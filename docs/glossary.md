@@ -34,6 +34,8 @@ Initial terms confirmed while grilling the Lab 1 design.
 | Root script | A Bun command exposed at the repository root to coordinate the client, server, database, or tests. |
 | Formatter | A development tool that applies the repository's consistent source layout; Lab 1 uses Biome. |
 | Linter | A development tool that reports source-code problems without replacing TypeScript checks or tests; Lab 1 uses Biome. |
+| Lefthook | The repository-managed Git hook runner used to check staged source files before a commit. |
+| Pre-commit hook | An automated check that runs before a commit is created; this repository runs Biome through Lefthook. |
 | Local topology | The Lab 1 development arrangement: Vite client, Express API, and PostgreSQL running as separate processes/services. |
 | T3 Env | The typed environment-validation boundary used by the server to parse configuration safely. |
 | System-check screen | The single Lab 1 client screen that demonstrates API liveness and database-backed categories. |

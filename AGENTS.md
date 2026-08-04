@@ -10,6 +10,7 @@ This repository currently implements Lab 1 only. Keep authentication, ticket wor
 - Keep `client/` and `server/` as the two application workspaces.
 - Use the root scripts in `package.json` for development, database, testing, type checking, and builds.
 - Use Biome through the root `format`, `format:check`, `lint`, and `check` scripts.
+- Install the Lefthook staged-file hook with `bun run hooks:install` and validate it with `bun run hooks:validate`.
 - Keep the server compatible with Node.js even though Bun runs the local scripts.
 
 ## Architecture

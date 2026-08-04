@@ -21,6 +21,8 @@
     "format:check": "biome format .",
     "lint": "biome lint .",
     "check": "biome check .",
+    "hooks:install": "lefthook install",
+    "hooks:validate": "lefthook validate",
     "test": "bun run test:client && bun run test:server",
     "test:client": "bun run --cwd client test",
     "test:server": "bun run --cwd server test",
@@ -33,6 +35,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.7",
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "lefthook": "2.1.10"
   }
 }

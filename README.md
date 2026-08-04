@@ -10,6 +10,7 @@ TokTickIT is the Lab 1 full-stack foundation for the IT service desk application
 - PostgreSQL 16 through Docker Compose
 - Prisma ORM
 - Biome formatter and linter
+- Lefthook staged-file checks
 - Vitest and Supertest
 
 ## Prerequisites
@@ -22,6 +23,7 @@ TokTickIT is the Lab 1 full-stack foundation for the IT service desk application
 ```sh
 bun install
 cp server/.env.example server/.env
+bun run hooks:install
 bun run db:up
 bun run db:generate
 ```
