@@ -1,10 +1,12 @@
 ---
 name: Lab 1 parent Issue
 about: Create one of the four checklist-driven Lab 1 delivery Issues
-title: "Issue #: "
+title: ""
 labels: ""
 assignees: ""
 ---
+
+<!-- Use a clear imperative title, such as Add, Create, Configure, Test, Verify, or Document. -->
 
 ## Goal
 <!-- State the thin, verifiable outcome. -->
@@ -26,8 +28,8 @@ assignees: ""
 - [ ] <!-- Link the Tests child Issue. -->
 - [ ] <!-- Link the Documentation / Evidence child Issue. -->
 
-## Notes
-- <!-- Constraints, scope boundaries, or implementation guidance. -->
+## Notes (optional)
+<!-- Add constraints, decisions, or links. Leave blank when there is nothing to record. -->
 
 ## Definition of Done
 - [ ] Acceptance criteria are satisfied.
