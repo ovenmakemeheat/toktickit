@@ -13,7 +13,7 @@ Initial terms confirmed while grilling the Lab 1 design.
 | Feature branch | A short-lived branch for one required Lab 1 Issue. |
 | Bun monorepo | The single repository managed by Bun, containing the `client/` and `server/` workspaces. |
 | Workspace | One independently runnable project area inside the monorepo; Lab 1 has a client workspace and a server workspace. |
-| Compose database | The local PostgreSQL service started from the repository's Docker Compose configuration. |
+| Compose database | The local PostgreSQL service started from `server/docker-compose.yml`. |
 | Migration | A versioned Prisma change that creates or alters database tables. |
 | Seed | Repeatable code that inserts the four required request categories without duplicates. |
 | Error envelope | The JSON shape `{ error: { code, message } }` used for API failures. |

@@ -30,6 +30,9 @@ bun run db:validate
 ```
 
 On Windows PowerShell, use `Copy-Item server/.env.example server/.env` instead of `cp`.
+If port `5432` is already in use, set `POSTGRES_PORT`, `DATABASE_URL`, and `TEST_DATABASE_URL` to the same available host port in `server/.env`.
+
+The database stack is owned by `server/`: Compose is defined in `server/docker-compose.yml`, PostgreSQL initialization is under `server/docker/`, and Prisma files remain under `server/prisma/`.
 
 The development database migration and seed commands are ready for the Category model delivered in Issue #15:
 
@@ -39,7 +42,7 @@ bun run db:seed
 bun run db:test:setup
 ```
 
-`db:test:setup` applies the current migrations and seed to the isolated `toktickit_test` database. The test database is created by the PostgreSQL initialization script on a new Compose volume.
+`db:test:setup` applies the current migrations and seed to the isolated `toktickit_test` database. The test database is created by `server/docker/postgres/init/01-create-test-database.sql` on a new Compose volume.
 
 ## Run the application
 

@@ -20,6 +20,7 @@ This repository currently implements Lab 1 only. Keep authentication, ticket wor
 - The server uses Express, TypeScript, T3 Env, Prisma, and PostgreSQL.
 - Keep `server/src/app.ts` importable without starting a listener; keep `listen()` in `server/src/index.ts`.
 - Keep Prisma schema and migrations under `server/prisma/`.
+- Keep Docker Compose, PostgreSQL initialization, environment templates, and database scripts under `server/`.
 - Use relative `/api` requests through the Vite proxy.
 
 ## Testing
