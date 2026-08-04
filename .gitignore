@@ -31,6 +31,10 @@ Thumbs.db
 !.vscode/extensions.json
 !.vscode/settings.json
 
+# Agent metadata not used by this repository
+.claude/
+CLAUDE.md
+
 # LaTeX build artifacts
 *.aux
 *.fdb_latexmk
