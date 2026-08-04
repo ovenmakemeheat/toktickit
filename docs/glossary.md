@@ -32,6 +32,8 @@ Initial terms confirmed while grilling the Lab 1 design.
 | Dev proxy | Vite's local forwarding of `/api` browser requests to the Express server. |
 | Requirements-first UI | The rule that Lab 1 UI behavior follows the requirement PDFs and does not invent later-lab screens. |
 | Root script | A Bun command exposed at the repository root to coordinate the client, server, database, or tests. |
+| Formatter | A development tool that applies the repository's consistent source layout; Lab 1 uses Biome. |
+| Linter | A development tool that reports source-code problems without replacing TypeScript checks or tests; Lab 1 uses Biome. |
 | Local topology | The Lab 1 development arrangement: Vite client, Express API, and PostgreSQL running as separate processes/services. |
 | T3 Env | The typed environment-validation boundary used by the server to parse configuration safely. |
 | System-check screen | The single Lab 1 client screen that demonstrates API liveness and database-backed categories. |

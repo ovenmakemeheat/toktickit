@@ -1,1 +1,3 @@
-console.log("TokTickIT seed command is configured; Lab 1 seed data is added in Issue #15.");
+console.log(
+  "TokTickIT seed command is configured; Lab 1 seed data is added in Issue #15.",
+);

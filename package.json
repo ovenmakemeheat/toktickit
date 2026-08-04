@@ -17,6 +17,10 @@
     "db:migrate:deploy": "bun run --cwd server db:migrate:deploy",
     "db:seed": "bun run --cwd server db:seed",
     "db:test:setup": "bun run --cwd server db:test:setup",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "lint": "biome lint .",
+    "check": "biome check .",
     "test": "bun run test:client && bun run test:server",
     "test:client": "bun run --cwd client test",
     "test:server": "bun run --cwd server test",
@@ -28,6 +32,7 @@
     "build:server": "bun run --cwd server build"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.7",
     "concurrently": "^9.2.1"
   }
 }

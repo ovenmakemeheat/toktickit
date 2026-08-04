@@ -9,6 +9,7 @@ TokTickIT is the Lab 1 full-stack foundation for the IT service desk application
 - Node-compatible Express and TypeScript
 - PostgreSQL 16 through Docker Compose
 - Prisma ORM
+- Biome formatter and linter
 - Vitest and Supertest
 
 ## Prerequisites
@@ -52,7 +53,9 @@ The Vite client proxies relative `/api` requests to the API on port 3000.
 ## Test and verify
 
 ```sh
-bun test
+bun run format:check
+bun run lint
+bun run test
 bun run typecheck
 bun run build
 ```

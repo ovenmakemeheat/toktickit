@@ -4,8 +4,14 @@ import { fileURLToPath } from "node:url";
 
 import { env } from "../src/env.js";
 
-const binDirectory = resolve(dirname(fileURLToPath(import.meta.url)), "../node_modules/.bin");
-const prismaCommand = resolve(binDirectory, process.platform === "win32" ? "prisma.exe" : "prisma");
+const binDirectory = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../node_modules/.bin",
+);
+const prismaCommand = resolve(
+  binDirectory,
+  process.platform === "win32" ? "prisma.exe" : "prisma",
+);
 const prismaEnvironment = {
   ...process.env,
   DATABASE_URL: env.TEST_DATABASE_URL,
@@ -25,7 +31,11 @@ function runPrisma(args: string[]) {
         return;
       }
 
-      reject(new Error(`Prisma ${args.join(" ")} exited with code ${code ?? "unknown"}`));
+      reject(
+        new Error(
+          `Prisma ${args.join(" ")} exited with code ${code ?? "unknown"}`,
+        ),
+      );
     });
   });
 }
