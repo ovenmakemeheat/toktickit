@@ -10,8 +10,8 @@
     "forceConsistentCasingInFileNames": true,
     "outDir": "dist",
     "rootDir": ".",
-    "types": ["node"]
+    "types": ["node", "vitest/globals"]
   },
-  "include": ["src", "prisma/seed.ts"],
+  "include": ["src", "tests", "scripts", "prisma/seed.ts"],
   "exclude": ["node_modules", "dist"]
 }
