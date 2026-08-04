@@ -26,6 +26,7 @@ cp server/.env.example server/.env
 bun run hooks:install
 bun run db:up
 bun run db:generate
+bun run db:validate
 ```
 
 On Windows PowerShell, use `Copy-Item server/.env.example server/.env` instead of `cp`.
@@ -55,13 +56,10 @@ The Vite client proxies relative `/api` requests to the API on port 3000.
 ## Test and verify
 
 ```sh
-bun run format:check
-bun run lint
-bun run test
-bun run typecheck
-bun run build
+bun run verify
 ```
 
+`verify` runs Biome checks, Lefthook configuration validation, Prisma schema validation, TypeScript checks, tests, and both workspace builds.
 API tests use the exported Express application and do not start a listener. The isolated test database workflow is completed with the API test setup in Issue #30.
 
 ## Scope

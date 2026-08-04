@@ -36,6 +36,8 @@ Initial terms confirmed while grilling the Lab 1 design.
 | Linter | A development tool that reports source-code problems without replacing TypeScript checks or tests; Lab 1 uses Biome. |
 | Lefthook | The repository-managed Git hook runner used to check staged source files before a commit. |
 | Pre-commit hook | An automated check that runs before a commit is created; this repository runs Biome through Lefthook. |
+| Prisma validation | A non-mutating check that confirms the Prisma schema is valid before migrations or application builds. |
+| Verification workflow | The root `bun run verify` gate that combines repository checks, Prisma validation, type checks, tests, and builds. |
 | Local topology | The Lab 1 development arrangement: Vite client, Express API, and PostgreSQL running as separate processes/services. |
 | T3 Env | The typed environment-validation boundary used by the server to parse configuration safely. |
 | System-check screen | The single Lab 1 client screen that demonstrates API liveness and database-backed categories. |
