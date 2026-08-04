@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+.bun/
+.pnpm-store/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Build output and tooling caches
+dist/
+build/
+.vite/
+coverage/
+.nyc_output/
+*.tsbuildinfo
+
+# Logs and local databases
+*.log
+*.db
+*.db-journal
+
+# Temporary files and OS metadata
+tmp/
+.DS_Store
+Thumbs.db
+
+# Editor settings (keep shared project settings if added later)
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# LaTeX build artifacts
+*.aux
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+*.toc
+*.out
