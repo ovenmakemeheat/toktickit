@@ -1,0 +1,43 @@
+{
+  "name": "toktickit",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev": "concurrently --kill-others --names client,server --prefix-colors blue,green \"bun run dev:client\" \"bun run dev:server\"",
+    "dev:client": "bun run --cwd client dev",
+    "dev:server": "bun run --cwd server dev",
+    "db:up": "bun run --cwd server db:up",
+    "db:down": "bun run --cwd server db:down",
+    "db:logs": "bun run --cwd server db:logs",
+    "db:generate": "bun run --cwd server prisma:generate",
+    "db:validate": "bun run --cwd server prisma:validate",
+    "db:migrate": "bun run --cwd server db:migrate",
+    "db:migrate:deploy": "bun run --cwd server db:migrate:deploy",
+    "db:seed": "bun run --cwd server db:seed",
+    "db:test:setup": "bun run --cwd server db:test:setup",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "lint": "biome lint .",
+    "check": "biome check .",
+    "hooks:install": "lefthook install",
+    "hooks:validate": "lefthook validate",
+    "test": "bun run test:client && bun run test:server",
+    "test:client": "bun run --cwd client test",
+    "test:server": "bun run --cwd server test",
+    "typecheck": "bun run typecheck:client && bun run typecheck:server",
+    "typecheck:client": "bun run --cwd client typecheck",
+    "typecheck:server": "bun run --cwd server typecheck",
+    "build": "bun run build:client && bun run build:server",
+    "build:client": "bun run --cwd client build",
+    "build:server": "bun run --cwd server build",
+    "verify": "bun run check && bun run hooks:validate && bun run db:validate && bun run typecheck && bun run test && bun run build"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.7",
+    "concurrently": "^9.2.1",
+    "lefthook": "2.1.10"
+  }
+}
