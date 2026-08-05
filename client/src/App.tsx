@@ -1,5 +1,12 @@
 import { useState } from "react";
 
+import {
+  apiErrorMessage,
+  fetchCategories,
+  fetchHealth,
+  type Category,
+} from "./lib/api";
+
 type HealthStatus = "unknown" | "checking" | "online" | "offline";
 
 const healthStatusLabels: Record<HealthStatus, string> = {
@@ -9,27 +16,31 @@ const healthStatusLabels: Record<HealthStatus, string> = {
   offline: "Offline",
 };
 
-const apiErrorMessage = "Unable to connect to TokTickIT API";
-
 export default function App() {
   const [healthStatus, setHealthStatus] = useState<HealthStatus>("unknown");
+  const [categories, setCategories] = useState<Category[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  async function checkHealth() {
+  async function checkSystem() {
     setHealthStatus("checking");
+    setCategories([]);
     setErrorMessage(null);
 
     try {
-      const response = await fetch("/api/health");
-      const payload = (await response.json()) as { status?: string };
+      const [health, categoryList] = await Promise.all([
+        fetchHealth(),
+        fetchCategories(),
+      ]);
 
-      if (!response.ok || payload.status !== "ok") {
+      if (health.status !== "ok") {
         throw new Error("Unexpected health response");
       }
 
       setHealthStatus("online");
+      setCategories(categoryList);
     } catch {
       setHealthStatus("offline");
+      setCategories([]);
       setErrorMessage(apiErrorMessage);
     }
   }
@@ -51,17 +62,27 @@ export default function App() {
             Lab 1 full-stack foundation is ready for the system check.
           </p>
           <p className="mb-3" role="status" aria-live="polite">
-            Backend status: {healthStatusLabels[healthStatus]}
+            System Status: {healthStatusLabels[healthStatus]}
           </p>
           {errorMessage ? (
             <p className="text-danger" role="alert">
               {errorMessage}
             </p>
           ) : null}
+          {categories.length > 0 ? (
+            <div className="mb-4">
+              <h2 className="h5">Supported categories</h2>
+              <ul aria-label="IT request categories">
+                {categories.map((category) => (
+                  <li key={category.id}>{category.name}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
           <button
             type="button"
             className="btn btn-primary"
-            onClick={checkHealth}
+            onClick={checkSystem}
             disabled={healthStatus === "checking"}
           >
             {healthStatus === "checking" ? "Checking..." : "Check System"}
