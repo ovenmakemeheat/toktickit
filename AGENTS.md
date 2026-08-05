@@ -34,6 +34,13 @@ bun run db:test:setup
 
 In PowerShell, use `Copy-Item server/.env.example server/.env`. Keep `server/.env` local. Start the application with `bun dev`; stop only the database with `bun run db:down`.
 
+### GitHub project board
+
+- Use the [TokTickIT Lab 1 project board](https://github.com/users/ovenmakemeheat/projects/1/views/2) as the canonical delivery view.
+- Keep exactly the four main Lab 1 issues (#13, #14, #15, and #16) on the board. Native sub-issues stay attached to their parent issues and are not added as separate board items.
+- Use the workflow statuses `Backlog`, `Specified`, `Started`, `PR Review`, `Fixing`, and `Done`.
+- Keep the board synchronized with issue and pull request state. Mark an issue `Done` only after its acceptance criteria, tests, peer review, and merge into `lab1-staging` are complete.
+
 ### Database workflow
 
 - Treat `server/docker-compose.yml`, `server/docker/`, `server/prisma/`, `server/.env.example`, and the server database scripts as one owned stack.
