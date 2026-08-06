@@ -8,6 +8,7 @@
 \usepackage{float}
 \usepackage{fontspec}
 \usepackage{graphicx}
+\usepackage{longtable}
 \usepackage{microtype}
 \usepackage{parskip}
 \usepackage{xcolor}
@@ -63,6 +64,10 @@
       {\small GitHub: \href{#4}{#5}}%
     }%
   }%
+}
+
+\newcommand{\promptquote}[1]{%
+  \textcolor{accent}{\textquotedblleft}\emph{#1}\textcolor{accent}{\textquotedblright}%
 }
 
 \begin{document}
@@ -158,17 +163,26 @@ The test matrix is kept in \texttt{docs/lab-01/tests.md}. The application bounda
 \textbf{Selected prompts and effects}
 
 {\small
-\begin{enumerate}[label=\textbf{P\arabic*:},leftmargin=13mm,itemsep=1pt]
-  \item \emph{read @docs/requirements, \$grill-with-docs}. Loaded the requirements and used the grilling workflow to identify scope and risks.
-  \item \emph{now follow the plan, first create the issues}. Converted the requirements into the Lab 1 issue structure.
-  \item \emph{all subissues should be inside the main 4 issues}. Kept exactly four parent issues and attached implementation work as native sub-issues.
-  \item \emph{please keep insturction in AGENTS.md strictly about don't close any PR or main issue you can only do check the checklists or closing subissue, closing main issue / PR close is human job}. Established the human-only rules for pull-request and main-issue state changes.
-  \item \emph{add biome, left-hook, prisma validation on git sub-issues of issue 1}. Added the requested quality gates and connected them to the foundation work.
-  \item \emph{yes, and pdf should be built in latex}. Chose a reproducible XeLaTeX report source and PDF build command.
-  \item \emph{do capture those for me from http://localhost:5173/}. Defined the required loading, success, and failure evidence for the running app.
-  \item \emph{do use browseruse cli}. Used browser-use CLI to verify the visible UI states and save the captures.
-  \item \emph{this is student - reviewer details Student ... also checkout all pr and review records; update reviewer part}. Audited PRs \#44-\#47 and recorded the student, peer, review comments, responses, and unresolved automated threads.
-\end{enumerate}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{7mm}@{\hspace{2mm}}>{\raggedright\arraybackslash}p{0.37\linewidth}@{\hspace{2mm}}>{\raggedright\arraybackslash}p{0.52\linewidth}@{}}
+  \toprule
+  \textbf{ID} & \textbf{Selected prompt} & \textbf{Effect} \\
+  \midrule
+  \endfirsthead
+  \toprule
+  \textbf{ID} & \textbf{Selected prompt} & \textbf{Effect} \\
+  \midrule
+  \endhead
+  P1 & \promptquote{read @docs/requirements, \$grill-with-docs} & Loaded the requirements and used the grilling workflow to identify scope and risks. \\
+  P2 & \promptquote{now follow the plan, first create the issues} & Converted the requirements into the Lab 1 issue structure. \\
+  P3 & \promptquote{all subissues should be inside the main 4 issues} & Kept exactly four parent issues and attached implementation work as native sub-issues. \\
+  P4 & \promptquote{please keep instruction in AGENTS.md strictly about don't close any PR or main issue ... human job} & Established human-only rules for pull-request and main-issue state changes. \\
+  P5 & \promptquote{add biome, left-hook, prisma validation on git sub-issues of issue 1} & Added the requested quality gates and connected them to the foundation work. \\
+  P6 & \promptquote{yes, and pdf should be built in latex} & Chose a reproducible XeLaTeX report source and PDF build command. \\
+  P7 & \promptquote{do capture those for me from http://localhost:5173/} & Defined the required loading, success, and failure evidence for the running app. \\
+  P8 & \promptquote{do use browseruse cli} & Used browser-use CLI to verify the visible UI states and save the captures. \\
+  P9 & \promptquote{this is student - reviewer details Student ... also checkout all pr and review records} & Audited PRs \#44-\#47 and recorded student, peer, review comments, responses, and unresolved automated threads. \\
+  \bottomrule
+\end{longtable}
 }
 
 \textbf{Reflection}
