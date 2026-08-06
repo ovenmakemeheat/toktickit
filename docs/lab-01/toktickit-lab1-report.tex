@@ -55,6 +55,12 @@
   }{\captureplaceholder{#2}}%
 }
 
+\newcommand{\workflowimage}[2]{%
+  \IfFileExists{#1}{%
+    \includegraphics[width=\linewidth,height=0.30\textheight,keepaspectratio]{#1}%
+  }{\captureplaceholder{#2}}%
+}
+
 \newcommand{\identitycard}[5]{%
   \fcolorbox{accent}{panel}{%
     \parbox[t]{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{%
@@ -149,6 +155,34 @@ The repository uses four parent Lab 1 issues and native sub-issues. Work is perf
 }
 
 \emph{GitHub records these peer submissions as \texttt{COMMENTED}; they are conversation evidence, not formal \texttt{APPROVE} events.}
+
+\textbf{Repository workflow screenshots}
+
+The following captures provide human-checked evidence for the board state, merge history, repository structure, and automated test output. GitHub captures were taken with browser-use CLI from the \texttt{lab1-staging} view.
+
+\begin{figure}[H]
+  \centering
+  \workflowimage{docs/lab-01/evidence/board.png}{Capture the completed Lab 1 project board.}
+  \caption{Lab 1 project board: six workflow columns, four parent issues, and visible sub-issue progress.}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \workflowimage{docs/lab-01/evidence/commit-history.png}{Capture the lab1-staging commit and merge history.}
+  \caption{Commit and merge history on \texttt{lab1-staging}, including the PR \#44 merge and issue-referenced commits.}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \workflowimage{docs/lab-01/evidence/directory-structure.png}{Capture the repository directory structure.}
+  \caption{Repository tree showing the client, server, documentation, agent instructions, and root tooling.}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \workflowimage{docs/lab-01/evidence/test-capture.png}{Capture passing client and server test output.}
+  \caption{Terminal evidence: the client suite passes 3 tests and the server suite passes 6 tests.}
+\end{figure}
 
 \section{Answer Part 2: Tests}
 

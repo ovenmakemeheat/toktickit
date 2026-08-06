@@ -1,6 +1,41 @@
 # Lab 1 app evidence capture
 
-These captures are the human-in-the-loop evidence for the App Demo section of the LaTeX report.
+These captures are the human-in-the-loop evidence for the Git workflow and App Demo sections of the LaTeX report.
+
+## Part 1 repository workflow captures
+
+The GitHub captures were taken with browser-use CLI from the `lab1-staging` repository state.
+
+### Project board
+
+Verify that the board shows all six workflow columns, the four parent Lab 1 issues, their sub-issue progress, and the current workflow status.
+
+Save the readable board capture as `docs/lab-01/evidence/board.png`.
+
+### Commit and merge history
+
+Verify that the `lab1-staging` history shows the foundation merge for PR #44 and focused issue-referenced commits for the Lab 1 work.
+
+Save the history capture as `docs/lab-01/evidence/commit-history.png`.
+
+### Directory structure
+
+Verify that the repository tree shows the required `client/`, `server/`, `docs/`, `AGENTS.md`, and root tooling files.
+
+Save the readable tree capture as `docs/lab-01/evidence/directory-structure.png`.
+
+### Terminal test output
+
+Verify that the captured terminal output shows the client suite passing 3 tests and the server suite passing 6 tests.
+
+Save the terminal capture as `docs/lab-01/evidence/test-capture.png`.
+
+### Part 1 human QA
+
+- [x] The board capture shows all workflow columns and the four parent issue cards.
+- [x] The commit history capture shows both a merge commit and focused issue-referenced commits.
+- [x] The directory capture keeps the repository folders and root tooling readable.
+- [x] The terminal capture shows all client and server tests passing.
 
 ## Preconditions
 
