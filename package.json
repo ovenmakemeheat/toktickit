@@ -33,6 +33,7 @@
     "build": "bun run build:client && bun run build:server",
     "build:client": "bun run --cwd client build",
     "build:server": "bun run --cwd server build",
+    "report:build": "bun docs/lab-01/build-report.ts",
     "verify": "bun run check && bun run hooks:validate && bun run db:validate && bun run typecheck && bun run test && bun run build"
   },
   "devDependencies": {
