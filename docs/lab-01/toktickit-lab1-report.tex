@@ -1,0 +1,155 @@
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[a4paper,margin=18mm,headheight=14pt]{geometry}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{float}
+\usepackage{fontspec}
+\usepackage{graphicx}
+\usepackage{microtype}
+\usepackage{parskip}
+\usepackage{xcolor}
+\usepackage{hyperref}
+
+\definecolor{ink}{HTML}{1F2937}
+\definecolor{muted}{HTML}{64748B}
+\definecolor{accent}{HTML}{0F766E}
+\definecolor{panel}{HTML}{F1F5F9}
+\definecolor{pending}{HTML}{FEF3C7}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=accent,
+  urlcolor=accent,
+  pdftitle={TokTickIT Lab 1 Report},
+  pdfauthor={TokTickIT},
+}
+
+\setmainfont{Latin Modern Roman}
+\setlength{\parindent}{0pt}
+\setlist{nosep,leftmargin=*}
+\setlist[itemize]{label=\textcolor{accent}{\small\textbullet}}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{TokTickIT Lab 1}
+\rhead{Submission evidence}
+\cfoot{\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+
+\newcommand{\captureplaceholder}[1]{%
+  \fcolorbox{muted}{pending}{%
+    \parbox[c][0.22\textheight][c]{0.94\linewidth}{%
+      \centering\textcolor{ink}{\textbf{Evidence pending}}\\[3pt]
+      \small #1
+    }%
+  }%
+}
+
+\newcommand{\evidenceimage}[2]{%
+  \IfFileExists{#1}{%
+    \includegraphics[width=\linewidth,height=0.22\textheight,keepaspectratio]{#1}%
+  }{\captureplaceholder{#2}}%
+}
+
+\begin{document}
+
+\begin{titlepage}
+  \thispagestyle{empty}
+  \vspace*{18mm}
+  {\Large\textcolor{accent}{CPE 334 \textbar\ Individual Sprint 1}}\par
+  \vspace{10mm}
+  {\Huge\bfseries TokTickIT}\par
+  \vspace{3mm}
+  {\Large Lab 1 full-stack vertical slice}\par
+  \vfill
+  \begin{tabular}{@{}>{\bfseries}p{35mm}p{95mm}@{}}
+    Stack & React, TypeScript, Vite, Bootstrap, Express, Prisma, PostgreSQL \\
+    Workflow & Bun workspaces, feature branches, GitHub Issues, Pull Requests \\
+    Evidence & Tests, API contracts, database seed, and human-checked App Demo \\
+  \end{tabular}
+  \vfill
+  {\small Built from one LaTeX source with XeLaTeX.}
+\end{titlepage}
+
+\tableofcontents
+\clearpage
+
+\section{Answer Part 1: Git Use with Engineering Workflow}
+
+The repository uses four parent Lab 1 issues and native sub-issues. Work is performed on feature branches and targets \texttt{lab1-staging}; the stable branch is \texttt{main}.
+
+\begin{tabular}{@{}p{31mm}p{52mm}p{42mm}@{}}
+  \toprule
+  Parent issue & Feature branch & Pull Request \\
+  \midrule
+  \#13 foundation & \texttt{feature/1-project-foundation} & \href{https://github.com/ovenmakemeheat/toktickit/pull/44}{PR \#44} \\
+  \#14 health & \texttt{feature/2-health-check} & \href{https://github.com/ovenmakemeheat/toktickit/pull/46}{PR \#46} \\
+  \#15 categories & \texttt{feature/3-category-seed} & \href{https://github.com/ovenmakemeheat/toktickit/pull/45}{PR \#45} \\
+  \#16 category list & \texttt{feature/4-category-list} & \href{https://github.com/ovenmakemeheat/toktickit/pull/47}{PR \#47} \\
+  \bottomrule
+\end{tabular}
+
+\vspace{4mm}
+\begin{itemize}
+  \item Repository: \url{https://github.com/ovenmakemeheat/toktickit}
+  \item Project board: \url{https://github.com/users/ovenmakemeheat/projects/1/views/2}
+  \item The parent issue checklists are the acceptance source; native sub-issues carry implementation, testing, and evidence slices.
+  \item Student: GUNTEE DOUNGMANEE (67070501003), \url{https://github.com/ovenmakemeheat}; peer reviewer: POLWARIT WATTHANAHEMMARAT (67070501067), \url{https://github.com/MadMax168}.
+  \item Positive peer-review records for PRs \#44-\#47 are audited with the author responses.
+  \item Full review details are in \texttt{docs/lab-01/reviewer.md}; PR \#47 remains open for human workflow completion.
+  \item Unresolved automated threads on PRs \#44, \#45, and \#47 are recorded separately and are not peer-review rejections.
+\end{itemize}
+
+\section{Answer Part 2: Tests}
+
+The test matrix is kept in \texttt{docs/lab-01/tests.md}. The application boundary is tested through the exported Express app and user-observable React behavior.
+
+\begin{tabular}{@{}p{18mm}p{22mm}p{73mm}p{19mm}@{}}
+  \toprule
+  ID & Tool & Proof & Status \\
+  \midrule
+  API-01 & Supertest & Health returns HTTP 200 and the exact TokTickIT API payload. & Passing \\
+  API-02 & Supertest & Categories return seeded ID/name pairs in ascending ID order. & Passing \\
+  UI-01 & Vitest & TokTickIT heading and Check System action render. & Passing \\
+  UI-02 & Vitest & Checking transitions to Online and renders returned categories. & Passing \\
+  UI-03 & Vitest & API failure clears stale categories and shows the safe error. & Passing \\
+  \bottomrule
+\end{tabular}
+
+\vspace{4mm}
+\textbf{Verification command:} \texttt{bun run verify}. It covers Biome, Lefthook validation, Prisma validation, type checks, both workspace test suites, and both workspace builds.
+
+\section{Answer Part 3: AI Use and Reflection}
+
+The AI-use record in \texttt{docs/lab-01/ai\_use.md} identifies OpenAI Codex with GPT-5, nine representative prompts, the supporting tools, and the human-in-the-loop checks. Prompt constraints progressively narrowed the work to the Lab 1 scope, Bun workflow, native issue structure, human-only GitHub state changes, and verifiable browser and PDF evidence.
+
+The process remained human checked: the loading capture was recaptured after visual inspection exposed an incorrect completed state, every PDF page was rendered and inspected, and GitHub review records were checked so positive peer comments were not mislabeled as formal approvals. Unresolved automated threads are recorded as unresolved.
+
+\section{Answer Part 4: App Demo}
+
+The system check makes two relative API requests through the Vite proxy. The success state proves that health is online and that the four categories came from PostgreSQL. The failure state proves that the user receives a safe error and stale categories are cleared.
+
+\begin{figure}[H]
+  \centering
+  \evidenceimage{docs/lab-01/evidence/loading.png}{Capture the transient Checking state while requests are in flight.}
+  \caption{Loading state: the button and status show that the system check is in progress.}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \evidenceimage{docs/lab-01/evidence/success.png}{Capture Online status and all four returned categories.}
+  \caption{Success state: Online and the database-backed categories are visible in order.}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \evidenceimage{docs/lab-01/evidence/failure.png}{Capture Offline status, the safe error, and no stale category list.}
+  \caption{Failure state: the API is unavailable and the user-safe error is shown.}
+\end{figure}
+
+The capture protocol and visual QA checklist are in \texttt{docs/lab-01/evidence/capture-checklist.md}. Each final page must be checked for clipped text, unreadable evidence, accidental blank space, and incorrect state labels.
+
+\end{document}
