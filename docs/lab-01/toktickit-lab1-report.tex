@@ -54,6 +54,17 @@
   }{\captureplaceholder{#2}}%
 }
 
+\newcommand{\identitycard}[5]{%
+  \fcolorbox{accent}{panel}{%
+    \parbox[t]{0.42\linewidth}{%
+      {\small\bfseries\textcolor{accent}{#1}}\par
+      {\bfseries #2}\par
+      {\small ID: #3}\par
+      {\small GitHub: \href{#4}{#5}}%
+    }%
+  }%
+}
+
 \begin{document}
 
 \begin{titlepage}
@@ -85,19 +96,28 @@ The repository uses four parent Lab 1 issues and native sub-issues. Work is perf
   \toprule
   Parent issue & Feature branch & Pull Request \\
   \midrule
-  \#13 foundation & \texttt{feature/1-project-foundation} & \href{https://github.com/ovenmakemeheat/toktickit/pull/44}{PR \#44} \\
-  \#14 health & \texttt{feature/2-health-check} & \href{https://github.com/ovenmakemeheat/toktickit/pull/46}{PR \#46} \\
-  \#15 categories & \texttt{feature/3-category-seed} & \href{https://github.com/ovenmakemeheat/toktickit/pull/45}{PR \#45} \\
-  \#16 category list & \texttt{feature/4-category-list} & \href{https://github.com/ovenmakemeheat/toktickit/pull/47}{PR \#47} \\
+  \href{https://github.com/ovenmakemeheat/toktickit/issues/13}{\#13 foundation} & \texttt{feature/1-project-foundation} & \href{https://github.com/ovenmakemeheat/toktickit/pull/44}{PR \#44} \\
+  \href{https://github.com/ovenmakemeheat/toktickit/issues/14}{\#14 health} & \texttt{feature/2-health-check} & \href{https://github.com/ovenmakemeheat/toktickit/pull/46}{PR \#46} \\
+  \href{https://github.com/ovenmakemeheat/toktickit/issues/15}{\#15 categories} & \texttt{feature/3-category-seed} & \href{https://github.com/ovenmakemeheat/toktickit/pull/45}{PR \#45} \\
+  \href{https://github.com/ovenmakemeheat/toktickit/issues/16}{\#16 category list} & \texttt{feature/4-category-list} & \href{https://github.com/ovenmakemeheat/toktickit/pull/47}{PR \#47} \\
   \bottomrule
 \end{tabular}
 
 \vspace{4mm}
+\textbf{Student and peer reviewer}
+
+\vspace{1mm}
+\begin{tabular}{@{}p{0.47\linewidth}@{\hspace{4mm}}p{0.47\linewidth}@{}}
+  \identitycard{Student}{GUNTEE DOUNGMANEE}{67070501003}{https://github.com/ovenmakemeheat}{ovenmakemeheat}
+  &
+  \identitycard{Peer reviewer}{POLWARIT WATTHANAHEMMARAT}{67070501067}{https://github.com/MadMax168}{MadMax168}
+\end{tabular}
+
+\vspace{3mm}
 \begin{itemize}
   \item Repository: \url{https://github.com/ovenmakemeheat/toktickit}
   \item Project board: \url{https://github.com/users/ovenmakemeheat/projects/1/views/2}
   \item The parent issue checklists are the acceptance source; native sub-issues carry implementation, testing, and evidence slices.
-  \item Student: GUNTEE DOUNGMANEE (67070501003), \url{https://github.com/ovenmakemeheat}; peer reviewer: POLWARIT WATTHANAHEMMARAT (67070501067), \url{https://github.com/MadMax168}.
   \item Positive peer-review records for PRs \#44-\#47 are audited with the author responses.
   \item Full review details are in \texttt{docs/lab-01/reviewer.md}; PR \#47 remains open for human workflow completion.
   \item Unresolved automated threads on PRs \#44, \#45, and \#47 are recorded separately and are not peer-review rejections.
@@ -124,9 +144,38 @@ The test matrix is kept in \texttt{docs/lab-01/tests.md}. The application bounda
 
 \section{Answer Part 3: AI Use and Reflection}
 
-The AI-use record in \texttt{docs/lab-01/ai\_use.md} identifies OpenAI Codex with GPT-5, nine representative prompts, the supporting tools, and the human-in-the-loop checks. Prompt constraints progressively narrowed the work to the Lab 1 scope, Bun workflow, native issue structure, human-only GitHub state changes, and verifiable browser and PDF evidence.
+\textbf{Tool and model}
 
-The process remained human checked: the loading capture was recaptured after visual inspection exposed an incorrect completed state, every PDF page was rendered and inspected, and GitHub review records were checked so positive peer comments were not mislabeled as formal approvals. Unresolved automated threads are recorded as unresolved.
+\begin{tabular}{@{}p{34mm}p{124mm}@{}}
+  \toprule
+  Tool & OpenAI Codex coding agent in ChatGPT \\
+  Model & GPT-5 \\
+  Supporting tools & GitHub connector, browser-use CLI, Bun, XeLaTeX, and Poppler \\
+  \bottomrule
+\end{tabular}
+
+\vspace{2mm}
+\textbf{Selected prompts and effects}
+
+{\small
+\begin{enumerate}[label=\textbf{P\arabic*:},leftmargin=13mm,itemsep=1pt]
+  \item \emph{read @docs/requirements, \$grill-with-docs}. Loaded the requirements and used the grilling workflow to identify scope and risks.
+  \item \emph{now follow the plan, first create the issues}. Converted the requirements into the Lab 1 issue structure.
+  \item \emph{all subissues should be inside the main 4 issues}. Kept exactly four parent issues and attached implementation work as native sub-issues.
+  \item \emph{please keep insturction in AGENTS.md strictly about don't close any PR or main issue you can only do check the checklists or closing subissue, closing main issue / PR close is human job}. Established the human-only rules for pull-request and main-issue state changes.
+  \item \emph{add biome, left-hook, prisma validation on git sub-issues of issue 1}. Added the requested quality gates and connected them to the foundation work.
+  \item \emph{yes, and pdf should be built in latex}. Chose a reproducible XeLaTeX report source and PDF build command.
+  \item \emph{do capture those for me from http://localhost:5173/}. Defined the required loading, success, and failure evidence for the running app.
+  \item \emph{do use browseruse cli}. Used browser-use CLI to verify the visible UI states and save the captures.
+  \item \emph{this is student - reviewer details Student ... also checkout all pr and review records; update reviewer part}. Audited PRs \#44-\#47 and recorded the student, peer, review comments, responses, and unresolved automated threads.
+\end{enumerate}
+}
+
+\textbf{Reflection}
+
+The prompts became more useful as they added concrete constraints: Bun, the server-owned database stack, four parent issues, native sub-issues, acceptance criteria, and human-only pull-request state changes. Those constraints kept the implementation aligned with Lab 1 instead of expanding into later features.
+
+The AI-assisted workflow still required human-in-the-loop checks. The browser capture was inspected visually; an initial loading attempt was detected as a completed success state and recaptured correctly. The final PDF was rendered page by page and checked for readable evidence, clipping, overlap, and excessive empty space. GitHub review records were also checked directly so positive peer comments were not mislabeled as formal approvals, and unresolved automated threads were preserved rather than reported as fixed.
 
 \section{Answer Part 4: App Demo}
 
