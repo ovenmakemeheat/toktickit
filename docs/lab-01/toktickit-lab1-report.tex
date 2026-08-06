@@ -128,6 +128,28 @@ The repository uses four parent Lab 1 issues and native sub-issues. Work is perf
   \item Unresolved automated threads on PRs \#44, \#45, and \#47 are recorded separately and are not peer-review rejections.
 \end{itemize}
 
+\textbf{Student--peer reviewer conversation}
+
+{\small
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{29mm}@{\hspace{2mm}}>{\raggedright\arraybackslash}p{0.34\linewidth}@{\hspace{2mm}}>{\raggedright\arraybackslash}p{0.42\linewidth}@{}}
+  \toprule
+  \textbf{Pull request} & \textbf{Peer reviewer message} & \textbf{Student response} \\
+  \midrule
+  \endfirsthead
+  \toprule
+  \textbf{Pull request} & \textbf{Peer reviewer message} & \textbf{Student response} \\
+  \midrule
+  \endhead
+  \href{https://github.com/ovenmakemeheat/toktickit/pull/44}{\#44 foundation} \textit{(Merged)} & \promptquote{All things good for me} & Acknowledged the lockfile comment and stated that the synchronized lockfile would be regenerated and committed. \\
+  \href{https://github.com/ovenmakemeheat/toktickit/pull/45}{\#45 category seed} \textit{(Merged)} & \promptquote{Good for me} & \promptquote{LGTM} \\
+  \href{https://github.com/ovenmakemeheat/toktickit/pull/46}{\#46 health check} \textit{(Merged)} & \promptquote{Nothing to change, Good for Me} & \promptquote{Thanks for the review!} \\
+  \href{https://github.com/ovenmakemeheat/toktickit/pull/47}{\#47 category list} \textit{(Open)} & \promptquote{All Be Good for Me} & \promptquote{Thanks!} The pull request remains open for human workflow completion. \\
+  \bottomrule
+\end{longtable}
+}
+
+\emph{GitHub records these peer submissions as \texttt{COMMENTED}; they are conversation evidence, not formal \texttt{APPROVE} events.}
+
 \section{Answer Part 2: Tests}
 
 The test matrix is kept in \texttt{docs/lab-01/tests.md}. The application boundary is tested through the exported Express app and user-observable React behavior.
