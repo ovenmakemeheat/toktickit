@@ -41,6 +41,14 @@ In PowerShell, use `Copy-Item server/.env.example server/.env`. Keep `server/.en
 - Use the workflow statuses `Backlog`, `Specified`, `Started`, `PR Review`, `Fixing`, and `Done`.
 - Keep the board synchronized with issue and pull request state. Mark an issue `Done` only after its acceptance criteria, tests, peer review, and merge into `lab1-staging` are complete.
 
+### GitHub state authority
+
+- The agent may inspect issue checklists, acceptance criteria, notes, and evidence, and may check off completed checklist items.
+- The agent may close a native sub-issue only after its checklist and acceptance criteria are complete.
+- The agent must never close or reopen a pull request, merge or unmerge a pull request, or otherwise change pull request state.
+- The agent must never close or reopen a main Lab 1 issue (#13, #14, #15, or #16).
+- A human must perform all pull request state changes and all main-issue closures or reopenings.
+
 ### Database workflow
 
 - Treat `server/docker-compose.yml`, `server/docker/`, `server/prisma/`, `server/.env.example`, and the server database scripts as one owned stack.
