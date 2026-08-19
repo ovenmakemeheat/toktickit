@@ -18,11 +18,17 @@ Verify that the `lab1-staging` history shows the foundation merge for PR #44 and
 
 Save the history capture as `docs/lab-01/evidence/commit-history.png`.
 
+Capture the current `main` history separately. It must show the staging-to-main integration when a human completes that merge.
+
+Save the main-branch capture as `docs/lab-01/evidence/main-history.png`.
+
 ### Directory structure
 
 Verify that the repository tree shows the required `client/`, `server/`, `docs/`, `AGENTS.md`, and root tooling files.
 
 Save the readable tree capture as `docs/lab-01/evidence/directory-structure.png`.
+
+Save the nested documentation tree as `docs/lab-01/evidence/docs-lab1-structure.png` and the server test tree as `docs/lab-01/evidence/server-tests-structure.png`.
 
 ### Terminal test output
 
@@ -34,8 +40,15 @@ Save the terminal capture as `docs/lab-01/evidence/test-capture.png`.
 
 - [x] The board capture shows all workflow columns and the four parent issue cards.
 - [x] The commit history capture shows both a merge commit and focused issue-referenced commits.
+- [x] The main-branch history is captured; it currently shows that staging has not yet been merged into `main`.
 - [x] The directory capture keeps the repository folders and root tooling readable.
+- [x] The nested captures show `docs/lab-01/` and `server/tests/lab-01/` contents.
 - [x] The terminal capture shows all client and server tests passing.
+
+### Submission blockers requiring human action
+
+- [ ] Merge `lab1-staging` into `main` and recapture the final main history.
+- [ ] Complete reciprocal peer review for the student’s partner repository and record the comment and response.
 
 ## Preconditions
 
