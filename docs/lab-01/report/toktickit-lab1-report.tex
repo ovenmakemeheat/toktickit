@@ -107,14 +107,23 @@ The repository uses four parent Lab 1 issues and native sub-issues. Work is perf
   \toprule
   Parent issue & Feature branch & Pull Request \\
   \midrule
-  \href{https://github.com/ovenmakemeheat/toktickit/issues/13}{\#13 foundation} & \texttt{feature/1-project-foundation} & \href{https://github.com/ovenmakemeheat/toktickit/pull/44}{PR \#44} \\
-  \href{https://github.com/ovenmakemeheat/toktickit/issues/14}{\#14 health} & \texttt{feature/2-health-check} & \href{https://github.com/ovenmakemeheat/toktickit/pull/46}{PR \#46} \\
-  \href{https://github.com/ovenmakemeheat/toktickit/issues/15}{\#15 categories} & \texttt{feature/3-category-seed} & \href{https://github.com/ovenmakemeheat/toktickit/pull/45}{PR \#45} \\
-  \href{https://github.com/ovenmakemeheat/toktickit/issues/16}{\#16 category list} & \texttt{feature/4-category-list} & \href{https://github.com/ovenmakemeheat/toktickit/pull/47}{PR \#47} \\
+  \href{https://github.com/ovenmakemeheat/toktickit/issues/13}{\#13 foundation} & \href{https://github.com/ovenmakemeheat/toktickit/tree/feature/1-project-foundation}{\texttt{feature/1-project-foundation}} & \href{https://github.com/ovenmakemeheat/toktickit/pull/44}{PR \#44} \\
+  \href{https://github.com/ovenmakemeheat/toktickit/issues/14}{\#14 health} & \href{https://github.com/ovenmakemeheat/toktickit/tree/feature/2-health-check}{\texttt{feature/2-health-check}} & \href{https://github.com/ovenmakemeheat/toktickit/pull/46}{PR \#46} \\
+  \href{https://github.com/ovenmakemeheat/toktickit/issues/15}{\#15 categories} & \href{https://github.com/ovenmakemeheat/toktickit/tree/feature/3-category-seed}{\texttt{feature/3-category-seed}} & \href{https://github.com/ovenmakemeheat/toktickit/pull/45}{PR \#45} \\
+  \href{https://github.com/ovenmakemeheat/toktickit/issues/16}{\#16 category list} & \href{https://github.com/ovenmakemeheat/toktickit/tree/feature/4-category-list}{\texttt{feature/4-category-list}} & \href{https://github.com/ovenmakemeheat/toktickit/pull/47}{PR \#47} \\
   \bottomrule
 \end{tabular}
 
 \vspace{4mm}
+\begin{tabular}{@{}p{35mm}p{125mm}@{}}
+  Repository & \href{https://github.com/ovenmakemeheat/toktickit}{ovenmakemeheat/toktickit} \\
+  Project board & \href{https://github.com/users/ovenmakemeheat/projects/1/views/2}{TokTickIT Lab 1} \\
+  Integration branch & \href{https://github.com/ovenmakemeheat/toktickit/tree/lab1-staging}{\texttt{lab1-staging}} \\
+  Stable branch & \href{https://github.com/ovenmakemeheat/toktickit/tree/main}{\texttt{main}} \\
+  Integration status & All four feature PRs are merged into \texttt{lab1-staging}; no staging-to-main PR exists in the audited GitHub state. \\
+\end{tabular}
+
+\vspace{3mm}
 \textbf{Student and peer reviewer}
 
 \vspace{1mm}
@@ -130,8 +139,9 @@ The repository uses four parent Lab 1 issues and native sub-issues. Work is perf
   \item Project board: \url{https://github.com/users/ovenmakemeheat/projects/1/views/2}
   \item The parent issue checklists are the acceptance source; native sub-issues carry implementation, testing, and evidence slices.
   \item Positive peer-review records for PRs \#44-\#47 are audited with the author responses.
-  \item Full review details are in \texttt{docs/lab-01/reviewer.md}; PR \#47 remains open for human workflow completion.
+  \item Full review details are in \texttt{docs/lab-01/reviewer.md}; PRs \#44-\#47 are merged into \texttt{lab1-staging}.
   \item Unresolved automated threads on PRs \#44, \#45, and \#47 are recorded separately and are not peer-review rejections.
+  \item Reciprocal review target: \href{https://github.com/MadMax168/TikTockIT}{MadMax168/TikTockIT}; its public pull-request list was empty at audit time, so reciprocal review evidence remains a human action.
 \end{itemize}
 
 \textbf{Student--peer reviewer conversation}
@@ -149,7 +159,7 @@ The repository uses four parent Lab 1 issues and native sub-issues. Work is perf
   \href{https://github.com/ovenmakemeheat/toktickit/pull/44}{\#44 foundation} \textit{(Merged)} & \promptquote{All things good for me} & Acknowledged the lockfile comment and stated that the synchronized lockfile would be regenerated and committed. \\
   \href{https://github.com/ovenmakemeheat/toktickit/pull/45}{\#45 category seed} \textit{(Merged)} & \promptquote{Good for me} & \promptquote{LGTM} \\
   \href{https://github.com/ovenmakemeheat/toktickit/pull/46}{\#46 health check} \textit{(Merged)} & \promptquote{Nothing to change, Good for Me} & \promptquote{Thanks for the review!} \\
-  \href{https://github.com/ovenmakemeheat/toktickit/pull/47}{\#47 category list} \textit{(Open)} & \promptquote{All Be Good for Me} & \promptquote{Thanks!} The pull request remains open for human workflow completion. \\
+  \href{https://github.com/ovenmakemeheat/toktickit/pull/47}{\#47 category list} \textit{(Merged)} & \promptquote{All Be Good for Me} & \promptquote{Thanks!} The pull request was merged into \texttt{lab1-staging}. \\
   \bottomrule
 \end{longtable}
 }
@@ -158,12 +168,12 @@ The repository uses four parent Lab 1 issues and native sub-issues. Work is perf
 
 \textbf{Repository workflow screenshots}
 
-The following captures provide human-checked evidence for the board state, merge history, repository structure, and automated test output. GitHub captures were taken with browser-use CLI from the \texttt{lab1-staging} view.
+The following captures provide human-checked evidence for the board state, merge history, repository structure, and automated test output. GitHub captures were taken with browser-use CLI from the relevant \texttt{lab1-staging} and \texttt{main} views.
 
 \begin{figure}[H]
   \centering
   \workflowimage{docs/lab-01/evidence/board.png}{Capture the completed Lab 1 project board.}
-  \caption{Lab 1 project board: six workflow columns, four parent issues, and visible sub-issue progress.}
+  \caption{Lab 1 project board: six workflow columns, all four parent issues in Done, and 100\% sub-issue progress.}
 \end{figure}
 
 \begin{figure}[H]
@@ -174,33 +184,79 @@ The following captures provide human-checked evidence for the board state, merge
 
 \begin{figure}[H]
   \centering
+  \workflowimage{docs/lab-01/evidence/main-history.png}{Capture the current main branch history.}
+  \caption{Current \texttt{main} history: it still contains only the initial setup commits, so staging-to-main integration remains a human action.}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
   \workflowimage{docs/lab-01/evidence/directory-structure.png}{Capture the repository directory structure.}
   \caption{Repository tree showing the client, server, documentation, agent instructions, and root tooling.}
 \end{figure}
 
 \begin{figure}[H]
   \centering
-  \workflowimage{docs/lab-01/evidence/test-capture.png}{Capture passing client and server test output.}
-  \caption{Terminal evidence: the client suite passes 3 tests and the server suite passes 6 tests.}
+  \workflowimage{docs/lab-01/evidence/docs-lab1-structure.png}{Capture the docs/lab-01 directory contents.}
+  \caption{Nested documentation tree showing \texttt{tests.md}, \texttt{reviewer.md}, \texttt{ai\_use.md}, and the LaTeX report source.}
 \end{figure}
+
+\begin{figure}[H]
+  \centering
+  \workflowimage{docs/lab-01/evidence/server-tests-structure.png}{Capture the server/tests/lab-01 directory contents.}
+  \caption{Nested server test tree showing the Lab 1 API, seed, foundation, and setup test files.}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \workflowimage{docs/lab-01/evidence/test-capture.png}{Capture passing client and server test output.}
+  \caption{Terminal evidence from the integrated branch: the client suite passes 3 tests and the server suite passes 6 tests.}
+\end{figure}
+
+\textbf{Rendered README.md}
+
+\begin{tabular}{@{}p{31mm}p{129mm}@{}}
+  Purpose & TokTickIT is the Lab 1 full-stack foundation for the IT service desk application. \\
+  Stack & Bun workspaces; React, TypeScript, Vite, Bootstrap; Node-compatible Express and TypeScript; PostgreSQL 16 through Docker Compose; Prisma; Biome; Lefthook; Vitest; and Supertest. \\
+  Prerequisites & Bun 1.3 or newer and Docker with Compose. \\
+  Setup & \texttt{bun install}; copy \texttt{server/.env.example} to \texttt{server/.env}; install hooks; start the database; generate and validate Prisma. \\
+  Database & The stack is owned by \texttt{server/}; Compose is under \texttt{server/docker-compose.yml}, PostgreSQL initialization is under \texttt{server/docker/}, and Prisma files are under \texttt{server/prisma/}. \\
+  Seed and tests & \texttt{bun run db:migrate}, \texttt{bun run db:seed}, \texttt{bun run db:test:setup}, then \texttt{bun run verify}. \\
+  Run & \texttt{bun run dev}; client at \url{http://localhost:5173}, API at \url{http://localhost:3000}, and PostgreSQL at \texttt{localhost:5432}. \\
+  Scope & Lab 1 proves the client, API, Prisma, PostgreSQL, and test tooling as one vertical slice. Authentication, tickets, uploads, and later-lab screens are out of scope. \\
+\end{tabular}
+
+\vspace{2mm}
+\textbf{Rendered .gitignore}
+
+\begin{tabular}{@{}p{38mm}p{122mm}@{}}
+  Dependencies & \texttt{node\_modules/}, \texttt{.bun/}, and package-manager stores. \\
+  Environment & \texttt{.env} and \texttt{.env.*}, except \texttt{.env.example}. \\
+  Build and cache & \texttt{dist/}, \texttt{build/}, \texttt{.vite/}, coverage, TypeScript build info, and logs. \\
+  Local state & \texttt{*.db}, \texttt{*.db-journal}, \texttt{tmp/}, and OS metadata. \\
+  Editor and agent files & Local VS Code settings, \texttt{.claude/}, and \texttt{CLAUDE.md}. \\
+  LaTeX artifacts & \texttt{*.aux}, \texttt{*.fdb\_latexmk}, \texttt{*.fls}, \texttt{*.synctex.gz}, \texttt{*.toc}, \texttt{*.out}, and \texttt{*.xdv}. \\
+\end{tabular}
 
 \section{Answer Part 2: Tests}
 
 The test matrix is kept in \texttt{docs/lab-01/tests.md}. The application boundary is tested through the exported Express app and user-observable React behavior.
 
-\begin{tabular}{@{}p{18mm}p{22mm}p{73mm}p{19mm}@{}}
+\begin{tabular}{@{}p{13mm}p{42mm}p{16mm}p{55mm}p{14mm}@{}}
   \toprule
-  ID & Tool & Proof & Status \\
+  ID & Test file & Tool & Proof & Status \\
   \midrule
-  API-01 & Supertest & Health returns HTTP 200 and the exact TokTickIT API payload. & Passing \\
-  API-02 & Supertest & Categories return seeded ID/name pairs in ascending ID order. & Passing \\
-  UI-01 & Vitest & TokTickIT heading and Check System action render. & Passing \\
-  UI-02 & Vitest & Checking transitions to Online and renders returned categories. & Passing \\
-  UI-03 & Vitest & API failure clears stale categories and shows the safe error. & Passing \\
+  API-01 & \path{server/tests/lab-01/health.test.ts} & Supertest & Health returns HTTP 200 and the exact TokTickIT API payload. & Passing \\
+  API-02 & \path{server/tests/lab-01/categories.test.ts} & Supertest & Categories return seeded ID/name pairs in ascending ID order. & Passing \\
+  UI-01 & \path{client/src/App.test.tsx} & Vitest & TokTickIT heading and Check System action render. & Passing \\
+  UI-02 & \path{client/src/App.test.tsx} & Vitest & Checking transitions to Online and renders returned categories. & Passing \\
+  UI-03 & \path{client/src/App.test.tsx} & Vitest & API failure clears stale categories and shows the safe error. & Passing \\
   \bottomrule
 \end{tabular}
 
 \vspace{4mm}
+The additional foundation smoke test is at \path{server/tests/lab-01/foundation.test.ts}; it verifies the exported Express app and typed environment configuration. This table is the rendered test traceability from \path{docs/lab-01/tests.md}.
+
+\vspace{2mm}
 \textbf{Verification command:} \texttt{bun run verify}. It covers Biome, Lefthook validation, Prisma validation, type checks, both workspace test suites, and both workspace builds.
 
 \section{Answer Part 3: AI Use and Reflection}
@@ -231,12 +287,12 @@ The test matrix is kept in \texttt{docs/lab-01/tests.md}. The application bounda
   P1 & \promptquote{read @docs/requirements, \$grill-with-docs} & Loaded the requirements and used the grilling workflow to identify scope and risks. \\
   P2 & \promptquote{now follow the plan, first create the issues} & Converted the requirements into the Lab 1 issue structure. \\
   P3 & \promptquote{all subissues should be inside the main 4 issues} & Kept exactly four parent issues and attached implementation work as native sub-issues. \\
-  P4 & \promptquote{please keep instruction in AGENTS.md strictly about don't close any PR or main issue ... human job} & Established human-only rules for pull-request and main-issue state changes. \\
+  P4 & \promptquote{please keep insturction in AGENTS.md strictly about don't close any PR or main issue you can only do check the checklists or closing subissue, closing main issue / PR close is human job} & Established human-only rules for pull-request and main-issue state changes. \\
   P5 & \promptquote{add biome, left-hook, prisma validation on git sub-issues of issue 1} & Added the requested quality gates and connected them to the foundation work. \\
   P6 & \promptquote{yes, and pdf should be built in latex} & Chose a reproducible XeLaTeX report source and PDF build command. \\
   P7 & \promptquote{do capture those for me from http://localhost:5173/} & Defined the required loading, success, and failure evidence for the running app. \\
   P8 & \promptquote{do use browseruse cli} & Used browser-use CLI to verify the visible UI states and save the captures. \\
-  P9 & \promptquote{this is student - reviewer details Student ... also checkout all pr and review records} & Audited PRs \#44-\#47 and recorded student, peer, review comments, responses, and unresolved automated threads. \\
+  P9 & \promptquote{this is student - reviewer details Student ... also checkout all pr and review records; update reviewer part} & Audited PRs \#44-\#47 and recorded student, peer, review comments, responses, and unresolved automated threads. \\
   \bottomrule
 \end{longtable}
 }
@@ -249,7 +305,7 @@ The AI-assisted workflow still required human-in-the-loop checks. The browser ca
 
 \section{Answer Part 4: App Demo}
 
-The system check makes two relative API requests through the Vite proxy. The success state proves that health is online and that the four categories came from PostgreSQL. The failure state proves that the user receives a safe error and stale categories are cleared.
+The system check makes two relative API requests through the Vite proxy: \path{/api/health} for health and \path{/api/categories} for categories. The success state proves that health is online and that the four categories came from PostgreSQL. The failure state proves that the user receives a safe error and stale categories are cleared.
 
 \begin{figure}[H]
   \centering
@@ -269,6 +325,5 @@ The system check makes two relative API requests through the Vite proxy. The suc
   \caption{Failure state: the API is unavailable and the user-safe error is shown.}
 \end{figure}
 
-The capture protocol and visual QA checklist are in \texttt{docs/lab-01/evidence/capture-checklist.md}. Each final page must be checked for clipped text, unreadable evidence, accidental blank space, and incorrect state labels.
 
 \end{document}

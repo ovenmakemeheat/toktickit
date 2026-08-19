@@ -4,7 +4,7 @@
     "includes": [
       "*.json",
       "*.jsonc",
-      "docs/lab-01/build-report.ts",
+      "docs/lab-01/report/build-report.ts",
       "client/**/*.{js,jsx,ts,tsx,json,jsonc,css}",
       "server/**/*.{js,jsx,ts,tsx,json,jsonc,css}",
       "!**/.bun",
