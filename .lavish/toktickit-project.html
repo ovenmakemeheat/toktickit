@@ -1,0 +1,943 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TokTickIT — Lab 1 Project Review</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
+    <style>
+      :root {
+        --tok-ink: #1f2937;
+        --tok-muted: #64748b;
+        --tok-accent: #0f766e;
+        --tok-accent-soft: #0d9488;
+        --tok-panel: #f1f5f9;
+        --tok-border: #e2e8f0;
+        --tok-pending: #fef3c7;
+      }
+      [data-bs-theme="light"] {
+        --bs-body-bg: #f8fafc;
+        --bs-body-color: var(--tok-ink);
+        --bs-primary: var(--tok-accent);
+        --bs-primary-rgb: 15, 118, 110;
+        --bs-link-color: var(--tok-accent);
+        --bs-link-color-rgb: 15, 118, 110;
+        --bs-link-hover-color: var(--tok-accent-soft);
+      }
+      [data-bs-theme="dark"] {
+        --tok-panel: #16212e;
+        --tok-border: #2a3a4c;
+        --bs-body-bg: #0d151c;
+        --bs-body-color: #e6edf3;
+        --bs-primary: #2dd4bf;
+        --bs-primary-rgb: 45, 212, 191;
+        --bs-link-color: #2dd4bf;
+        --bs-link-color-rgb: 45, 212, 191;
+        --bs-link-hover-color: #5eead4;
+      }
+      *, *::before, *::after { box-sizing: border-box; }
+      .tok-surface { background: var(--bs-body-bg); color: var(--bs-body-color); }
+      .tok-hero {
+        background:
+          radial-gradient(1200px 500px at 80% -10%, rgba(15, 118, 110, 0.18), transparent 60%),
+          radial-gradient(900px 420px at 0% 110%, rgba(15, 118, 110, 0.12), transparent 55%),
+          var(--tok-panel);
+        border-bottom: 1px solid var(--tok-border);
+      }
+      .tok-card {
+        background: var(--bs-body-bg);
+        border: 1px solid var(--tok-border);
+        border-radius: 0.75rem;
+      }
+      .tok-card-title { color: var(--tok-accent); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+      .tok-muted { color: var(--tok-muted); }
+      .tok-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        border: 1px solid var(--tok-border);
+        background: var(--tok-panel);
+        border-radius: 999px;
+        padding: 0.15rem 0.55rem;
+        font-size: 0.78rem;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        white-space: nowrap;
+      }
+      .tok-code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.85em;
+        background: var(--tok-panel);
+        border: 1px solid var(--tok-border);
+        border-radius: 0.375rem;
+        padding: 0.05rem 0.35rem;
+        overflow-wrap: anywhere;
+      }
+      .tok-status { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; font-weight: 600; }
+      .tok-status::before { content: ""; width: 0.55rem; height: 0.55rem; border-radius: 50%; background: currentColor; flex: none; }
+      .tok-status-done { color: #047857; }
+      .tok-status-done::before { background: #10b981; }
+      .tok-status-info { color: #1d4ed8; }
+      .tok-status-info::before { background: #3b82f6; }
+      .tok-status-warn { color: #b45309; }
+      .tok-status-warn::before { background: #f59e0b; }
+      .tok-row-label { color: var(--tok-muted); font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+      .tok-accent-bar { border-left: 4px solid var(--tok-accent); }
+      .tok-navbar { border-bottom: 1px solid var(--tok-border); background: var(--bs-body-bg); }
+      .tok-section-title { font-weight: 700; letter-spacing: -0.01em; }
+      .tok-lead { color: var(--tok-muted); }
+      .tok-theme-btn { cursor: pointer; border: 1px solid var(--tok-border); background: var(--tok-panel); color: var(--bs-body-color); border-radius: 0.5rem; padding: 0.25rem 0.6rem; font-size: 0.85rem; }
+      .mermaid { display: flex; justify-content: center; }
+      .mermaid svg { max-width: 100%; height: auto; }
+      .table { --bs-table-bg: transparent; }
+      .tok-figure-caption { color: var(--tok-muted); font-size: 0.82rem; text-align: center; margin-top: 0.5rem; }
+      .list-monospace li { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.88rem; overflow-wrap: anywhere; }
+      :where(.row, .d-flex, .flex-wrap) > * { min-width: 0; }
+      :where(p, h1, h2, h3, h4, h5, h6, li, dd, blockquote, figcaption, td, th, .badge, .tok-chip) { overflow-wrap: anywhere; }
+      :where(img, svg, video, canvas, iframe) { max-width: 100%; height: auto; }
+    </style>
+  </head>
+  <body class="tok-surface">
+    <nav class="navbar navbar-expand-lg sticky-top tok-navbar">
+      <div class="container">
+        <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="#top">
+          <i class="bi bi-ticket-perforated text-primary"></i>
+          <span>TokTickIT</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="mainNav">
+          <ul class="navbar-nav me-auto ms-lg-3 gap-lg-1">
+            <li class="nav-item"><a class="nav-link" href="#overview">Overview</a></li>
+            <li class="nav-item"><a class="nav-link" href="#architecture">Architecture</a></li>
+            <li class="nav-item"><a class="nav-link" href="#data">Data</a></li>
+            <li class="nav-item"><a class="nav-link" href="#issues">Issues</a></li>
+            <li class="nav-item"><a class="nav-link" href="#tests">Tests</a></li>
+            <li class="nav-item"><a class="nav-link" href="#gitflow">Git flow</a></li>
+            <li class="nav-item"><a class="nav-link" href="#adrs">ADRs</a></li>
+            <li class="nav-item"><a class="nav-link" href="#delivery">Delivery</a></li>
+          </ul>
+          <button id="themeToggle" class="tok-theme-btn" type="button" aria-label="Toggle dark mode">
+            <i class="bi bi-moon-stars"></i> Theme
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <header id="top" class="tok-hero py-5">
+      <div class="container py-lg-4">
+        <div class="row align-items-center g-4">
+          <div class="col-lg-8">
+            <p class="text-uppercase text-primary fw-semibold small mb-2">
+              Lab 1 · IT Service Desk · Submission
+            </p>
+            <h1 class="display-5 fw-bold tok-section-title mb-3">
+              TokTickIT — full-stack foundation
+            </h1>
+            <p class="lead tok-lead mb-4" style="max-width: 60ch;">
+              A Bun-managed React + Express + Prisma + PostgreSQL vertical slice
+              proving the client, API, database, and test tooling as one working
+              Lab 1 unit. Authentication, tickets, uploads, and later-lab screens
+              are deliberately out of scope.
+            </p>
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+              <span class="badge text-bg-primary">4/4 main issues Done</span>
+              <span class="badge text-bg-success">19 issues closed</span>
+              <span class="badge text-bg-info">9 tests passing</span>
+              <span class="badge text-bg-secondary">29 ADRs</span>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="tok-card p-4 h-100">
+              <p class="tok-card-title mb-3">Vertical slice</p>
+              <ul class="list-unstyled d-grid gap-2 mb-0">
+                <li class="d-flex gap-2 align-items-center"><i class="bi bi-check-circle-fill text-success"></i> <span>Client · React, Vite, Bootstrap</span></li>
+                <li class="d-flex gap-2 align-items-center"><i class="bi bi-check-circle-fill text-success"></i> <span>API · Express, T3 Env, Zod</span></li>
+                <li class="d-flex gap-2 align-items-center"><i class="bi bi-check-circle-fill text-success"></i> <span>Data · Prisma + PostgreSQL 16</span></li>
+                <li class="d-flex gap-2 align-items-center"><i class="bi bi-check-circle-fill text-success"></i> <span>Quality · Biome, Lefthook, Vitest</span></li>
+                <li class="d-flex gap-2 align-items-center"><i class="bi bi-dash-circle text-secondary"></i> <span class="tok-muted">Auth / tickets / uploads — out</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section class="py-4 border-bottom" style="border-color: var(--tok-border) !important;">
+      <div class="container">
+        <div class="row g-3 text-center">
+          <div class="col-6 col-md-4 col-lg-2">
+            <div class="tok-card py-3 h-100">
+              <div class="fs-3 fw-bold text-primary">4</div>
+              <div class="tok-muted small">Main issues<br />Done on board</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4 col-lg-2">
+            <div class="tok-card py-3 h-100">
+              <div class="fs-3 fw-bold">19</div>
+              <div class="tok-muted small">GitHub issues<br />all closed</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4 col-lg-2">
+            <div class="tok-card py-3 h-100">
+              <div class="fs-3 fw-bold text-success">9</div>
+              <div class="tok-muted small">Test cases<br />5 files</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4 col-lg-2">
+            <div class="tok-card py-3 h-100">
+              <div class="fs-3 fw-bold">29</div>
+              <div class="tok-muted small">Architecture<br />decision records</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4 col-lg-2">
+            <div class="tok-card py-3 h-100">
+              <div class="fs-3 fw-bold">3</div>
+              <div class="tok-muted small">Pull requests<br />merged</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4 col-lg-2">
+            <div class="tok-card py-3 h-100">
+              <div class="fs-3 fw-bold">28</div>
+              <div class="tok-muted small">Commits on<br /><span class="tok-code">lab1-staging</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="overview" class="py-5">
+      <div class="container">
+        <h2 class="h3 tok-section-title mb-1">Overview &amp; current state</h2>
+        <p class="tok-lead mb-4">What Lab 1 must prove, and where the repository stands right now.</p>
+        <div class="row g-4">
+          <div class="col-lg-7">
+            <div class="tok-card p-4 h-100">
+              <p class="tok-card-title mb-3">What Lab 1 delivers</p>
+              <div class="d-flex flex-column gap-3">
+                <div class="d-flex gap-3">
+                  <i class="bi bi-1-circle-fill fs-4 text-primary flex-shrink-0"></i>
+                  <div>
+                    <strong>A running system check screen</strong>
+                    <p class="mb-0 tok-muted small">
+                      The client renders one accessible screen that calls the API for
+                      health and the seeded category list, with explicit loading,
+                      success, offline, and empty states (<span class="tok-code">client/src/App.tsx</span>).
+                    </p>
+                  </div>
+                </div>
+                <div class="d-flex gap-3">
+                  <i class="bi bi-2-circle-fill fs-4 text-primary flex-shrink-0"></i>
+                  <div>
+                    <strong>A thin, layered REST API</strong>
+                    <p class="mb-0 tok-muted small">
+                      Importable Express app in <span class="tok-code">server/src/app.ts</span> with
+                      <span class="tok-code">GET /api/health</span> and
+                      <span class="tok-code">GET /api/categories</span>; process startup stays in
+                      <span class="tok-code">src/index.ts</span>.
+                    </p>
+                  </div>
+                </div>
+                <div class="d-flex gap-3">
+                  <i class="bi bi-3-circle-fill fs-4 text-primary flex-shrink-0"></i>
+                  <div>
+                    <strong>Prisma + PostgreSQL persistence</strong>
+                    <p class="mb-0 tok-muted small">
+                      A <span class="tok-code">Category</span> model with a repeat-safe, name-keyed
+                      upsert seed, one migration, and an isolated
+                      <span class="tok-code">toktickit_test</span> database.
+                    </p>
+                  </div>
+                </div>
+                <div class="d-flex gap-3">
+                  <i class="bi bi-4-circle-fill fs-4 text-primary flex-shrink-0"></i>
+                  <div>
+                    <strong>Traceable, gated quality</strong>
+                    <p class="mb-0 tok-muted small">
+                      Rubric-mapped tests plus a single final gate
+                      (<span class="tok-code">bun run verify</span>) covering Biome, Lefthook,
+                      Prisma validation, type checks, tests, and builds.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-5">
+            <div class="tok-card p-4 h-100">
+              <p class="tok-card-title mb-3">Repository layout</p>
+              <ul class="list-monospace list-unstyled d-grid gap-2 mb-0 small">
+                <li class="d-flex flex-wrap align-items-center gap-2">
+                  <span class="tok-code">client/</span>
+                  <span class="tok-muted">React · TS · Vite · Bootstrap · Vitest</span>
+                </li>
+                <li class="d-flex flex-wrap align-items-center gap-2">
+                  <span class="tok-code">server/</span>
+                  <span class="tok-muted">Express · Prisma · docker-compose · tests</span>
+                </li>
+                <li class="d-flex flex-wrap align-items-center gap-2">
+                  <span class="tok-code">docs/adr/</span>
+                  <span class="tok-muted">29 decision records</span>
+                </li>
+                <li class="d-flex flex-wrap align-items-center gap-2">
+                  <span class="tok-code">docs/lab-01/</span>
+                  <span class="tok-muted">report source, evidence, reviewer, AI use</span>
+                </li>
+                <li class="d-flex flex-wrap align-items-center gap-2">
+                  <span class="tok-code">output/pdf/</span>
+                  <span class="tok-muted">built submission PDF</span>
+                </li>
+              </ul>
+              <hr style="border-color: var(--tok-border)" />
+              <p class="tok-row-label mb-2">Working tree</p>
+              <p class="small mb-3">
+                Currently on <span class="tok-code">feature/40-report-compliance</span> with
+                uncommitted report documentation edits (reviewer conversation, evidence
+                captures, report PDF) not yet committed.
+              </p>
+              <p class="tok-status tok-status-warn mb-0">
+                One open item: pending report-compliance changes
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="architecture" class="py-5" style="background: var(--tok-panel);">
+      <div class="container">
+        <h2 class="h3 tok-section-title mb-1">Architecture</h2>
+        <p class="tok-lead mb-4">How a "Check System" click flows from the browser to PostgreSQL.</p>
+
+        <div class="tok-card p-4 mb-4">
+          <div class="mermaid">
+flowchart LR
+  subgraph B["Browser — Client workspace"]
+    UI["React screen<br/><i>App.tsx</i> · Vite :5173"]
+  end
+  subgraph A["Express API — Server workspace"]
+    APP["app.ts<br/>GET /api/health<br/>GET /api/categories"]
+    SVC["category-service.ts<br/>listCategories()"]
+  end
+  subgraph D["Data"]
+    ORM["Prisma Client<br/>schema.prisma"]
+    DB[("PostgreSQL 16<br/>Docker Compose :5432")]
+  end
+  UI -- "relative /api via Vite proxy" --> APP
+  APP -- "listCategories(prisma)" --> SVC
+  SVC -- "prisma.category.findMany" --> ORM
+  ORM --> DB
+          </div>
+          <p class="tok-figure-caption mb-0">One vertical slice: React screen &rarr; proxied API &rarr; thin service &rarr; Prisma &rarr; PostgreSQL. Health is a liveness check and never touches the database.</p>
+        </div>
+
+        <div class="row g-4">
+          <div class="col-lg-6">
+            <div class="tok-card p-4 h-100">
+              <p class="tok-card-title mb-3">API contract</p>
+              <div class="d-flex flex-column gap-3">
+                <div>
+                  <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                    <span class="badge text-bg-primary">GET /api/health</span>
+                    <span class="tok-status tok-status-done">200 · liveness only</span>
+                  </div>
+                  <pre class="tok-code p-2 d-block mb-0"><code>{ "status": "ok", "service": "TokTickIT API" }</code></pre>
+                </div>
+                <div>
+                  <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                    <span class="badge text-bg-primary">GET /api/categories</span>
+                    <span class="tok-status tok-status-done">200 · seeded list</span>
+                    <span class="badge text-bg-warning">503 · store unavailable</span>
+                  </div>
+                  <pre class="tok-code p-2 d-block mb-0"><code>[{ "id": 1, "name": "Account and Access" }, { "id": 2, "name": "Hardware" }, ...]</code></pre>
+                </div>
+                <p class="small tok-muted mb-0">
+                  Failure shape is a stable <span class="tok-code">{"error": { code, message }}</span>
+                  envelope; errors map to <span class="tok-code">CATEGORY_STORE_UNAVAILABLE</span>
+                  or <span class="tok-code">CATEGORY_LIST_FAILED</span> (ADR 0004).
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="tok-card p-4 h-100">
+              <p class="tok-card-title mb-3">Key seams (ADR 0007, 0009)</p>
+              <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th scope="col">Concern</th>
+                      <th scope="col">Owned by</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>REST validation &amp; routing</td>
+                      <td><span class="tok-code">server/src/app.ts</span></td>
+                    </tr>
+                    <tr>
+                      <td>Category read logic</td>
+                      <td><span class="tok-code">server/src/services/category-service.ts</span></td>
+                    </tr>
+                    <tr>
+                      <td>Process startup / listener</td>
+                      <td><span class="tok-code">server/src/index.ts</span></td>
+                    </tr>
+                    <tr>
+                      <td>Typed env (T3 Env + Zod)</td>
+                      <td><span class="tok-code">server/src/env.ts</span></td>
+                    </tr>
+                    <tr>
+                      <td>Client API client + guards</td>
+                      <td><span class="tok-code">client/src/lib/api.ts</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="data" class="py-5">
+      <div class="container">
+        <h2 class="h3 tok-section-title mb-1">Data model &amp; seed</h2>
+        <p class="tok-lead mb-4">One model, one migration, four repeat-safe seeded categories.</p>
+        <div class="row g-4">
+          <div class="col-lg-6">
+            <div class="tok-card p-4 h-100">
+              <p class="tok-card-title mb-3">Category model</p>
+              <pre class="tok-code p-3 d-block mb-3"><code>model Category {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+}</code></pre>
+              <p class="small tok-muted mb-0">
+                Defined in <span class="tok-code">server/prisma/schema.prisma</span>; migration
+                <span class="tok-code">20260805160550_add_category</span> creates the table.
+                Development and <span class="tok-code">toktickit_test</span> databases share the
+                migration and seed paths.
+              </p>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="tok-card p-4 h-100">
+              <p class="tok-card-title mb-3">Seeded categories</p>
+              <div class="d-flex flex-wrap gap-2 mb-3">
+                <span class="tok-chip"><span class="text-success">#1</span> Account and Access</span>
+                <span class="tok-chip"><span class="text-success">#2</span> Hardware</span>
+                <span class="tok-chip"><span class="text-success">#3</span> Software</span>
+                <span class="tok-chip"><span class="text-success">#4</span> Network</span>
+              </div>
+              <p class="small tok-muted mb-2">
+                <span class="tok-code">seed-categories.ts</span> uses name-keyed
+                <span class="tok-code">upsert</span> so re-runs create no duplicates (ADR 0005).
+              </p>
+              <p class="tok-status tok-status-done mb-0">
+                Verified by the seed test's repeat-safety case
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="issues" class="py-5" style="background: var(--tok-panel);">
+      <div class="container">
+        <h2 class="h3 tok-section-title mb-1">Project board</h2>
+        <p class="tok-lead mb-4">
+          Four dependency-aware parent issues, each with closed native sub-issues, all moved to
+          <span class="tok-status tok-status-done">Done</span> on the Lab 1 board.
+        </p>
+        <div class="row g-4">
+          <div class="col-lg-6">
+            <div class="tok-card p-4 h-100 tok-accent-bar">
+              <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+                <h3 class="h5 mb-0"><span class="text-primary">#13</span> Set up the TokTickIT project foundation</h3>
+                <span class="tok-status tok-status-done">Done</span>
+              </div>
+              <p class="small tok-muted mb-2">Bun monorepo, local runtime, quality tooling, and docs. Merged via PR #44.</p>
+              <div class="d-flex flex-wrap gap-2 mb-2">
+                <span class="tok-chip">#29 workspaces + local stack</span>
+                <span class="tok-chip">#30 test tooling + test DB</span>
+                <span class="tok-chip">#31 docs</span>
+                <span class="tok-chip">#41 Biome</span>
+                <span class="tok-chip">#42 Lefthook</span>
+                <span class="tok-chip">#43 Prisma validation</span>
+              </div>
+              <p class="small mb-0 tok-muted">Branch <span class="tok-code">feature/1-project-foundation</span></p>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="tok-card p-4 h-100 tok-accent-bar">
+              <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+                <h3 class="h5 mb-0"><span class="text-primary">#14</span> Implement the API health check</h3>
+                <span class="tok-status tok-status-done">Done</span>
+              </div>
+              <p class="small tok-muted mb-2">Liveness endpoint plus the client's online/offline system-check state.</p>
+              <div class="d-flex flex-wrap gap-2 mb-2">
+                <span class="tok-chip">#32 endpoint + status display</span>
+                <span class="tok-chip">#33 contract test</span>
+                <span class="tok-chip">#34 docs</span>
+              </div>
+              <p class="small mb-0 tok-muted">Branch <span class="tok-code">feature/2-health-check</span></p>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="tok-card p-4 h-100 tok-accent-bar">
+              <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+                <h3 class="h5 mb-0"><span class="text-primary">#15</span> Create and seed IT request categories</h3>
+                <span class="tok-status tok-status-done">Done</span>
+              </div>
+              <p class="small tok-muted mb-2">Category persistence, migration, and repeat-safe seed. Merged via PR #45.</p>
+              <div class="d-flex flex-wrap gap-2 mb-2">
+                <span class="tok-chip">#35 model + seed</span>
+                <span class="tok-chip">#36 persistence verified</span>
+                <span class="tok-chip">#37 data setup docs</span>
+              </div>
+              <p class="small mb-0 tok-muted">Branch <span class="tok-code">feature/3-category-seed</span></p>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="tok-card p-4 h-100 tok-accent-bar">
+              <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+                <h3 class="h5 mb-0"><span class="text-primary">#16</span> Display the IT request category list</h3>
+                <span class="tok-status tok-status-done">Done</span>
+              </div>
+              <p class="small tok-muted mb-2">Categories API, system-check flow, UI states, and the final report. Merged via PR #47.</p>
+              <div class="d-flex flex-wrap gap-2 mb-2">
+                <span class="tok-chip">#38 categories API + system check</span>
+                <span class="tok-chip">#39 flow + UI-state tests</span>
+                <span class="tok-chip">#40 final vertical-slice docs</span>
+              </div>
+              <p class="small mb-0 tok-muted">Branches <span class="tok-code">feature/4-category-list</span>, <span class="tok-code">feature/40-report-compliance</span></p>
+            </div>
+          </div>
+        </div>
+        <div class="alert alert-warning d-flex gap-3 align-items-start mt-4 mb-0" role="alert">
+          <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
+          <div>
+            <strong>Open thread:</strong> Issue #40 is closed, but its branch
+            <span class="tok-code">feature/40-report-compliance</span> still carries uncommitted report
+            documentation edits awaiting a commit and any follow-up PR.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tests" class="py-5">
+      <div class="container">
+        <h2 class="h3 tok-section-title mb-1">Test traceability</h2>
+        <p class="tok-lead mb-4">Every required Lab 1 check maps to a test at the API or user-observable boundary.</p>
+        <div class="tok-card p-4 mb-4">
+          <div class="table-responsive">
+            <table class="table align-middle">
+              <caption class="visually-hidden">Lab 1 test cases and their source files</caption>
+              <thead>
+                <tr>
+                  <th scope="col">ID</th>
+                  <th scope="col">Tool</th>
+                  <th scope="col">File</th>
+                  <th scope="col">What it proves</th>
+                  <th scope="col">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="tok-code">API-01</span></td>
+                  <td>Supertest</td>
+                  <td><span class="tok-code">health.test.ts</span></td>
+                  <td><span class="tok-code">GET /api/health</span> returns the exact liveness payload</td>
+                  <td><span class="tok-status tok-status-done">Passing</span></td>
+                </tr>
+                <tr>
+                  <td><span class="tok-code">API-02</span></td>
+                  <td>Supertest</td>
+                  <td><span class="tok-code">categories.test.ts</span></td>
+                  <td><span class="tok-code">GET /api/categories</span> returns id/name pairs in ascending ID order</td>
+                  <td><span class="tok-status tok-status-done">Passing</span></td>
+                </tr>
+                <tr>
+                  <td><span class="tok-code">SEED-01</span></td>
+                  <td>Vitest</td>
+                  <td><span class="tok-code">category-seed.test.ts</span></td>
+                  <td>Seed creates the four categories in predictable order</td>
+                  <td><span class="tok-status tok-status-done">Passing</span></td>
+                </tr>
+                <tr>
+                  <td><span class="tok-code">SEED-02</span></td>
+                  <td>Vitest</td>
+                  <td><span class="tok-code">category-seed.test.ts</span></td>
+                  <td>Seed creates no duplicates on re-run (repeat-safe)</td>
+                  <td><span class="tok-status tok-status-done">Passing</span></td>
+                </tr>
+                <tr>
+                  <td><span class="tok-code">FND-01</span></td>
+                  <td>Supertest</td>
+                  <td><span class="tok-code">foundation.test.ts</span></td>
+                  <td>Exported Express app answers without binding a listener</td>
+                  <td><span class="tok-status tok-status-done">Passing</span></td>
+                </tr>
+                <tr>
+                  <td><span class="tok-code">FND-02</span></td>
+                  <td>Vitest</td>
+                  <td><span class="tok-code">foundation.test.ts</span></td>
+                  <td>T3 Env validates development and test database config</td>
+                  <td><span class="tok-status tok-status-done">Passing</span></td>
+                </tr>
+                <tr>
+                  <td><span class="tok-code">UI-01</span></td>
+                  <td>Vitest + Testing Library</td>
+                  <td><span class="tok-code">App.test.tsx</span></td>
+                  <td>Heading and "Check System" action render</td>
+                  <td><span class="tok-status tok-status-done">Passing</span></td>
+                </tr>
+                <tr>
+                  <td><span class="tok-code">UI-02</span></td>
+                  <td>Vitest + Testing Library</td>
+                  <td><span class="tok-code">App.test.tsx</span></td>
+                  <td>Checking &rarr; Online; both APIs called; categories rendered</td>
+                  <td><span class="tok-status tok-status-done">Passing</span></td>
+                </tr>
+                <tr>
+                  <td><span class="tok-code">UI-03</span></td>
+                  <td>Vitest + Testing Library</td>
+                  <td><span class="tok-code">App.test.tsx</span></td>
+                  <td>Offline on failure; stale categories cleared; alert shown</td>
+                  <td><span class="tok-status tok-status-done">Passing</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="row g-4">
+          <div class="col-lg-7">
+            <div class="tok-card p-4 h-100">
+              <p class="tok-card-title mb-3">Final gate — <span class="tok-code">bun run verify</span></p>
+              <ol class="mb-3 d-grid gap-2">
+                <li><strong>Biome</strong> — format, lint, check</li>
+                <li><strong>Lefthook</strong> — configuration validated</li>
+                <li><strong>Prisma</strong> — schema validated</li>
+                <li><strong>TypeScript</strong> — client + server type checks</li>
+                <li><strong>Tests</strong> — client (jsdom) + server (Node) suites</li>
+                <li><strong>Builds</strong> — both workspaces compile</li>
+              </ol>
+              <p class="small tok-muted mb-0">
+                API tests run against the exported app with no listener, using the isolated
+                <span class="tok-code">toktickit_test</span> database (ADR 0008).
+              </p>
+            </div>
+          </div>
+          <div class="col-lg-5">
+            <div class="tok-card p-4 h-100">
+              <p class="tok-card-title mb-3">Traceability note</p>
+              <p class="small mb-3">
+                The test matrix in <span class="tok-code">docs/lab-01/tests.md</span> names the five
+                rubric IDs (<span class="tok-code">API-01/02</span>, <span class="tok-code">UI-01..03</span>)
+                and maps each to its source file (ADR 0017).
+              </p>
+              <p class="tok-status tok-status-done mb-0">
+                Last gate result: passing
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="gitflow" class="py-5" style="background: var(--tok-panel);">
+      <div class="container">
+        <h2 class="h3 tok-section-title mb-1">Git flow</h2>
+        <p class="tok-lead mb-4">Four issue branches, three merged PRs, one staging trunk — humans control PR and issue state.</p>
+
+        <div class="tok-card p-4 mb-4">
+          <div class="mermaid">
+flowchart LR
+  F1["feature/1-project-foundation"]
+  F2["feature/2-health-check"]
+  F3["feature/3-category-seed"]
+  F4["feature/4-category-list"]
+  F40["feature/40-report-compliance<br/><i>current branch · uncommitted edits</i>"]
+  ST["lab1-staging"]
+  MA["main"]
+  F1 -- "PR #44 · reviewed &amp; merged" --> ST
+  F2 -- "reviewed &amp; merged" --> ST
+  F3 -- "PR #45 · reviewed &amp; merged" --> ST
+  F4 -- "PR #47 · reviewed &amp; merged" --> ST
+  F40 -. "pending commit" .-> ST
+  ST -- "delivery trunk" --> MA
+          </div>
+          <p class="tok-figure-caption mb-0">Feature branches target <span class="tok-code">lab1-staging</span>; no direct commits to <span class="tok-code">main</span> or the staging branch.</p>
+        </div>
+
+        <div class="row g-4">
+          <div class="col-lg-6">
+            <div class="tok-card p-4 h-100">
+              <p class="tok-card-title mb-3">Branches</p>
+              <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                  <thead>
+                    <tr><th scope="col">Branch</th><th scope="col">Role</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td><span class="tok-code">main</span></td><td>Released baseline (4 commits)</td></tr>
+                    <tr><td><span class="tok-code">lab1-staging</span></td><td>Integration trunk (28 commits)</td></tr>
+                    <tr><td><span class="tok-code">feature/*</span></td><td>Issue branches merged via PR</td></tr>
+                    <tr><td><span class="tok-code">feature/40-report-compliance</span></td><td>Current working branch, dirty tree</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="tok-card p-4 h-100">
+              <p class="tok-card-title mb-3">State authority</p>
+              <ul class="small d-grid gap-2 mb-0">
+                <li><strong>Agent</strong> inspects checklists and evidence, checks off items, closes sub-issues once complete.</li>
+                <li><strong>Human only</strong> — open/close or merge/unmerge PRs, and close/reopen the main issues #13–#16.</li>
+                <li>Board statuses form a delivery state machine: <span class="tok-code">Backlog &rarr; Specified &rarr; Started &rarr; PR Review &rarr; Fixing &rarr; Done</span> (ADR 0018, 0020).</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="adrs" class="py-5">
+      <div class="container">
+        <h2 class="h3 tok-section-title mb-1">Decision records</h2>
+        <p class="tok-lead mb-4">29 accepted ADRs under <span class="tok-code">docs/adr/</span>, grouped by theme.</p>
+
+        <div class="row g-4">
+          <div class="col-lg-6">
+            <div class="tok-card p-4 h-100">
+              <p class="tok-card-title mb-3">Foundation &amp; tooling</p>
+              <ul class="small d-grid gap-1 mb-0">
+                <li>0001 · Scope the current work to Lab 1</li>
+                <li>0002 · Bun-managed client/server monorepo</li>
+                <li>0003 · PostgreSQL via Docker Compose</li>
+                <li>0012 · Root Bun workspace as command surface</li>
+                <li>0013 · Standardized local ports</li>
+                <li>0014 · T3 Env server configuration</li>
+              </ul>
+              <hr style="border-color: var(--tok-border)" />
+              <p class="tok-card-title mb-3">Architecture</p>
+              <ul class="small d-grid gap-1 mb-0">
+                <li>0004 · Small, stable Lab 1 API contract</li>
+                <li>0006 · Check System as explicit state</li>
+                <li>0009 · Thin, layered server</li>
+                <li>0010 · Local API contract types</li>
+                <li>0011 · Relative API paths via Vite proxy</li>
+                <li>0015 · Single system-check screen</li>
+                <li>0016 · Accessible, user-observable states</li>
+              </ul>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="tok-card p-4 h-100">
+              <p class="tok-card-title mb-3">Data &amp; testing</p>
+              <ul class="small d-grid gap-1 mb-0">
+                <li>0005 · Seed by unique name, return in ID order</li>
+                <li>0007 · Tests isolated at application seams</li>
+                <li>0008 · Isolated API test database</li>
+                <li>0017 · Rubric-traceable test matrix</li>
+              </ul>
+              <hr style="border-color: var(--tok-border)" />
+              <p class="tok-card-title mb-3">Delivery, GitHub &amp; report</p>
+              <ul class="small d-grid gap-1 mb-0">
+                <li>0018 · Four dependency-aware Issues</li>
+                <li>0019 · PR review as deliverable evidence</li>
+                <li>0020 · Kanban status state machine</li>
+                <li>0021–0024 · Issue templates &amp; checklists</li>
+                <li>0025 · Docs vs. Lab 1 evidence separation</li>
+                <li>0026 · Authentic, concise AI-use evidence</li>
+                <li>0027 · LaTeX as submission source</li>
+                <li>0028 · Compact, visually verified LaTeX</li>
+                <li>0029 · No unnecessary report appendix</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="delivery" class="py-5" style="background: var(--tok-panel);">
+      <div class="container">
+        <h2 class="h3 tok-section-title mb-1">Deliverables</h2>
+        <p class="tok-lead mb-4">What gets handed in, and where it lives in the repository.</p>
+        <div class="row g-4">
+          <div class="col-lg-4">
+            <div class="tok-card p-4 h-100">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <i class="bi bi-file-earmark-pdf fs-4 text-danger"></i>
+                <h3 class="h5 mb-0">Submission PDF</h3>
+              </div>
+              <p class="small tok-muted mb-0">
+                Built from <span class="tok-code">docs/lab-01/toktickit-lab1-report.tex</span> via
+                <span class="tok-code">bun run report:build</span> &rarr;
+                <span class="tok-code">output/pdf/toktickit-lab1-report.pdf</span> (ADRs 0027–0029).
+              </p>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="tok-card p-4 h-100">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <i class="bi bi-clipboard-check fs-4 text-primary"></i>
+                <h3 class="h5 mb-0">Evidence &amp; review</h3>
+              </div>
+              <p class="small tok-muted mb-0">
+                Evidence captures under <span class="tok-code">docs/lab-01/evidence/</span>, the
+                human reviewer conversation in <span class="tok-code">reviewer.md</span>, and the AI-use
+                log in <span class="tok-code">ai_use.md</span> (ADR 0019, 0026).
+              </p>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="tok-card p-4 h-100">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <i class="bi bi-boxes fs-4 text-success"></i>
+                <h3 class="h5 mb-0">Working system</h3>
+              </div>
+              <p class="small tok-muted mb-0">
+                <span class="tok-code">bun dev</span> runs client (:5173), API (:3000), and PostgreSQL
+                (:5432) together; the Vite proxy forwards relative <span class="tok-code">/api</span>
+                requests.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="py-4 border-top" style="border-color: var(--tok-border) !important;">
+      <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <p class="small tok-muted mb-0">
+          TokTickIT · Lab 1 review artifact · rendered in the project's own design system
+          (Bootstrap 5.3 + report tokens <span class="tok-code">#0F766E</span> / <span class="tok-code">#1F2937</span>).
+        </p>
+        <a class="small text-decoration-none" href="#top"><i class="bi bi-arrow-up"></i> Back to top</a>
+      </div>
+    </footer>
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    ></script>
+    <script>
+      const themeToggle = document.getElementById("themeToggle");
+      const root = document.documentElement;
+      const saved = localStorage.getItem("tok-theme");
+      if (saved) root.setAttribute("data-bs-theme", saved);
+      themeToggle.addEventListener("click", () => {
+        const next =
+          root.getAttribute("data-bs-theme") === "dark" ? "light" : "dark";
+        root.setAttribute("data-bs-theme", next);
+        localStorage.setItem("tok-theme", next);
+      });
+    </script>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.15.0/dist/mermaid.esm.min.mjs";
+
+      const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+      const paint = document.createElement("canvas").getContext("2d");
+      function toRgba(color) {
+        paint.clearRect(0, 0, 1, 1);
+        paint.fillStyle = "#000";
+        paint.fillStyle = color;
+        paint.fillRect(0, 0, 1, 1);
+        return paint.getImageData(0, 0, 1, 1).data;
+      }
+
+      function compositeRgba(foreground, background) {
+        const foregroundAlpha = foreground[3] / 255;
+        const backgroundAlpha = background[3] / 255;
+        const alpha = foregroundAlpha + backgroundAlpha * (1 - foregroundAlpha);
+        if (alpha === 0) return [0, 0, 0, 0];
+        return [
+          (foreground[0] * foregroundAlpha + background[0] * backgroundAlpha * (1 - foregroundAlpha)) / alpha,
+          (foreground[1] * foregroundAlpha + background[1] * backgroundAlpha * (1 - foregroundAlpha)) / alpha,
+          (foreground[2] * foregroundAlpha + background[2] * backgroundAlpha * (1 - foregroundAlpha)) / alpha,
+          alpha * 255,
+        ];
+      }
+
+      function pageIsDark() {
+        const rootEl = document.documentElement;
+        const rootBackground = toRgba(getComputedStyle(rootEl).backgroundColor);
+        const bodyBackground = document.body ? toRgba(getComputedStyle(document.body).backgroundColor) : [0, 0, 0, 0];
+        const [r, g, b, a] = compositeRgba(bodyBackground, rootBackground);
+        if (a > 0) {
+          return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 < 0.5;
+        }
+        const colorScheme = getComputedStyle(rootEl).colorScheme;
+        if (colorScheme.includes("dark") && !colorScheme.includes("light")) return true;
+        if (colorScheme.includes("light") && !colorScheme.includes("dark")) return false;
+        return darkQuery.matches;
+      }
+
+      const diagrams = [...document.querySelectorAll(".mermaid")].map((el) => ({ el, src: el.textContent }));
+      let applied;
+      let rendering = false;
+      let queued = false;
+      function queueRender() {
+        queued = true;
+        if (rendering) return;
+        void render();
+      }
+      async function render() {
+        rendering = true;
+        try {
+          while (queued) {
+            queued = false;
+            const theme = pageIsDark() ? "dark" : "default";
+            if (theme === applied) continue;
+            mermaid.initialize({ startOnLoad: false, theme, securityLevel: "strict" });
+            for (const { el, src } of diagrams) {
+              el.removeAttribute("data-processed");
+              el.textContent = src;
+            }
+            try {
+              await mermaid.run({ nodes: diagrams.map((d) => d.el) });
+            } catch (error) {
+              console.error("Mermaid diagram render failed:", error);
+              return;
+            }
+            applied = theme;
+          }
+        } finally {
+          rendering = false;
+          if (queued) queueRender();
+        }
+      }
+
+      if (document.readyState === "complete") queueRender();
+      else window.addEventListener("load", queueRender, { once: true });
+      const themeObserver = new MutationObserver(queueRender);
+      for (const el of [document.documentElement, document.body]) {
+        if (!el) continue;
+        themeObserver.observe(el, {
+          attributes: true,
+          attributeFilter: ["data-theme", "class", "style"],
+        });
+      }
+      document.addEventListener("change", queueRender, true);
+      document.addEventListener(
+        "transitionend",
+        ({ propertyName }) => {
+          if (propertyName === "background-color") queueRender();
+        },
+        true,
+      );
+      darkQuery.addEventListener("change", queueRender);
+    </script>
+  </body>
+</html>

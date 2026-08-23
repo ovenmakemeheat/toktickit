@@ -17,6 +17,8 @@ Provide PostgreSQL through a repository-owned Docker Compose service:
 - commit `.env.example`, never real credentials;
 - run Prisma migrations and the idempotent category seed through documented Bun scripts.
 
+Keep the Compose file at `server/docker-compose.yml` and PostgreSQL initialization at `server/docker/postgres/init/` so the complete database stack has one workspace owner.
+
 Use the pinned `postgres:16` image for the development service.
 
 ## Consequences

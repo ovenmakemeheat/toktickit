@@ -13,7 +13,7 @@ Initial terms confirmed while grilling the Lab 1 design.
 | Feature branch | A short-lived branch for one required Lab 1 Issue. |
 | Bun monorepo | The single repository managed by Bun, containing the `client/` and `server/` workspaces. |
 | Workspace | One independently runnable project area inside the monorepo; Lab 1 has a client workspace and a server workspace. |
-| Compose database | The local PostgreSQL service started from the repository's Docker Compose configuration. |
+| Compose database | The local PostgreSQL service started from `server/docker-compose.yml`. |
 | Migration | A versioned Prisma change that creates or alters database tables. |
 | Seed | Repeatable code that inserts the four required request categories without duplicates. |
 | Error envelope | The JSON shape `{ error: { code, message } }` used for API failures. |
@@ -32,6 +32,12 @@ Initial terms confirmed while grilling the Lab 1 design.
 | Dev proxy | Vite's local forwarding of `/api` browser requests to the Express server. |
 | Requirements-first UI | The rule that Lab 1 UI behavior follows the requirement PDFs and does not invent later-lab screens. |
 | Root script | A Bun command exposed at the repository root to coordinate the client, server, database, or tests. |
+| Formatter | A development tool that applies the repository's consistent source layout; Lab 1 uses Biome. |
+| Linter | A development tool that reports source-code problems without replacing TypeScript checks or tests; Lab 1 uses Biome. |
+| Lefthook | The repository-managed Git hook runner used to check staged source files before a commit. |
+| Pre-commit hook | An automated check that runs before a commit is created; this repository runs Biome through Lefthook. |
+| Prisma validation | A non-mutating check that confirms the Prisma schema is valid before migrations or application builds. |
+| Verification workflow | The root `bun run verify` gate that combines repository checks, Prisma validation, type checks, tests, and builds. |
 | Local topology | The Lab 1 development arrangement: Vite client, Express API, and PostgreSQL running as separate processes/services. |
 | T3 Env | The typed environment-validation boundary used by the server to parse configuration safely. |
 | System-check screen | The single Lab 1 client screen that demonstrates API liveness and database-backed categories. |
