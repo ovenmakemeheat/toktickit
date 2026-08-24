@@ -2,12 +2,79 @@
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
-  color: #1d2733;
-  background: #f4f7fb;
+  color: #173229;
+  background: #f5f7f6;
 }
 
 body {
   min-width: 320px;
   margin: 0;
-  background: #f4f7fb;
+  background: #f5f7f6;
+}
+
+.lab2-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 2rem 1rem;
+}
+
+.lab2-panel {
+  width: min(100%, 38rem);
+  padding: clamp(1.5rem, 4vw, 3rem);
+  background: #ffffff;
+  border: 1px solid #d6e6dc;
+  border-radius: 1rem;
+  box-shadow: 0 1rem 2.5rem rgb(23 50 41 / 10%);
+}
+
+.lab2-eyebrow {
+  margin-bottom: 0.5rem;
+  color: #006b3c;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lab2-introduction {
+  color: #4d6258;
+  line-height: 1.6;
+}
+
+.lab2-state {
+  margin: 1.5rem 0 0;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: #eaf6ef;
+}
+
+.lab2-state-error {
+  color: #7a1f2b;
+  background: #fff0f1;
+}
+
+.lab2-requester-summary {
+  display: grid;
+  gap: 0.25rem;
+  margin: 1.5rem 0;
+  padding: 1rem;
+  border-left: 0.25rem solid #006b3c;
+  background: #eaf6ef;
+}
+
+.lab2-summary-label {
+  color: #4d6258;
+  font-size: 0.875rem;
+}
+
+@media (max-width: 767px) {
+  .lab2-page {
+    align-items: start;
+    padding: 1rem;
+  }
+
+  .lab2-panel {
+    padding: 1.5rem;
+  }
 }
