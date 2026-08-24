@@ -1,0 +1,158 @@
+# Lab 2 test plan
+
+Status: draft for human approval
+
+Issue: #51 - Lab 2 - Sprint specification and test plan
+
+This plan is written before product implementation. It is the test contract for `specification.md`, `ui-spec.md`, and `api-spec.md`; the `Final result` column is intentionally `Pending` until the tests are implemented and executed.
+
+## 1. Test strategy
+
+| Level | Boundary | Required evidence |
+| --- | --- | --- |
+| Unit | Pure ticket-number, normalization, validation, query, and attachment-policy functions | Deterministic examples, boundaries, and collision/rejection behavior. |
+| API/integration | Supertest against exported `server/src/app.ts` with the isolated test database | Request/response status, body, persistence, ownership, and safe-error behavior. No real listener. |
+| UI component | Vitest, Testing Library, and user-event at the user-observable boundary | Labels, field states, navigation, loading, validation, success, failure, and action behavior. |
+| UI style/responsive | Client style assertions and Playwright viewport checks | Zen Green tokens, layout breakpoints, focus, no overflow, and state presentation. |
+| Visual inspection | Playwright screenshots compared with `ui-spec.md` | Desktop, tablet, mobile, normal, loading, empty, failure, validation, and attachment states. |
+| E2E | Playwright through the running client and API | Select Requester, create, upload, list, switch context, detail, download, and soft removal. |
+
+Tests use seeded active Requesters A, B, C, and D plus one inactive Requester, the four required Categories, at least six Related Systems, and isolated test Tickets/Attachments. Attachment tests use generated temporary files and clean them up without using user-controlled filenames as paths.
+
+## 2. TDD and execution rules
+
+1. Select one test row and its linked FR, BR, and AC before implementation.
+2. Write a failing test for the expected behavior or boundary.
+3. Implement the smallest behavior needed to make that test pass.
+4. Refactor without weakening the assertion, then run the narrowest relevant test.
+5. Update the `Final result` column and evidence only after the actual test passes.
+6. Do not skip, disable, quarantine, or mark flaky a required test. A failure is work to resolve, not evidence to omit.
+7. API tests use Supertest against the exported app and do not start a listener. UI tests use accessible roles, labels, and visible behavior rather than implementation details.
+8. Run the full repository gate before the feature PR is ready.
+
+## 3. Planned-test matrix
+
+### 3.1 Unit tests
+
+| Test ID | Requirement / AC | What it tests | Expected result | Automated test file | Final result |
+| --- | --- | --- | --- | --- | --- |
+| UNIT-01 | BR-01, AC-05 | Ticket Number format and uniqueness retry | Generates `TT-YYYYMMDD-XXXXXX` and retries a collision without returning a duplicate. | `server/tests/lab-02/ticket-number.unit.test.ts` | Pending |
+| UNIT-02 | BR-09, BR-10, AC-06, AC-07 | Text normalization and field validation | Trims fields, accepts inclusive boundaries, and rejects empty, too short, too long, and invalid enum values. | `server/tests/lab-02/ticket-validation.unit.test.ts` | Pending |
+| UNIT-03 | BR-14, BR-16, BR-17, AC-12 | Ticket query parser and deterministic ordering | Accepts documented parameters, applies defaults, and rejects invalid page, page size, filter, and sort values. | `server/tests/lab-02/ticket-query.unit.test.ts` | Pending |
+| UNIT-04 | BR-18, BR-19, BR-20, BR-24, AC-18, AC-20 | Attachment policy | Accepts only permitted type/size/count combinations, generates safe storage keys, and validates removal reasons. | `server/tests/lab-02/attachment-policy.unit.test.ts` | Pending |
+
+### 3.2 API and integration tests
+
+| Test ID | Requirement / AC | What it tests | Expected result | Automated test file | Final result |
+| --- | --- | --- | --- | --- | --- |
+| API-01 | FR-02, FR-16, BR-04, AC-02, AC-04 | Active reference and requester context | Active Categories, Related Systems, and Requesters are returned; inactive Requesters are absent; context failures are safe. | `server/tests/lab-02/create-ticket.api.test.ts` | Pending |
+| API-02 | FR-07, BR-01, BR-02, BR-08, BR-11, AC-05 | Valid Ticket creation | Returns `201`, saves one Ticket, generates unique number/date, assigns the header Requester, and sets `NEW`. | `server/tests/lab-02/create-ticket.api.test.ts` | Pending |
+| API-03 | BR-08, BR-09, BR-10, AC-07 | Create validation and inactive references | Invalid body, inactive Category/System, invalid context, and invalid priority return documented `400`/`404` with no Ticket. | `server/tests/lab-02/create-ticket.api.test.ts` | Pending |
+| API-04 | BR-12, AC-08 | Idempotent create retry | Equivalent retry returns `200` for the original Ticket; changed payload with the same ID returns `409`; count remains one. | `server/tests/lab-02/create-ticket.api.test.ts` | Pending |
+| API-05 | BR-18, BR-19, BR-20, BR-21, AC-09, AC-10, AC-18 | Attachment upload after creation | Valid upload returns `201`; invalid file and storage failure are safe; a failed upload does not delete the Ticket. | `server/tests/lab-02/attachments.api.test.ts` | Pending |
+| API-06 | FR-09, BR-07, AC-11 | Owned Ticket list | Requester A receives only A Tickets and cannot see B records through the list. | `server/tests/lab-02/my-tickets.api.test.ts` | Pending |
+| API-07 | BR-14, BR-15, BR-16, BR-17, AC-12 | Search, filters, sorting, and pagination | Query parameters produce deterministic items and correct page metadata; invalid parameters return `400`. | `server/tests/lab-02/my-tickets.api.test.ts` | Pending |
+| API-08 | BR-26, AC-13, AC-14 | List empty, no-results, and failure behavior | Empty ownership scope and valid no-match query return distinct metadata shapes usable by the UI; database failure returns a safe error. | `server/tests/lab-02/my-tickets.api.test.ts` | Pending |
+| API-09 | FR-11, AC-15 | Owned Ticket Detail | Owned detail returns read-only fields and all attachment metadata. | `server/tests/lab-02/ticket-detail.api.test.ts` | Pending |
+| API-10 | BR-07, BR-23, AC-16, AC-21 | Detail ownership protection | Missing and cross-Requester Ticket requests both return non-disclosing `404`. | `server/tests/lab-02/ticket-detail.api.test.ts` | Pending |
+| API-11 | FR-12, BR-22, AC-17 | Attachment metadata | Active and removed metadata are returned; removed records have no download URL. | `server/tests/lab-02/attachments.api.test.ts` | Pending |
+| API-12 | BR-18, BR-19, BR-20, AC-18 | Attachment constraints | Unsupported type, over-5-MB file, and sixth active file return documented errors and do not create invalid active rows. | `server/tests/lab-02/attachments.api.test.ts` | Pending |
+| API-13 | FR-14, BR-23, AC-19, AC-21 | Active download | Owned active file returns bytes and safe content headers; missing, removed, and cross-owner cases are rejected. | `server/tests/lab-02/attachments.api.test.ts` | Pending |
+| API-14 | FR-15, BR-22, BR-24, AC-20 | Soft removal | Valid reason returns `204`, sets removal metadata, retains the row, and removes active download access. | `server/tests/lab-02/attachments.api.test.ts` | Pending |
+| API-15 | BR-23, BR-24, AC-21 | Attachment ownership and repeat removal | Cross-owner mutation is `404`; removed mutation is `409`; invalid reason is `400`. | `server/tests/lab-02/attachments.api.test.ts` | Pending |
+| API-16 | FR-17, AC-24 | Safe error contract | Validation, missing-resource, ownership, upload, conflict, storage, and unexpected failures use stable safe bodies with no stack/path leakage. | `server/tests/lab-02/create-ticket.api.test.ts` and `server/tests/lab-02/attachments.api.test.ts` | Pending |
+
+### 3.3 Client UI tests
+
+| Test ID | Requirement / AC | What it tests | Expected result | Automated test file | Final result |
+| --- | --- | --- | --- | --- | --- |
+| UI-01 | FR-01, FR-02, AC-01, AC-02 | Requester Selection initial and loading states | No requester-specific request occurs without selection; active options, loading, empty, failure, labels, and Continue behavior are visible. | `client/src/lab-02/RequesterSelection.test.tsx` | Pending |
+| UI-02 | FR-03, FR-04, BR-06, AC-03 | Select and Change Requester | Shell shows selected name; changing context clears stale list/detail data and reloads the new context. | `client/src/lab-02/RequesterSelection.test.tsx` | Pending |
+| UI-03 | FR-04, FR-06, FR-07, AC-04, AC-05 | Create Ticket valid form | Active reference controls load, valid fields submit once, success shows generated Ticket Number, and next action is visible. | `client/src/lab-02/CreateTicket.test.tsx` | Pending |
+| UI-04 | BR-08, BR-09, BR-10, AC-06 | Create Ticket field validation | Required, trimming, length, priority, and reference errors appear near fields; invalid submit does not call the API. | `client/src/lab-02/CreateTicket.test.tsx` | Pending |
+| UI-05 | BR-13, BR-21, AC-08, AC-10 | Busy, failure preservation, and partial upload | Submit disables while busy; API failure preserves values; partial upload keeps Ticket Number and exposes retry. | `client/src/lab-02/CreateTicket.test.tsx` | Pending |
+| UI-06 | FR-09, FR-10, BR-14, BR-15, BR-16, BR-17, AC-11, AC-12, AC-13 | My Tickets controls and states | Search, filters, sort, pagination, empty-list, no-results, and failure states use the documented request and visible feedback. | `client/src/lab-02/MyTickets.test.tsx` | Pending |
+| UI-07 | BR-26, AC-14 | My Tickets loading and stale-data protection | Loading is announced and failure does not present old results as current. | `client/src/lab-02/MyTickets.test.tsx` | Pending |
+| UI-08 | FR-11, AC-15, AC-16 | Requester Ticket Detail | Owned detail renders read-only fields, separate Attachments section, and safe not-found state. | `client/src/lab-02/RequesterTicketDetail.test.tsx` | Pending |
+| UI-09 | FR-12, BR-22, AC-17 | Attachment metadata presentation | Active and removed records are visible with correct labels; removed records have no preview/download action. | `client/src/lab-02/AttachmentSection.test.tsx` | Pending |
+| UI-10 | FR-13, BR-18, BR-19, AC-18 | Attachment validation and upload states | Type, size, count, uploading, success, and failure feedback is visible and actionable. | `client/src/lab-02/AttachmentSection.test.tsx` | Pending |
+| UI-11 | FR-14, FR-15, BR-24, AC-19, AC-20, AC-21 | Download, confirmation, reason, and removal | Active download is available; removal requires reason and confirmation; removed state blocks download. | `client/src/lab-02/AttachmentSection.test.tsx` | Pending |
+| UI-12 | FR-18, FR-19, AC-22, AC-23 | Shared labels, focus, live states, and controls | Required labels, accessible names, focus indicators, status text, disabled actions, and keyboard flow are observable. | `client/src/lab-02/ZenGreenResponsive.test.tsx` | Pending |
+
+### 3.4 Style, responsive, visual, and E2E tests
+
+| Test ID | Requirement / AC | What it tests | Expected result | Automated test file or evidence | Final result |
+| --- | --- | --- | --- | --- | --- |
+| STYLE-01 | FR-18, AC-22, AC-23 | Zen Green tokens and reusable component states | Required colors, field states, badges, focus, messages, and button behavior match `ui-spec.md`. | `client/src/lab-02/ZenGreenResponsive.test.tsx` | Pending |
+| RESP-01 | FR-18, AC-22 | Desktop, tablet, and mobile layout | No clipping, overlap, hidden action, or horizontal scrolling at >=992px, 768-991px, and <768px. | `e2e/lab-02/requester-ticket-flow.spec.ts` | Pending |
+| VIS-01 | FR-18, FR-19, AC-22, AC-23 | Visual checklist and screenshots | Required states and screen representations are captured under the three Lab 2 screenshot directories and reviewed against `ui-spec.md`. | `artifacts/lab-02/screenshots/` and `docs/lab-02/reviewer.md` | Pending |
+| E2E-01 | AC-01, AC-02, AC-03, AC-04, AC-05, AC-11, AC-12, AC-15 | Full requester flow | Select active Requester, load references, create Ticket, see Ticket Number, find it, switch Requester, and open owned detail. | `e2e/lab-02/requester-ticket-flow.spec.ts` | Pending |
+| E2E-02 | AC-09, AC-10, AC-17, AC-18, AC-19, AC-20, AC-21 | Full Attachment lifecycle | Upload permitted file, observe metadata, download active file, soft-remove with reason, and verify blocked removed download. | `e2e/lab-02/requester-ticket-flow.spec.ts` | Pending |
+
+## 4. Acceptance-criteria coverage
+
+| Acceptance Criteria | Planned test IDs |
+| --- | --- |
+| AC-01 | UI-01, E2E-01 |
+| AC-02 | API-01, UI-01, E2E-01 |
+| AC-03 | UI-02, E2E-01 |
+| AC-04 | API-01, UI-03, E2E-01 |
+| AC-05 | UNIT-01, API-02, UI-03, E2E-01 |
+| AC-06 | UNIT-02, UI-04 |
+| AC-07 | UNIT-02, API-03 |
+| AC-08 | API-04, UI-05 |
+| AC-09 | API-05, E2E-02 |
+| AC-10 | API-05, UI-05, E2E-02 |
+| AC-11 | API-06, UI-06, E2E-01 |
+| AC-12 | UNIT-03, API-07, UI-06, E2E-01 |
+| AC-13 | API-08, UI-06 |
+| AC-14 | API-08, UI-07 |
+| AC-15 | API-09, UI-08, E2E-01 |
+| AC-16 | API-10, UI-08 |
+| AC-17 | API-11, UI-09, E2E-02 |
+| AC-18 | UNIT-04, API-05, API-12, UI-10, E2E-02 |
+| AC-19 | API-13, UI-11, E2E-02 |
+| AC-20 | UNIT-04, API-14, UI-11, E2E-02 |
+| AC-21 | API-10, API-13, API-15, UI-11, E2E-02 |
+| AC-22 | STYLE-01, RESP-01, VIS-01, E2E-01, E2E-02 |
+| AC-23 | UI-12, STYLE-01, VIS-01 |
+| AC-24 | API-16 |
+
+No acceptance criterion is complete until its mapped tests pass and its required evidence is reviewable.
+
+## 5. Required paths and evidence
+
+The Lab 2 increment must contain these required automated paths:
+
+```text
+server/tests/lab-02/
+├── create-ticket.api.test.ts
+├── my-tickets.api.test.ts
+├── ticket-detail.api.test.ts
+└── attachments.api.test.ts
+
+client/src/lab-02/
+├── CreateTicket.test.tsx
+├── MyTickets.test.tsx
+├── RequesterTicketDetail.test.tsx
+└── AttachmentSection.test.tsx
+
+e2e/lab-02/
+└── requester-ticket-flow.spec.ts
+```
+
+Additional unit, requester-selection, and responsive test files listed in the matrix are allowed and expected where they keep the contract boundaries clear.
+
+Visual evidence is stored under `artifacts/lab-02/screenshots/create-ticket/`, `artifacts/lab-02/screenshots/my-tickets/`, and `artifacts/lab-02/screenshots/ticket-detail/`. Review notes and AI-use evidence are stored in `docs/lab-02/reviewer.md` and `docs/lab-02/ai-use.md` during later Issues.
+
+## 6. Planned commands and results
+
+| Phase | Command | Result at contract drafting |
+| --- | --- | --- |
+| Client iteration | `bun run test:client` | Pending implementation. |
+| Server iteration | `bun run test:server` | Pending implementation and test database setup. |
+| Type checking | `bun run typecheck` | Pending implementation. |
+| Full test suite | `bun run test` | Pending implementation. |
+| Full repository gate | `bun run verify` | Pending final integration. |
+
+The Final result column above must be updated from `Pending` to the actual result only after execution. The handoff must state the commands run, environment prerequisites, and any manual visual checks.
