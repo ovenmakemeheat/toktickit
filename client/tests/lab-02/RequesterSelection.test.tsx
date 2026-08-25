@@ -2,7 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import App from "../App";
+import App from "../../src/App";
 
 const activeRequesters = [
   { id: 1, name: "Requester A", email: "requester-a@toktickit.test" },
