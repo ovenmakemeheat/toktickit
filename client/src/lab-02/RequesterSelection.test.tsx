@@ -20,6 +20,26 @@ afterEach(() => {
 });
 
 describe("Issue #52 Development Requester selection", () => {
+  it("shows a loading state while requesters are loading", async () => {
+    let resolveResponse!: (value: ReturnType<typeof response>) => void;
+    const pendingResponse = new Promise<ReturnType<typeof response>>(
+      (resolve) => {
+        resolveResponse = resolve;
+      },
+    );
+    vi.stubGlobal("fetch", vi.fn().mockReturnValue(pendingResponse));
+
+    render(<App />);
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Loading Development Requesters...",
+    );
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+
+    resolveResponse(response(activeRequesters));
+    expect(await screen.findByRole("combobox")).toBeInTheDocument();
+  });
+
   it("shows only the active requester response and enables Continue after selection", async () => {
     vi.stubGlobal(
       "fetch",
@@ -46,6 +66,22 @@ describe("Issue #52 Development Requester selection", () => {
       screen.getByRole("heading", { name: "Requester context selected" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Requester B")).toBeInTheDocument();
+  });
+
+  it("keeps the requester selector inside the responsive page and panel shells", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(response(activeRequesters)),
+    );
+
+    render(<App />);
+
+    const selector = await screen.findByRole("combobox", {
+      name: "Development Requester",
+    });
+    expect(screen.getByRole("main")).toHaveClass("lab2-page");
+    expect(selector).toHaveClass("form-select");
+    expect(selector.closest("section")).toHaveClass("lab2-panel");
   });
 
   it("shows a recoverable failure state", async () => {
