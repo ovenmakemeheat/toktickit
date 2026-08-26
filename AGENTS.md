@@ -49,6 +49,14 @@ In PowerShell, use `Copy-Item server/.env.example server/.env`. Keep `server/.en
 - The agent must never close or reopen a main Lab 1 issue (#13, #14, #15, or #16).
 - A human must perform all pull request state changes and all main-issue closures or reopenings.
 
+### Pull request and review rules from Lab 2 onward
+
+- These rules apply from Lab 2 onward. Lab 1 is exempt.
+- The Pull Request author must not merge their own Pull Request. After approval, the reviewer who performed the review must click `Merge pull request`.
+- Reply to every review comment before merging. State that the comment was fixed, or explain why the requested change is not being made.
+- Link every Pull Request to its corresponding Issue. Linking a branch is only a convenience and does not replace the Pull Request-to-Issue link used for backlog traceability.
+- Treat review as a conversation: do not merge silently after receiving approval while leaving review comments unanswered.
+
 ### Database workflow
 
 - Treat `server/docker-compose.yml`, `server/docker/`, `server/prisma/`, `server/.env.example`, and the server database scripts as one owned stack.

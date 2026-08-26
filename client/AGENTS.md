@@ -33,7 +33,7 @@ For focused work inside this workspace, the equivalent package scripts are `bun 
 - Use Vitest and Testing Library in the `jsdom` environment.
 - Test at the user-observable boundary, including heading content and system-check loading, success, and failure behavior.
 - Prefer accessible queries and user interactions over implementation details.
-- Keep client test setup in `src/test/setup.ts` and avoid starting a real API listener in unit tests.
+- Keep shared client test setup in `tests/setup.ts` and avoid starting a real API listener in unit tests.
 
 ## Handoff
 

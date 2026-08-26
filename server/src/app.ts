@@ -1,10 +1,31 @@
-import express from "express";
+import express, { type Response } from "express";
 
 import { prisma } from "./db.js";
 import {
-  CategoryStoreUnavailableError,
   listCategories,
-} from "./services/category-service.js";
+  listDevelopmentRequesters,
+  listRelatedSystems,
+  ReferenceDataStoreUnavailableError,
+} from "./services/reference-data-service.js";
+
+function sendReferenceDataError(response: Response, error: unknown) {
+  if (error instanceof ReferenceDataStoreUnavailableError) {
+    response.status(503).json({
+      error: {
+        code: error.code,
+        message: error.message,
+      },
+    });
+    return;
+  }
+
+  response.status(500).json({
+    error: {
+      code: "REFERENCE_DATA_FAILED",
+      message: "Unable to load reference data",
+    },
+  });
+}
 
 export const app = express();
 
@@ -19,22 +40,23 @@ app.get("/api/categories", async (_request, response) => {
   try {
     response.json(await listCategories(prisma));
   } catch (error) {
-    if (error instanceof CategoryStoreUnavailableError) {
-      response.status(503).json({
-        error: {
-          code: error.code,
-          message: error.message,
-        },
-      });
-      return;
-    }
+    sendReferenceDataError(response, error);
+  }
+});
 
-    response.status(500).json({
-      error: {
-        code: "CATEGORY_LIST_FAILED",
-        message: "Unable to load categories",
-      },
-    });
+app.get("/api/related-systems", async (_request, response) => {
+  try {
+    response.json(await listRelatedSystems(prisma));
+  } catch (error) {
+    sendReferenceDataError(response, error);
+  }
+});
+
+app.get("/api/development-requesters", async (_request, response) => {
+  try {
+    response.json(await listDevelopmentRequesters(prisma));
+  } catch (error) {
+    sendReferenceDataError(response, error);
   }
 });
 

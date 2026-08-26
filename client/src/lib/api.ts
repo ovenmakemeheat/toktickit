@@ -5,6 +5,12 @@ export type Category = {
   name: string;
 };
 
+export type DevelopmentRequester = {
+  id: number;
+  name: string;
+  email: string;
+};
+
 type HealthResponse = {
   service: string;
   status: "ok";
@@ -47,6 +53,22 @@ function isCategoryList(payload: unknown): payload is Category[] {
   );
 }
 
+function isDevelopmentRequesterList(
+  payload: unknown,
+): payload is DevelopmentRequester[] {
+  return (
+    Array.isArray(payload) &&
+    payload.every(
+      (requester) =>
+        typeof requester === "object" &&
+        requester !== null &&
+        Number.isInteger((requester as Record<string, unknown>).id) &&
+        typeof (requester as Record<string, unknown>).name === "string" &&
+        typeof (requester as Record<string, unknown>).email === "string",
+    )
+  );
+}
+
 export async function fetchHealth(): Promise<HealthResponse> {
   const response = await fetch("/api/health");
   const payload = await readJson(response);
@@ -63,6 +85,19 @@ export async function fetchCategories(): Promise<Category[]> {
   const payload = await readJson(response);
 
   if (!response.ok || !isCategoryList(payload)) {
+    throw new ApiRequestError();
+  }
+
+  return payload;
+}
+
+export async function fetchDevelopmentRequesters(): Promise<
+  DevelopmentRequester[]
+> {
+  const response = await fetch("/api/development-requesters");
+  const payload = await readJson(response);
+
+  if (!response.ok || !isDevelopmentRequesterList(payload)) {
     throw new ApiRequestError();
   }
 
