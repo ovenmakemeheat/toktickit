@@ -11,17 +11,70 @@ export type DevelopmentRequester = {
   email: string;
 };
 
+export type RelatedSystem = {
+  id: number;
+  name: string;
+};
+
+export type RequestedPriority = "LOW" | "MEDIUM" | "HIGH";
+
+export type CreateTicketInput = {
+  clientRequestId: string;
+  categoryId: number;
+  relatedSystemId: number;
+  requestedPriority: RequestedPriority;
+  summary: string;
+  description: string;
+};
+
+export type TicketDetail = {
+  id: number;
+  ticketNumber: string;
+  ticketDate: string;
+  requester: { id: number; name: string };
+  category: Category;
+  relatedSystem: RelatedSystem;
+  requestedPriority: RequestedPriority;
+  summary: string;
+  description: string;
+  currentStatus: "NEW";
+  createdAt: string;
+  lastUpdated: string;
+  attachments: Array<{
+    id: number;
+    displayName: string;
+    mimeType: string;
+    sizeBytes: number;
+    uploadedAt: string;
+    removedAt: string | null;
+    removalReason: string | null;
+    isActive: boolean;
+    downloadUrl: string | null;
+  }>;
+};
+
 type HealthResponse = {
   service: string;
   status: "ok";
 };
 
 export class ApiRequestError extends Error {
-  constructor() {
+  readonly code: string | undefined;
+  readonly fields: ApiErrorField[] | undefined;
+
+  constructor(code?: string, fields?: ApiErrorField[]) {
     super(apiErrorMessage);
     this.name = "ApiRequestError";
+    this.code = code;
+    this.fields = fields;
   }
 }
+
+export type ApiErrorField = {
+  field: string;
+  code: string;
+  message: string;
+};
 
 async function readJson(response: Response): Promise<unknown> {
   try {
@@ -69,6 +122,98 @@ function isDevelopmentRequesterList(
   );
 }
 
+function isRelatedSystemList(payload: unknown): payload is RelatedSystem[] {
+  return (
+    Array.isArray(payload) &&
+    payload.every(
+      (relatedSystem) =>
+        typeof relatedSystem === "object" &&
+        relatedSystem !== null &&
+        Number.isInteger((relatedSystem as Record<string, unknown>).id) &&
+        typeof (relatedSystem as Record<string, unknown>).name === "string",
+    )
+  );
+}
+
+function isTicketDetail(payload: unknown): payload is TicketDetail {
+  if (typeof payload !== "object" || payload === null) {
+    return false;
+  }
+
+  const ticket = payload as Record<string, unknown>;
+  const requester = ticket.requester as Record<string, unknown> | undefined;
+  const category = ticket.category as Record<string, unknown> | undefined;
+  const relatedSystem = ticket.relatedSystem as
+    | Record<string, unknown>
+    | undefined;
+
+  return (
+    Number.isInteger(ticket.id) &&
+    typeof ticket.ticketNumber === "string" &&
+    typeof ticket.ticketDate === "string" &&
+    typeof ticket.summary === "string" &&
+    typeof ticket.description === "string" &&
+    ["LOW", "MEDIUM", "HIGH"].includes(ticket.requestedPriority as string) &&
+    ticket.currentStatus === "NEW" &&
+    typeof ticket.createdAt === "string" &&
+    typeof ticket.lastUpdated === "string" &&
+    isReference(requester) &&
+    isReference(category) &&
+    isReference(relatedSystem) &&
+    Array.isArray(ticket.attachments)
+  );
+}
+
+function isReference(
+  value: Record<string, unknown> | null | undefined,
+): value is { id: number; name: string } {
+  return (
+    value !== undefined &&
+    value !== null &&
+    Number.isInteger(value.id) &&
+    typeof value.name === "string"
+  );
+}
+
+function getApiErrorDetails(payload: unknown) {
+  if (typeof payload !== "object" || payload === null) {
+    return { code: undefined, fields: undefined };
+  }
+
+  const error = (payload as Record<string, unknown>).error;
+  if (typeof error !== "object" || error === null) {
+    return { code: undefined, fields: undefined };
+  }
+
+  const details = error as Record<string, unknown>;
+  const fields = Array.isArray(details.fields)
+    ? details.fields.filter(isApiErrorField)
+    : undefined;
+
+  return {
+    code: typeof details.code === "string" ? details.code : undefined,
+    fields: fields?.length ? fields : undefined,
+  };
+}
+
+function isApiErrorField(value: unknown): value is ApiErrorField {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const field = value as Record<string, unknown>;
+  return (
+    typeof field.field === "string" &&
+    typeof field.code === "string" &&
+    typeof field.message === "string"
+  );
+}
+
+function throwApiRequestError(payload: unknown): never {
+  const { code, fields } = getApiErrorDetails(payload);
+  throw new ApiRequestError(code, fields);
+}
+
 export async function fetchHealth(): Promise<HealthResponse> {
   const response = await fetch("/api/health");
   const payload = await readJson(response);
@@ -85,7 +230,18 @@ export async function fetchCategories(): Promise<Category[]> {
   const payload = await readJson(response);
 
   if (!response.ok || !isCategoryList(payload)) {
-    throw new ApiRequestError();
+    throwApiRequestError(payload);
+  }
+
+  return payload;
+}
+
+export async function fetchRelatedSystems(): Promise<RelatedSystem[]> {
+  const response = await fetch("/api/related-systems");
+  const payload = await readJson(response);
+
+  if (!response.ok || !isRelatedSystemList(payload)) {
+    throwApiRequestError(payload);
   }
 
   return payload;
@@ -98,7 +254,28 @@ export async function fetchDevelopmentRequesters(): Promise<
   const payload = await readJson(response);
 
   if (!response.ok || !isDevelopmentRequesterList(payload)) {
-    throw new ApiRequestError();
+    throwApiRequestError(payload);
+  }
+
+  return payload;
+}
+
+export async function createTicket(
+  requesterId: number,
+  input: CreateTicketInput,
+): Promise<TicketDetail> {
+  const response = await fetch("/api/tickets", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Development-Requester-Id": String(requesterId),
+    },
+    body: JSON.stringify(input),
+  });
+  const payload = await readJson(response);
+
+  if (!response.ok || !isTicketDetail(payload)) {
+    throwApiRequestError(payload);
   }
 
   return payload;
