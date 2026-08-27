@@ -28,6 +28,120 @@ body {
   box-shadow: 0 1rem 2.5rem rgb(23 50 41 / 10%);
 }
 
+.lab2-shell {
+  width: min(100%, 62rem);
+  display: grid;
+  gap: 1rem;
+}
+
+.lab2-shell-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: #ffffff;
+  border: 1px solid #d6e6dc;
+  border-radius: 0.875rem;
+}
+
+.lab2-shell-context {
+  color: #4d6258;
+  font-size: 0.9rem;
+}
+
+.lab2-shell-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.lab2-create-panel {
+  width: min(100%, 62rem);
+}
+
+.lab2-readonly-grid,
+.lab2-form-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.lab2-readonly-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 1.5rem;
+}
+
+.lab2-readonly {
+  color: #4d6258;
+  background: #f0f4f1;
+}
+
+.lab2-fieldset {
+  margin: 0 0 1.5rem;
+  padding: 1rem;
+  border: 1px solid #d6e6dc;
+  border-radius: 0.75rem;
+}
+
+.lab2-fieldset legend {
+  float: none;
+  width: auto;
+  margin: 0;
+  padding: 0 0.5rem;
+  color: #173229;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.lab2-form-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.lab2-field-error {
+  margin-top: 0.35rem;
+  color: #7a1f2b;
+  font-size: 0.875rem;
+}
+
+[aria-invalid="true"] {
+  border-color: #7a1f2b;
+}
+
+.lab2-attachment-list {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.75rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.lab2-attachment-list li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: #4d6258;
+}
+
+.lab2-attachment-ready {
+  color: #006b3c;
+  font-size: 0.875rem;
+}
+
+.lab2-state-success {
+  display: grid;
+  gap: 0.25rem;
+  color: #14532d;
+  background: #eaf6ef;
+}
+
+.lab2-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
 .lab2-eyebrow {
   margin-bottom: 0.5rem;
   color: #006b3c;
@@ -35,6 +149,10 @@ body {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.lab2-shell-header .lab2-eyebrow {
+  margin-bottom: 0.2rem;
 }
 
 .lab2-introduction {
@@ -76,5 +194,23 @@ body {
 
   .lab2-panel {
     padding: 1.5rem;
+  }
+
+  .lab2-shell-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .lab2-shell-nav {
+    justify-content: stretch;
+  }
+
+  .lab2-shell-nav .btn {
+    flex: 1 1 auto;
+  }
+
+  .lab2-readonly-grid,
+  .lab2-form-grid {
+    grid-template-columns: 1fr;
   }
 }
