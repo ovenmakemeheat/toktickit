@@ -18,6 +18,26 @@ export type RelatedSystem = {
 
 export type RequestedPriority = "LOW" | "MEDIUM" | "HIGH";
 
+export type TicketSortBy =
+  | "ticketDate"
+  | "updatedAt"
+  | "ticketNumber"
+  | "summary";
+
+export type TicketSortDirection = "asc" | "desc";
+
+export type TicketListQuery = {
+  search?: string;
+  categoryId?: number;
+  relatedSystemId?: number;
+  requestedPriority?: RequestedPriority;
+  currentStatus?: "NEW";
+  sortBy?: TicketSortBy;
+  sortDirection?: TicketSortDirection;
+  page?: number;
+  pageSize?: 10 | 20 | 50;
+};
+
 export type CreateTicketInput = {
   clientRequestId: string;
   categoryId: number;
@@ -51,6 +71,28 @@ export type TicketDetail = {
     isActive: boolean;
     downloadUrl: string | null;
   }>;
+};
+
+export type TicketSummary = Pick<
+  TicketDetail,
+  | "id"
+  | "ticketNumber"
+  | "ticketDate"
+  | "requester"
+  | "category"
+  | "relatedSystem"
+  | "requestedPriority"
+  | "summary"
+  | "currentStatus"
+  | "lastUpdated"
+>;
+
+export type TicketListResponse = {
+  items: TicketSummary[];
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
 };
 
 type HealthResponse = {
@@ -161,6 +203,48 @@ function isTicketDetail(payload: unknown): payload is TicketDetail {
     isReference(category) &&
     isReference(relatedSystem) &&
     Array.isArray(ticket.attachments)
+  );
+}
+
+function isTicketSummary(payload: unknown): payload is TicketSummary {
+  if (typeof payload !== "object" || payload === null) {
+    return false;
+  }
+
+  const ticket = payload as Record<string, unknown>;
+  const requester = ticket.requester as Record<string, unknown> | undefined;
+  const category = ticket.category as Record<string, unknown> | undefined;
+  const relatedSystem = ticket.relatedSystem as
+    | Record<string, unknown>
+    | undefined;
+
+  return (
+    Number.isInteger(ticket.id) &&
+    typeof ticket.ticketNumber === "string" &&
+    typeof ticket.ticketDate === "string" &&
+    typeof ticket.summary === "string" &&
+    ["LOW", "MEDIUM", "HIGH"].includes(ticket.requestedPriority as string) &&
+    ticket.currentStatus === "NEW" &&
+    typeof ticket.lastUpdated === "string" &&
+    isReference(requester) &&
+    isReference(category) &&
+    isReference(relatedSystem)
+  );
+}
+
+function isTicketListResponse(payload: unknown): payload is TicketListResponse {
+  if (typeof payload !== "object" || payload === null) {
+    return false;
+  }
+
+  const list = payload as Record<string, unknown>;
+  return (
+    Array.isArray(list.items) &&
+    list.items.every(isTicketSummary) &&
+    Number.isInteger(list.page) &&
+    Number.isInteger(list.pageSize) &&
+    Number.isInteger(list.totalItems) &&
+    Number.isInteger(list.totalPages)
   );
 }
 
@@ -275,6 +359,47 @@ export async function createTicket(
   const payload = await readJson(response);
 
   if (!response.ok || !isTicketDetail(payload)) {
+    throwApiRequestError(payload);
+  }
+
+  return payload;
+}
+
+export async function fetchTickets(
+  requesterId: number,
+  query: TicketListQuery = {},
+): Promise<TicketListResponse> {
+  const searchParams = new URLSearchParams();
+  const entries: Array<[string, string | number | undefined]> = [
+    ["search", query.search?.trim() || undefined],
+    ["categoryId", query.categoryId],
+    ["relatedSystemId", query.relatedSystemId],
+    ["requestedPriority", query.requestedPriority],
+    ["currentStatus", query.currentStatus],
+    ["sortBy", query.sortBy],
+    ["sortDirection", query.sortDirection],
+    ["page", query.page],
+    ["pageSize", query.pageSize],
+  ];
+
+  for (const [key, value] of entries) {
+    if (value !== undefined && value !== "") {
+      searchParams.set(key, String(value));
+    }
+  }
+
+  const queryString = searchParams.toString();
+  const response = await fetch(
+    queryString ? `/api/tickets?${queryString}` : "/api/tickets",
+    {
+      headers: {
+        "X-Development-Requester-Id": String(requesterId),
+      },
+    },
+  );
+  const payload = await readJson(response);
+
+  if (!response.ok || !isTicketListResponse(payload)) {
     throwApiRequestError(payload);
   }
 
