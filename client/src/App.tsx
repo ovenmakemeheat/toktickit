@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import CreateTicket from "./lab-02/CreateTicket";
+import RequesterTicketDetail from "./lab-02/RequesterTicketDetail";
 import RequesterSelection from "./lab-02/RequesterSelection";
 import {
   DevelopmentRequesterProvider,
@@ -80,10 +81,24 @@ function SelectedRequesterScreen() {
 
 function AppContent() {
   const { selectedRequester } = useDevelopmentRequester();
+  const ticketId = window.location.pathname.match(
+    /^\/tickets\/([1-9]\d*)$/,
+  )?.[1];
 
   return (
     <main className="lab2-page">
-      {selectedRequester ? <SelectedRequesterScreen /> : <RequesterSelection />}
+      {selectedRequester ? (
+        ticketId ? (
+          <RequesterTicketDetail
+            ticketId={ticketId}
+            onBack={() => window.history.back()}
+          />
+        ) : (
+          <SelectedRequesterScreen />
+        )
+      ) : (
+        <RequesterSelection />
+      )}
     </main>
   );
 }
