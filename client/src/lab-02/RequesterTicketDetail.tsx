@@ -74,7 +74,6 @@ export default function RequesterTicketDetail({
 
     setIsLoading(true);
     setHasError(false);
-    setTicket(null);
 
     try {
       setTicket(await fetchTicketDetail(selectedRequester.id, ticketId));
@@ -86,6 +85,7 @@ export default function RequesterTicketDetail({
   }, [selectedRequester, ticketId]);
 
   useEffect(() => {
+    setTicket(null);
     void loadTicket();
   }, [loadTicket]);
 
@@ -151,7 +151,7 @@ export default function RequesterTicketDetail({
         </div>
       ) : null}
 
-      {!isLoading && !hasError && ticket ? (
+      {!hasError && ticket ? (
         <>
           <div className="lab2-readonly-grid lab2-ticket-detail-fields">
             <ReadOnlyField

@@ -18,6 +18,7 @@ import {
   downloadTicketAttachment,
   listTicketAttachments,
   removeTicketAttachment,
+  requireOwnedTicket,
   uploadTicketAttachment,
 } from "./services/attachment-service.js";
 import {
@@ -381,22 +382,43 @@ app.get("/api/tickets/:ticketId/attachments", async (request, response) => {
 });
 
 app.post("/api/tickets/:ticketId/attachments", (request, response) => {
-  parseSingleAttachment(request, response, (error) => {
-    if (error) {
-      sendAttachmentUploadError(response, error);
-      return;
-    }
+  void requireOwnedTicket(
+    prisma,
+    request.get("X-Development-Requester-Id"),
+    request.params.ticketId,
+  )
+    .then(() => {
+      parseSingleAttachment(request, response, (error) => {
+        if (error) {
+          sendAttachmentUploadError(response, error);
+          return;
+        }
 
-    void uploadTicketAttachment(
-      prisma,
-      request.get("X-Development-Requester-Id"),
-      request.params.ticketId,
-      request.file,
-    )
-      .then((attachment) => response.status(201).json(attachment))
-      .catch((uploadError) => sendAttachmentUploadError(response, uploadError));
-  });
+        void uploadTicketAttachment(
+          prisma,
+          request.get("X-Development-Requester-Id"),
+          request.params.ticketId,
+          request.file,
+        )
+          .then((attachment) => response.status(201).json(attachment))
+          .catch((uploadError) =>
+            sendAttachmentUploadError(response, uploadError),
+          );
+      });
+    })
+    .catch((error) => sendAttachmentUploadError(response, error));
 });
+
+function contentDispositionHeader(displayName: string) {
+  const safeName = displayName.replace(/["\r\n\\]/g, "_");
+  const asciiFallback = safeName.replace(/[^\x20-\x7e]/g, "_") || "attachment";
+  const encodedName = encodeURIComponent(safeName).replace(
+    /[!'()*]/g,
+    (character) => `%${character.charCodeAt(0).toString(16).toUpperCase()}`,
+  );
+
+  return `attachment; filename="${asciiFallback}"; filename*=UTF-8''${encodedName}`;
+}
 
 app.get(
   "/api/tickets/:ticketId/attachments/:attachmentId/download",
@@ -408,13 +430,12 @@ app.get(
         request.params.ticketId,
         request.params.attachmentId,
       );
-      const safeFilename = result.attachment.displayName.replace(
-        /["\r\n\\]/g,
-        "_",
-      );
       response
         .type(result.attachment.mimeType)
-        .set("Content-Disposition", `attachment; filename="${safeFilename}"`)
+        .set(
+          "Content-Disposition",
+          contentDispositionHeader(result.attachment.displayName),
+        )
         .send(result.content);
     } catch (error) {
       sendAttachmentReadError(

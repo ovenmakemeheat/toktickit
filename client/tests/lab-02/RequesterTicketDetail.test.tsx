@@ -167,4 +167,45 @@ describe("Issue #55 Requester Ticket Detail", () => {
     ).toBeInTheDocument();
     expect(screen.queryByText("Ticket was not found")).not.toBeInTheDocument();
   });
+
+  it("keeps upload success feedback visible while refreshing the Ticket", async () => {
+    const refreshedTicket = {
+      ...ticket,
+      lastUpdated: "2026-08-29T10:00:00.000Z",
+      attachments: [
+        ...ticket.attachments,
+        { ...activeAttachment, id: 203, displayName: "new-evidence.png" },
+      ],
+    };
+    let detailRequests = 0;
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === "/api/tickets/101") {
+        detailRequests += 1;
+        return Promise.resolve(
+          response(detailRequests === 1 ? ticket : refreshedTicket),
+        );
+      }
+      if (url === "/api/tickets/101/attachments") {
+        return Promise.resolve(response(activeAttachment));
+      }
+      return Promise.reject(new Error(`Unexpected request: ${url}`));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+
+    renderDetail();
+    await screen.findByRole("heading", { name: "TT-20260829-ABC123" });
+    await user.upload(
+      screen.getByLabelText("Upload attachment"),
+      new File(["image"], "new-evidence.png", { type: "image/png" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Upload attachment" }));
+
+    expect(
+      await screen.findByText("Attachment uploaded successfully."),
+    ).toBeInTheDocument();
+    expect(detailRequests).toBe(2);
+    expect(screen.getByText("new-evidence.png")).toBeInTheDocument();
+  });
 });

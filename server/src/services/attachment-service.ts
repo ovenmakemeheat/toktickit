@@ -3,6 +3,7 @@ import type { PrismaClient } from "@prisma/client";
 import {
   maxActiveAttachmentCount,
   sanitizeDisplayName,
+  validateAttachmentContent,
   validateAttachmentFile,
   validateRemovalReason,
   type AttachmentUploadFile,
@@ -18,7 +19,7 @@ import { parseTicketId, TicketNotFoundError } from "./ticket-service.js";
 
 type AttachmentStore = Pick<
   PrismaClient,
-  "developmentRequester" | "ticket" | "attachment"
+  "developmentRequester" | "ticket" | "attachment" | "$transaction"
 >;
 
 type AttachmentRecord = {
@@ -105,7 +106,7 @@ export class AttachmentUploadFailedError extends Error {
 
 type OwnedTicket = { id: number };
 
-async function requireOwnedTicket(
+export async function requireOwnedTicket(
   prisma: AttachmentStore,
   requesterHeader: string | undefined,
   rawTicketId: unknown,
@@ -202,12 +203,7 @@ export async function uploadTicketAttachment(
   }
 
   validateAttachmentFile(file);
-  const activeCount = await prisma.attachment.count({
-    where: { ticketId: ticket.id, removedAt: null },
-  });
-  if (activeCount >= maxActiveAttachmentCount) {
-    throw new ActiveAttachmentLimitReachedError();
-  }
+  validateAttachmentContent(file);
 
   const storageKey = generateStorageKey();
   try {
@@ -220,18 +216,35 @@ export async function uploadTicketAttachment(
   }
 
   try {
-    const attachment = await prisma.attachment.create({
-      data: {
-        ticketId: ticket.id,
-        storageKey,
-        displayName: sanitizeDisplayName(file.originalname),
-        mimeType: file.mimetype.toLowerCase(),
-        sizeBytes: file.size,
-      },
+    const attachment = await prisma.$transaction(async (transaction) => {
+      await transaction.ticket.update({
+        where: { id: ticket.id },
+        data: { updatedAt: new Date() },
+      });
+
+      const activeCount = await transaction.attachment.count({
+        where: { ticketId: ticket.id, removedAt: null },
+      });
+      if (activeCount >= maxActiveAttachmentCount) {
+        throw new ActiveAttachmentLimitReachedError();
+      }
+
+      return transaction.attachment.create({
+        data: {
+          ticketId: ticket.id,
+          storageKey,
+          displayName: sanitizeDisplayName(file.originalname),
+          mimeType: file.mimetype.toLowerCase(),
+          sizeBytes: file.size,
+        },
+      });
     });
     return toAttachmentMetadata(attachment, ticket.id);
-  } catch {
+  } catch (error) {
     await storage.remove(storageKey).catch(() => undefined);
+    if (error instanceof ActiveAttachmentLimitReachedError) {
+      throw error;
+    }
     throw new AttachmentUploadFailedError();
   }
 }
@@ -303,12 +316,29 @@ export async function removeTicketAttachment(
   }
 
   const removalReason = validateRemovalReason(rawRemovalReason);
-  await prisma.attachment.update({
-    where: { id: attachment.id },
-    data: {
-      removedAt: new Date(),
-      removalReason,
-    },
+  await prisma.$transaction(async (transaction) => {
+    await transaction.ticket.update({
+      where: { id: ticket.id },
+      data: { updatedAt: new Date() },
+    });
+
+    const currentAttachment = await transaction.attachment.findFirst({
+      where: { id: attachment.id, ticketId: ticket.id },
+    });
+    if (!currentAttachment) {
+      throw new AttachmentNotFoundError();
+    }
+    if (currentAttachment.removedAt !== null) {
+      throw new AttachmentAlreadyRemovedError();
+    }
+
+    await transaction.attachment.update({
+      where: { id: currentAttachment.id },
+      data: {
+        removedAt: new Date(),
+        removalReason,
+      },
+    });
   });
   return ticket;
 }

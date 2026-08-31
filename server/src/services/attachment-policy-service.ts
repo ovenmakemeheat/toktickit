@@ -85,6 +85,33 @@ export function validateAttachmentFile(
   return { extension, mimetype: expectedMimeType };
 }
 
+function startsWithBytes(buffer: Buffer, bytes: number[]) {
+  return bytes.every((byte, index) => buffer[index] === byte);
+}
+
+export function validateAttachmentContent(
+  file: AttachmentUploadFile & { buffer: Buffer },
+) {
+  const mimeType = file.mimetype.toLowerCase();
+  const hasValidSignature =
+    (mimeType === "image/jpeg" &&
+      startsWithBytes(file.buffer, [0xff, 0xd8, 0xff])) ||
+    (mimeType === "image/png" &&
+      startsWithBytes(
+        file.buffer,
+        [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a],
+      )) ||
+    (mimeType === "image/webp" &&
+      startsWithBytes(file.buffer, [0x52, 0x49, 0x46, 0x46]) &&
+      startsWithBytes(file.buffer.subarray(8), [0x57, 0x45, 0x42, 0x50])) ||
+    (mimeType === "application/pdf" &&
+      startsWithBytes(file.buffer, [0x25, 0x50, 0x44, 0x46, 0x2d]));
+
+  if (!hasValidSignature) {
+    throw new AttachmentTypeNotAllowedError();
+  }
+}
+
 export function validateRemovalReason(value: unknown) {
   if (typeof value !== "string") {
     throw new RemovalReasonInvalidError();

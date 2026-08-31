@@ -1,19 +1,40 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import CreateTicket from "./lab-02/CreateTicket";
 import RequesterTicketDetail from "./lab-02/RequesterTicketDetail";
 import RequesterSelection from "./lab-02/RequesterSelection";
+import { navigate } from "./lib/navigation";
 import {
   DevelopmentRequesterProvider,
   useDevelopmentRequester,
 } from "./lab-02/requester-context";
 
-function SelectedRequesterScreen() {
+type AppRoute =
+  | { page: "summary" }
+  | { page: "create" }
+  | { page: "detail"; ticketId: string };
+
+function readRoute(): AppRoute {
+  const detailTicketId = window.location.pathname.match(
+    /^\/tickets\/([1-9]\d*)$/,
+  )?.[1];
+  if (detailTicketId) {
+    return { page: "detail", ticketId: detailTicketId };
+  }
+
+  if (window.location.pathname === "/tickets/new") {
+    return { page: "create" };
+  }
+
+  return { page: "summary" };
+}
+
+function SelectedRequesterScreen({ route }: { route: AppRoute }) {
   const { selectedRequester, clearRequester } = useDevelopmentRequester();
-  const [activePage, setActivePage] = useState<"summary" | "create">("summary");
+  const activePage = route.page === "create" ? "create" : "summary";
 
   function changeRequester() {
-    setActivePage("summary");
+    navigate("/");
     clearRequester();
   }
 
@@ -31,7 +52,7 @@ function SelectedRequesterScreen() {
             type="button"
             className="btn btn-sm btn-outline-success"
             aria-current={activePage === "summary" ? "page" : undefined}
-            onClick={() => setActivePage("summary")}
+            onClick={() => navigate("/")}
           >
             Requester Summary
           </button>
@@ -39,7 +60,7 @@ function SelectedRequesterScreen() {
             type="button"
             className="btn btn-sm btn-success"
             aria-current={activePage === "create" ? "page" : undefined}
-            onClick={() => setActivePage("create")}
+            onClick={() => navigate("/tickets/new")}
           >
             Create Ticket
           </button>
@@ -53,8 +74,13 @@ function SelectedRequesterScreen() {
         </nav>
       </header>
 
-      {activePage === "create" ? (
-        <CreateTicket onBack={() => setActivePage("summary")} />
+      {route.page === "detail" ? (
+        <RequesterTicketDetail
+          ticketId={route.ticketId}
+          onBack={() => navigate("/tickets")}
+        />
+      ) : route.page === "create" ? (
+        <CreateTicket onBack={() => navigate("/")} />
       ) : (
         <section
           className="lab2-panel"
@@ -81,21 +107,21 @@ function SelectedRequesterScreen() {
 
 function AppContent() {
   const { selectedRequester } = useDevelopmentRequester();
-  const ticketId = window.location.pathname.match(
-    /^\/tickets\/([1-9]\d*)$/,
-  )?.[1];
+  const [route, setRoute] = useState<AppRoute>(readRoute);
+
+  useEffect(() => {
+    function handlePopState() {
+      setRoute(readRoute());
+    }
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   return (
     <main className="lab2-page">
       {selectedRequester ? (
-        ticketId ? (
-          <RequesterTicketDetail
-            ticketId={ticketId}
-            onBack={() => window.history.back()}
-          />
-        ) : (
-          <SelectedRequesterScreen />
-        )
+        <SelectedRequesterScreen route={route} />
       ) : (
         <RequesterSelection />
       )}

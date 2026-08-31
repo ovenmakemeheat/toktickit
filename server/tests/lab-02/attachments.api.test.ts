@@ -18,6 +18,7 @@ let requesterAId!: number;
 let requesterBId!: number;
 let lifecycleTicketId!: number;
 let limitTicketId!: number;
+let concurrentTicketId!: number;
 let lifecycleAttachmentId!: number;
 let activeAttachmentId!: number;
 
@@ -103,6 +104,10 @@ describe("Lab 2 attachment lifecycle", () => {
       requesterAId,
       `Attachment limit ${randomUUID().slice(0, 8)}`,
     );
+    concurrentTicketId = await createTicket(
+      requesterAId,
+      `Attachment concurrency ${randomUUID().slice(0, 8)}`,
+    );
   });
 
   afterAll(async () => {
@@ -148,11 +153,19 @@ describe("Lab 2 attachment lifecycle", () => {
       "image/jpeg",
       Buffer.from("not a png"),
     );
+    const forgedContent = await uploadAttachment(
+      lifecycleTicketId,
+      requesterAId,
+      "evidence.pdf",
+      "application/pdf",
+      Buffer.from("this is not a PDF"),
+    );
 
     expectError(missingContext, 400, "REQUESTER_CONTEXT_REQUIRED");
     expectError(missingFile, 400, "ATTACHMENT_FILE_REQUIRED");
     expectError(unsupported, 415, "ATTACHMENT_TYPE_NOT_ALLOWED");
     expectError(mismatch, 415, "ATTACHMENT_TYPE_NOT_ALLOWED");
+    expectError(forgedContent, 415, "ATTACHMENT_TYPE_NOT_ALLOWED");
   });
 
   it("rejects an attachment over the 5 MB server boundary", async () => {
@@ -168,6 +181,14 @@ describe("Lab 2 attachment lifecycle", () => {
   });
 
   it("stores permitted metadata and exposes active metadata without storage keys", async () => {
+    await prisma.ticket.update({
+      where: { id: lifecycleTicketId },
+      data: { updatedAt: new Date("2020-01-01T00:00:00.000Z") },
+    });
+    const beforeUpload = await prisma.ticket.findUniqueOrThrow({
+      where: { id: lifecycleTicketId },
+      select: { updatedAt: true },
+    });
     const response = await uploadAttachment(
       lifecycleTicketId,
       requesterAId,
@@ -191,6 +212,13 @@ describe("Lab 2 attachment lifecycle", () => {
     );
     expect(response.body.storageKey).toBeUndefined();
     lifecycleAttachmentId = response.body.id;
+    const afterUpload = await prisma.ticket.findUniqueOrThrow({
+      where: { id: lifecycleTicketId },
+      select: { updatedAt: true },
+    });
+    expect(afterUpload.updatedAt.getTime()).toBeGreaterThan(
+      beforeUpload.updatedAt.getTime(),
+    );
 
     const metadata = await request(app)
       .get(`/api/tickets/${lifecycleTicketId}/attachments`)
@@ -218,7 +246,38 @@ describe("Lab 2 attachment lifecycle", () => {
     expect(download.body).toEqual(Buffer.from("%PDF-1.4 attachment test"));
   });
 
+  it("encodes Unicode display names in download headers", async () => {
+    const uploaded = await uploadAttachment(
+      lifecycleTicketId,
+      requesterAId,
+      "evidence-📄.pdf",
+    );
+    expect(uploaded.status).toBe(201);
+
+    const download = await request(app)
+      .get(
+        `/api/tickets/${lifecycleTicketId}/attachments/${uploaded.body.id}/download`,
+      )
+      .set("X-Development-Requester-Id", String(requesterAId));
+
+    expect(download.status).toBe(200);
+    expect(download.headers["content-disposition"]).toContain(
+      'filename="evidence-__.pdf"',
+    );
+    expect(download.headers["content-disposition"]).toContain(
+      "filename*=UTF-8''evidence-%F0%9F%93%84.pdf",
+    );
+  });
+
   it("soft-removes metadata, blocks download, and rejects repeat removal", async () => {
+    await prisma.ticket.update({
+      where: { id: lifecycleTicketId },
+      data: { updatedAt: new Date("2020-01-01T00:00:00.000Z") },
+    });
+    const beforeRemoval = await prisma.ticket.findUniqueOrThrow({
+      where: { id: lifecycleTicketId },
+      select: { updatedAt: true },
+    });
     const invalid = await request(app)
       .delete(
         `/api/tickets/${lifecycleTicketId}/attachments/${lifecycleAttachmentId}`,
@@ -242,6 +301,13 @@ describe("Lab 2 attachment lifecycle", () => {
     expect(removed.status).toBe(204);
     expect(repeated.status).toBe(409);
     expect(repeated.body.error.code).toBe("ATTACHMENT_ALREADY_REMOVED");
+    const afterRemoval = await prisma.ticket.findUniqueOrThrow({
+      where: { id: lifecycleTicketId },
+      select: { updatedAt: true },
+    });
+    expect(afterRemoval.updatedAt.getTime()).toBeGreaterThan(
+      beforeRemoval.updatedAt.getTime(),
+    );
 
     const metadata = await request(app)
       .get(`/api/tickets/${lifecycleTicketId}/attachments`)
@@ -288,6 +354,40 @@ describe("Lab 2 attachment lifecycle", () => {
     expectError(sixth, 409, "ACTIVE_ATTACHMENT_LIMIT_REACHED");
   });
 
+  it("serializes concurrent uploads at the five-active-file limit", async () => {
+    for (let index = 0; index < maxActiveAttachmentCount - 1; index += 1) {
+      const response = await uploadAttachment(
+        concurrentTicketId,
+        requesterAId,
+        `concurrent-${index}.pdf`,
+      );
+      expect(response.status).toBe(201);
+    }
+
+    const responses = await Promise.all([
+      uploadAttachment(concurrentTicketId, requesterAId, "concurrent-a.pdf"),
+      uploadAttachment(concurrentTicketId, requesterAId, "concurrent-b.pdf"),
+    ]);
+
+    expect(
+      responses.filter((response) => response.status === 201),
+    ).toHaveLength(1);
+    expect(
+      responses.filter((response) => response.status === 409),
+    ).toHaveLength(1);
+    const rejected = responses.find((response) => response.status === 409);
+    if (!rejected) {
+      throw new Error("Expected one concurrent upload to be rejected");
+    }
+    expectError(rejected, 409, "ACTIVE_ATTACHMENT_LIMIT_REACHED");
+
+    await expect(
+      prisma.attachment.count({
+        where: { ticketId: concurrentTicketId, removedAt: null },
+      }),
+    ).resolves.toBe(maxActiveAttachmentCount);
+  });
+
   it("does not disclose or mutate another Requester's Ticket attachments", async () => {
     const metadata = await request(app)
       .get(`/api/tickets/${limitTicketId}/attachments`)
@@ -297,6 +397,17 @@ describe("Lab 2 attachment lifecycle", () => {
       requesterBId,
       "cross-owner.pdf",
     );
+    const crossOwnerMultipleFiles = await request(app)
+      .post(`/api/tickets/${limitTicketId}/attachments`)
+      .set("X-Development-Requester-Id", String(requesterBId))
+      .attach("file", Buffer.from("%PDF-1.4 first"), {
+        filename: "first.pdf",
+        contentType: "application/pdf",
+      })
+      .attach("file", Buffer.from("%PDF-1.4 second"), {
+        filename: "second.pdf",
+        contentType: "application/pdf",
+      });
     const download = await request(app)
       .get(
         `/api/tickets/${limitTicketId}/attachments/${activeAttachmentId}/download`,
@@ -309,6 +420,7 @@ describe("Lab 2 attachment lifecycle", () => {
 
     expectError(metadata, 404, "TICKET_NOT_FOUND");
     expectError(upload, 404, "TICKET_NOT_FOUND");
+    expectError(crossOwnerMultipleFiles, 404, "TICKET_NOT_FOUND");
     expectError(download, 404, "TICKET_NOT_FOUND");
     expectError(remove, 404, "TICKET_NOT_FOUND");
   });
