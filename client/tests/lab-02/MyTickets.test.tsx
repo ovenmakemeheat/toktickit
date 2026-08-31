@@ -38,6 +38,13 @@ const ownedTicket = {
   lastUpdated: "2026-08-29T09:05:00.000Z",
 };
 
+const ownedTicketDetail = {
+  ...ownedTicket,
+  description: "The VPN connection fails after entering the credentials.",
+  createdAt: "2026-08-29T09:00:00.000Z",
+  attachments: [],
+};
+
 const listWithTicket = {
   items: [ownedTicket],
   page: 1,
@@ -114,6 +121,7 @@ function setupFetch(
 
 afterEach(() => {
   cleanup();
+  window.history.replaceState({}, "", "/");
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
@@ -141,8 +149,8 @@ describe("Issue #54 My Tickets", () => {
     expect(screen.getAllByText("High")).not.toHaveLength(0);
     expect(screen.getAllByText("New")).not.toHaveLength(0);
     expect(
-      screen.queryByRole("link", { name: "Open Ticket" }),
-    ).not.toBeInTheDocument();
+      screen.getAllByRole("button", { name: "Open Ticket" }),
+    ).not.toHaveLength(0);
 
     const ticketCall = fetchMock.mock.calls.find(([input]) =>
       String(input).startsWith("/api/tickets"),
@@ -193,6 +201,32 @@ describe("Issue #54 My Tickets", () => {
     expect(
       await screen.findByText("Requester A has no tickets yet."),
     ).toBeInTheDocument();
+  });
+
+  it("opens a ticket detail view from the result action", async () => {
+    const fetchMock = setupFetch((url) =>
+      url === "/api/tickets/101"
+        ? response(ownedTicketDetail)
+        : response(listWithTicket),
+    );
+    const user = userEvent.setup();
+
+    await openMyTickets(user);
+    await screen.findAllByText("VPN connection fails");
+
+    await user.click(screen.getAllByRole("button", { name: "Open Ticket" })[0]);
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "TT-20260829-ABC123",
+      }),
+    ).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/tickets/101",
+      expect.objectContaining({
+        headers: { "X-Development-Requester-Id": "1" },
+      }),
+    );
   });
 
   it("exposes a recoverable failure without showing stale results", async () => {

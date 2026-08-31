@@ -17,6 +17,7 @@ import {
   type TicketListResponse,
   type TicketSortBy,
 } from "../lib/api";
+import { navigate } from "../lib/navigation";
 import { useDevelopmentRequester } from "./requester-context";
 
 type MyTicketsProps = {
@@ -160,6 +161,10 @@ export default function MyTickets({ onCreateTicket }: MyTicketsProps) {
 
   function changePage(page: number) {
     setQuery((current) => ({ ...current, page }));
+  }
+
+  function openTicket(ticketId: number) {
+    navigate(`/tickets/${ticketId}`);
   }
 
   const activeQuery = isActiveQuery(query);
@@ -441,6 +446,7 @@ export default function MyTickets({ onCreateTicket }: MyTicketsProps) {
                   <th scope="col">Requested Priority</th>
                   <th scope="col">Current Status</th>
                   <th scope="col">Last Updated</th>
+                  <th scope="col">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -463,6 +469,15 @@ export default function MyTickets({ onCreateTicket }: MyTicketsProps) {
                       </span>
                     </td>
                     <td>{formatDate(ticket.lastUpdated)}</td>
+                    <td className="lab2-ticket-table-actions">
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-success"
+                        onClick={() => openTicket(ticket.id)}
+                      >
+                        Open Ticket
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -497,6 +512,13 @@ export default function MyTickets({ onCreateTicket }: MyTicketsProps) {
                     <dd>{formatDate(ticket.lastUpdated)}</dd>
                   </div>
                 </dl>
+                <button
+                  type="button"
+                  className="btn btn-outline-success"
+                  onClick={() => openTicket(ticket.id)}
+                >
+                  Open Ticket
+                </button>
               </article>
             ))}
           </div>
