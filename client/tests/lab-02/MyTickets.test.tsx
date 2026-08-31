@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -44,6 +44,16 @@ const listWithTicket = {
   pageSize: 10,
   totalItems: 1,
   totalPages: 1,
+};
+
+const initialList = {
+  ...listWithTicket,
+  items: [{ ...ownedTicket, summary: "Initial response" }],
+};
+
+const latestList = {
+  ...listWithTicket,
+  items: [{ ...ownedTicket, summary: "Latest response" }],
 };
 
 const emptyList = {
@@ -130,9 +140,9 @@ describe("Issue #54 My Tickets", () => {
     expect(screen.getAllByText("Hardware")).not.toHaveLength(0);
     expect(screen.getAllByText("High")).not.toHaveLength(0);
     expect(screen.getAllByText("New")).not.toHaveLength(0);
-    expect(screen.getAllByRole("link", { name: "Open Ticket" })).toHaveLength(
-      2,
-    );
+    expect(
+      screen.queryByRole("link", { name: "Open Ticket" }),
+    ).not.toBeInTheDocument();
 
     const ticketCall = fetchMock.mock.calls.find(([input]) =>
       String(input).startsWith("/api/tickets"),
@@ -212,5 +222,48 @@ describe("Issue #54 My Tickets", () => {
         String(input).startsWith("/api/tickets"),
       ),
     ).toHaveLength(2);
+  });
+
+  it("ignores an older list response after the query changes", async () => {
+    let resolveInitial!: (value: MockResponse) => void;
+    let resolveLatest!: (value: MockResponse) => void;
+    const initialResponse = new Promise<MockResponse>((resolve) => {
+      resolveInitial = resolve;
+    });
+    const latestResponse = new Promise<MockResponse>((resolve) => {
+      resolveLatest = resolve;
+    });
+    const fetchMock = setupFetch((url) =>
+      url.includes("search=VPN") ? latestResponse : initialResponse,
+    );
+    const user = userEvent.setup();
+
+    await openMyTickets(user);
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.filter(([input]) =>
+          String(input).startsWith("/api/tickets"),
+        ),
+      ).toHaveLength(1),
+    );
+
+    await user.type(screen.getByRole("textbox", { name: "Search" }), "VPN");
+    await user.click(screen.getByRole("button", { name: "Search" }));
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.filter(([input]) =>
+          String(input).startsWith("/api/tickets"),
+        ),
+      ).toHaveLength(2),
+    );
+
+    resolveLatest(response(latestList));
+    expect(await screen.findAllByText("Latest response")).not.toHaveLength(0);
+
+    resolveInitial(response(initialList));
+    await waitFor(() =>
+      expect(screen.queryByText("Initial response")).not.toBeInTheDocument(),
+    );
+    expect(screen.getAllByText("Latest response")).not.toHaveLength(0);
   });
 });

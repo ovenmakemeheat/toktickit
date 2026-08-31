@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 
 import {
   apiErrorMessage,
@@ -66,6 +72,7 @@ export default function MyTickets({ onCreateTicket }: MyTicketsProps) {
   const [list, setList] = useState<TicketListResponse | null>(null);
   const [listError, setListError] = useState(false);
   const [listLoading, setListLoading] = useState(true);
+  const latestListRequest = useRef(0);
 
   const loadReferences = useCallback(async () => {
     setReferenceLoading(true);
@@ -87,32 +94,47 @@ export default function MyTickets({ onCreateTicket }: MyTicketsProps) {
     }
   }, []);
 
-  const loadTickets = useCallback(async () => {
-    if (!selectedRequester) {
-      return;
-    }
-
-    setListLoading(true);
-    setListError(false);
-    setList(null);
-
-    try {
-      const nextList = await fetchTickets(selectedRequester.id, query);
-      setList(nextList);
-    } catch {
-      setListError(true);
-    } finally {
-      setListLoading(false);
-    }
-  }, [query, selectedRequester]);
-
   useEffect(() => {
     void loadReferences();
   }, [loadReferences]);
 
   useEffect(() => {
-    void loadTickets();
-  }, [loadTickets]);
+    if (!selectedRequester) {
+      return;
+    }
+
+    const controller = new AbortController();
+    const requestId = latestListRequest.current + 1;
+    latestListRequest.current = requestId;
+
+    setListLoading(true);
+    setListError(false);
+    setList(null);
+
+    void fetchTickets(selectedRequester.id, query, controller.signal)
+      .then((nextList) => {
+        if (requestId !== latestListRequest.current) {
+          return;
+        }
+        setList(nextList);
+      })
+      .catch(() => {
+        if (
+          controller.signal.aborted ||
+          requestId !== latestListRequest.current
+        ) {
+          return;
+        }
+        setListError(true);
+      })
+      .finally(() => {
+        if (requestId === latestListRequest.current) {
+          setListLoading(false);
+        }
+      });
+
+    return () => controller.abort();
+  }, [query, selectedRequester]);
 
   if (!selectedRequester) {
     return null;
@@ -370,7 +392,7 @@ export default function MyTickets({ onCreateTicket }: MyTicketsProps) {
           <button
             type="button"
             className="btn btn-outline-success"
-            onClick={() => void loadTickets()}
+            onClick={() => setQuery((current) => ({ ...current }))}
           >
             Try again
           </button>
@@ -419,9 +441,6 @@ export default function MyTickets({ onCreateTicket }: MyTicketsProps) {
                   <th scope="col">Requested Priority</th>
                   <th scope="col">Current Status</th>
                   <th scope="col">Last Updated</th>
-                  <th scope="col">
-                    <span className="visually-hidden">Actions</span>
-                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -444,14 +463,6 @@ export default function MyTickets({ onCreateTicket }: MyTicketsProps) {
                       </span>
                     </td>
                     <td>{formatDate(ticket.lastUpdated)}</td>
-                    <td>
-                      <a
-                        className="btn btn-sm btn-outline-success"
-                        href={`/tickets/${ticket.id}`}
-                      >
-                        Open Ticket
-                      </a>
-                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -486,12 +497,6 @@ export default function MyTickets({ onCreateTicket }: MyTicketsProps) {
                     <dd>{formatDate(ticket.lastUpdated)}</dd>
                   </div>
                 </dl>
-                <a
-                  className="btn btn-outline-success"
-                  href={`/tickets/${ticket.id}`}
-                >
-                  Open Ticket
-                </a>
               </article>
             ))}
           </div>

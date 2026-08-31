@@ -368,6 +368,7 @@ export async function createTicket(
 export async function fetchTickets(
   requesterId: number,
   query: TicketListQuery = {},
+  signal?: AbortSignal,
 ): Promise<TicketListResponse> {
   const searchParams = new URLSearchParams();
   const entries: Array<[string, string | number | undefined]> = [
@@ -395,6 +396,7 @@ export async function fetchTickets(
       headers: {
         "X-Development-Requester-Id": String(requesterId),
       },
+      signal,
     },
   );
   const payload = await readJson(response);
