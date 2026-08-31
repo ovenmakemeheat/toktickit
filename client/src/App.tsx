@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import CreateTicket from "./lab-02/CreateTicket";
 import RequesterTicketDetail from "./lab-02/RequesterTicketDetail";
+import MyTickets from "./lab-02/MyTickets";
 import RequesterSelection from "./lab-02/RequesterSelection";
 import { navigate } from "./lib/navigation";
 import {
@@ -11,6 +12,7 @@ import {
 
 type AppRoute =
   | { page: "summary" }
+  | { page: "tickets" }
   | { page: "create" }
   | { page: "detail"; ticketId: string };
 
@@ -26,12 +28,21 @@ function readRoute(): AppRoute {
     return { page: "create" };
   }
 
+  if (window.location.pathname === "/tickets") {
+    return { page: "tickets" };
+  }
+
   return { page: "summary" };
 }
 
 function SelectedRequesterScreen({ route }: { route: AppRoute }) {
   const { selectedRequester, clearRequester } = useDevelopmentRequester();
-  const activePage = route.page === "create" ? "create" : "summary";
+  const activePage =
+    route.page === "create" ||
+    route.page === "tickets" ||
+    route.page === "summary"
+      ? route.page
+      : undefined;
 
   function changeRequester() {
     navigate("/");
@@ -58,6 +69,14 @@ function SelectedRequesterScreen({ route }: { route: AppRoute }) {
           </button>
           <button
             type="button"
+            className="btn btn-sm btn-outline-success"
+            aria-current={activePage === "tickets" ? "page" : undefined}
+            onClick={() => navigate("/tickets")}
+          >
+            My Tickets
+          </button>
+          <button
+            type="button"
             className="btn btn-sm btn-success"
             aria-current={activePage === "create" ? "page" : undefined}
             onClick={() => navigate("/tickets/new")}
@@ -79,8 +98,13 @@ function SelectedRequesterScreen({ route }: { route: AppRoute }) {
           ticketId={route.ticketId}
           onBack={() => navigate("/tickets")}
         />
+      ) : route.page === "tickets" ? (
+        <MyTickets
+          key={selectedRequester?.id}
+          onCreateTicket={() => navigate("/tickets/new")}
+        />
       ) : route.page === "create" ? (
-        <CreateTicket onBack={() => navigate("/")} />
+        <CreateTicket onBack={() => navigate("/tickets")} />
       ) : (
         <section
           className="lab2-panel"

@@ -65,12 +65,146 @@ body {
   width: min(100%, 70rem);
 }
 
+.lab2-tickets-panel {
+  width: min(100%, 78rem);
+}
+
 .lab2-page-heading {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.lab2-ticket-filters {
+  display: grid;
   gap: 1rem;
   margin-bottom: 1.5rem;
+  padding: 1rem;
+  border: 1px solid #d6e6dc;
+  border-radius: 0.75rem;
+  background: #f8fbf9;
+}
+
+.lab2-ticket-search {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.lab2-search-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.lab2-search-actions .form-control {
+  flex: 1 1 16rem;
+}
+
+.lab2-ticket-filter-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.lab2-clear-filters {
+  justify-self: start;
+}
+
+.lab2-filter-reference-error {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  color: #7a1f2b;
+}
+
+.lab2-ticket-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid #d6e6dc;
+  border-radius: 0.75rem;
+}
+
+.lab2-ticket-table {
+  min-width: 66rem;
+  margin-bottom: 0;
+}
+
+.lab2-ticket-table th {
+  color: #173229;
+  white-space: nowrap;
+  background: #eaf6ef;
+}
+
+.lab2-ticket-summary-cell {
+  min-width: 14rem;
+  max-width: 20rem;
+}
+
+.lab2-ticket-badge {
+  display: inline-block;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  color: #14532d;
+  background: #eaf6ef;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.lab2-ticket-cards {
+  display: none;
+}
+
+.lab2-ticket-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  color: #4d6258;
+}
+
+.lab2-ticket-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #d6e6dc;
+  border-radius: 0.75rem;
+  background: #ffffff;
+}
+
+.lab2-ticket-card-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.lab2-ticket-card h2 {
+  margin: 0;
+  color: #173229;
+  font-size: 1.1rem;
+}
+
+.lab2-ticket-card dl {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.lab2-ticket-card dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.lab2-ticket-card dt {
+  color: #4d6258;
+  font-weight: 600;
+}
+
+.lab2-ticket-card dd {
+  margin: 0;
+  text-align: right;
 }
 
 .lab2-readonly-grid,
@@ -310,7 +444,34 @@ body {
   }
 
   .lab2-page-heading {
+    align-items: stretch;
     flex-direction: column;
+  }
+
+  .lab2-page-heading .btn {
+    align-self: stretch;
+  }
+
+  .lab2-ticket-filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lab2-ticket-table-wrapper {
+    display: none;
+  }
+
+  .lab2-ticket-cards {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .lab2-ticket-pagination {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .lab2-ticket-pagination .lab2-form-actions {
+    justify-content: space-between;
   }
 
   .lab2-readonly-grid,

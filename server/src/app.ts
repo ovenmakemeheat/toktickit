@@ -39,6 +39,10 @@ import {
   TicketNotFoundError,
 } from "./services/ticket-service.js";
 import {
+  listTickets,
+  TicketQueryValidationError,
+} from "./services/ticket-query-service.js";
+import {
   RequesterContextInvalidError,
   RequesterContextRequiredError,
 } from "./services/requester-context-service.js";
@@ -133,6 +137,36 @@ function sendTicketDetailError(response: Response, error: unknown) {
     error: {
       code: "TICKET_DETAIL_FAILED",
       message: "Unable to load ticket detail",
+    },
+  });
+}
+
+function sendTicketListError(response: Response, error: unknown) {
+  if (
+    error instanceof RequesterContextRequiredError ||
+    error instanceof RequesterContextInvalidError
+  ) {
+    response.status(400).json({
+      error: { code: error.code, message: error.message },
+    });
+    return;
+  }
+
+  if (error instanceof TicketQueryValidationError) {
+    response.status(400).json({
+      error: {
+        code: error.code,
+        message: error.message,
+        fields: error.fields,
+      },
+    });
+    return;
+  }
+
+  response.status(500).json({
+    error: {
+      code: "TICKET_LIST_FAILED",
+      message: "Unable to load tickets",
     },
   });
 }
@@ -345,6 +379,20 @@ app.post("/api/tickets", async (request, response) => {
     response.status(result.replayed ? 200 : 201).json(result.ticket);
   } catch (error) {
     sendTicketCreateError(response, error);
+  }
+});
+
+app.get("/api/tickets", async (request, response) => {
+  try {
+    response.json(
+      await listTickets(
+        prisma,
+        request.get("X-Development-Requester-Id"),
+        request.query,
+      ),
+    );
+  } catch (error) {
+    sendTicketListError(response, error);
   }
 });
 
