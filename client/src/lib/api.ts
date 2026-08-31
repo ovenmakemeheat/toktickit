@@ -47,6 +47,18 @@ export type CreateTicketInput = {
   description: string;
 };
 
+export type AttachmentMetadata = {
+  id: number;
+  displayName: string;
+  mimeType: string;
+  sizeBytes: number;
+  uploadedAt: string;
+  removedAt: string | null;
+  removalReason: string | null;
+  isActive: boolean;
+  downloadUrl: string | null;
+};
+
 export type TicketDetail = {
   id: number;
   ticketNumber: string;
@@ -60,17 +72,7 @@ export type TicketDetail = {
   currentStatus: "NEW";
   createdAt: string;
   lastUpdated: string;
-  attachments: Array<{
-    id: number;
-    displayName: string;
-    mimeType: string;
-    sizeBytes: number;
-    uploadedAt: string;
-    removedAt: string | null;
-    removalReason: string | null;
-    isActive: boolean;
-    downloadUrl: string | null;
-  }>;
+  attachments: AttachmentMetadata[];
 };
 
 export type TicketSummary = Pick<
@@ -202,7 +204,30 @@ function isTicketDetail(payload: unknown): payload is TicketDetail {
     isReference(requester) &&
     isReference(category) &&
     isReference(relatedSystem) &&
-    Array.isArray(ticket.attachments)
+    Array.isArray(ticket.attachments) &&
+    ticket.attachments.every(isAttachmentMetadata)
+  );
+}
+
+function isAttachmentMetadata(payload: unknown): payload is AttachmentMetadata {
+  if (typeof payload !== "object" || payload === null) {
+    return false;
+  }
+
+  const attachment = payload as Record<string, unknown>;
+  return (
+    Number.isInteger(attachment.id) &&
+    typeof attachment.displayName === "string" &&
+    typeof attachment.mimeType === "string" &&
+    Number.isInteger(attachment.sizeBytes) &&
+    typeof attachment.uploadedAt === "string" &&
+    (typeof attachment.removedAt === "string" ||
+      attachment.removedAt === null) &&
+    (typeof attachment.removalReason === "string" ||
+      attachment.removalReason === null) &&
+    typeof attachment.isActive === "boolean" &&
+    (typeof attachment.downloadUrl === "string" ||
+      attachment.downloadUrl === null)
   );
 }
 
@@ -363,6 +388,113 @@ export async function createTicket(
   }
 
   return payload;
+}
+
+export async function fetchTicketDetail(
+  requesterId: number,
+  ticketId: number | string,
+): Promise<TicketDetail> {
+  const response = await fetch(`/api/tickets/${ticketId}`, {
+    headers: {
+      "X-Development-Requester-Id": String(requesterId),
+    },
+  });
+  const payload = await readJson(response);
+
+  if (!response.ok || !isTicketDetail(payload)) {
+    throwApiRequestError(payload);
+  }
+
+  return payload;
+}
+
+export async function fetchTicketAttachments(
+  requesterId: number,
+  ticketId: number | string,
+): Promise<AttachmentMetadata[]> {
+  const response = await fetch(`/api/tickets/${ticketId}/attachments`, {
+    headers: {
+      "X-Development-Requester-Id": String(requesterId),
+    },
+  });
+  const payload = await readJson(response);
+
+  if (
+    !response.ok ||
+    !Array.isArray(payload) ||
+    !payload.every(isAttachmentMetadata)
+  ) {
+    throwApiRequestError(payload);
+  }
+
+  return payload;
+}
+
+export async function uploadTicketAttachment(
+  requesterId: number,
+  ticketId: number | string,
+  file: File,
+): Promise<AttachmentMetadata> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await fetch(`/api/tickets/${ticketId}/attachments`, {
+    method: "POST",
+    headers: {
+      "X-Development-Requester-Id": String(requesterId),
+    },
+    body: formData,
+  });
+  const payload = await readJson(response);
+
+  if (!response.ok || !isAttachmentMetadata(payload)) {
+    throwApiRequestError(payload);
+  }
+
+  return payload;
+}
+
+export async function downloadTicketAttachment(
+  requesterId: number,
+  ticketId: number | string,
+  attachmentId: number | string,
+): Promise<Blob> {
+  const response = await fetch(
+    `/api/tickets/${ticketId}/attachments/${attachmentId}/download`,
+    {
+      headers: {
+        "X-Development-Requester-Id": String(requesterId),
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throwApiRequestError(await readJson(response));
+  }
+
+  return response.blob();
+}
+
+export async function removeTicketAttachment(
+  requesterId: number,
+  ticketId: number | string,
+  attachmentId: number | string,
+  removalReason: string,
+): Promise<void> {
+  const response = await fetch(
+    `/api/tickets/${ticketId}/attachments/${attachmentId}`,
+    {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Development-Requester-Id": String(requesterId),
+      },
+      body: JSON.stringify({ removalReason }),
+    },
+  );
+
+  if (!response.ok) {
+    throwApiRequestError(await readJson(response));
+  }
 }
 
 export async function fetchTickets(

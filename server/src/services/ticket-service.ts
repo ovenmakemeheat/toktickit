@@ -17,7 +17,7 @@ type TicketStore = Pick<
   "developmentRequester" | "category" | "relatedSystem" | "ticket"
 >;
 
-const ticketDetailInclude = {
+export const ticketDetailInclude = {
   requester: { select: { id: true, name: true } },
   category: { select: { id: true, name: true } },
   relatedSystem: { select: { id: true, name: true } },
@@ -83,12 +83,32 @@ export class IdempotencyKeyReusedError extends Error {
   }
 }
 
+export class TicketIdValidationError extends Error {
+  readonly code = "TICKET_ID_INVALID";
+
+  constructor() {
+    super("Ticket ID must be a positive integer");
+    this.name = "TicketIdValidationError";
+  }
+}
+
+export class TicketNotFoundError extends Error {
+  readonly code = "TICKET_NOT_FOUND";
+
+  constructor() {
+    super("Ticket was not found");
+    this.name = "TicketNotFoundError";
+  }
+}
+
 export type CreateTicketResult = {
   ticket: TicketDetailResponse;
   replayed: boolean;
 };
 
-function toTicketDetail(ticket: TicketWithDetails): TicketDetailResponse {
+export function toTicketDetail(
+  ticket: TicketWithDetails,
+): TicketDetailResponse {
   return {
     id: ticket.id,
     ticketNumber: ticket.ticketNumber,
@@ -119,6 +139,41 @@ function toTicketDetail(ticket: TicketWithDetails): TicketDetailResponse {
       };
     }),
   };
+}
+
+export function parseTicketId(rawTicketId: unknown) {
+  if (
+    typeof rawTicketId !== "string" ||
+    !/^[1-9]\d*$/.test(rawTicketId.trim())
+  ) {
+    throw new TicketIdValidationError();
+  }
+
+  const ticketId = Number(rawTicketId);
+  if (!Number.isSafeInteger(ticketId) || ticketId < 1) {
+    throw new TicketIdValidationError();
+  }
+
+  return ticketId;
+}
+
+export async function getTicketDetail(
+  prisma: TicketStore,
+  requesterHeader: string | undefined,
+  rawTicketId: unknown,
+): Promise<TicketDetailResponse> {
+  const requester = await requireActiveRequester(prisma, requesterHeader);
+  const ticketId = parseTicketId(rawTicketId);
+  const ticket = await prisma.ticket.findFirst({
+    where: { id: ticketId, requesterId: requester.id },
+    include: ticketDetailInclude,
+  });
+
+  if (!ticket) {
+    throw new TicketNotFoundError();
+  }
+
+  return toTicketDetail(ticket);
 }
 
 function hasEquivalentRequest(

@@ -56,3 +56,12 @@ export function validateAttachmentSelection(
     return { file, error: null };
   });
 }
+
+export function validateRemovalReason(value: string): string | null {
+  const reason = value.trim();
+  if (reason.length < 3 || reason.length > 200) {
+    return "Removal reason must contain 3-200 characters after trimming.";
+  }
+
+  return null;
+}
