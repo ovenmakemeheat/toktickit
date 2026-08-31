@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import CreateTicket from "./lab-02/CreateTicket";
+import MyTickets from "./lab-02/MyTickets";
 import RequesterSelection from "./lab-02/RequesterSelection";
 import {
   DevelopmentRequesterProvider,
@@ -9,7 +10,9 @@ import {
 
 function SelectedRequesterScreen() {
   const { selectedRequester, clearRequester } = useDevelopmentRequester();
-  const [activePage, setActivePage] = useState<"summary" | "create">("summary");
+  const [activePage, setActivePage] = useState<
+    "summary" | "tickets" | "create"
+  >("summary");
 
   function changeRequester() {
     setActivePage("summary");
@@ -36,6 +39,14 @@ function SelectedRequesterScreen() {
           </button>
           <button
             type="button"
+            className="btn btn-sm btn-outline-success"
+            aria-current={activePage === "tickets" ? "page" : undefined}
+            onClick={() => setActivePage("tickets")}
+          >
+            My Tickets
+          </button>
+          <button
+            type="button"
             className="btn btn-sm btn-success"
             aria-current={activePage === "create" ? "page" : undefined}
             onClick={() => setActivePage("create")}
@@ -52,7 +63,12 @@ function SelectedRequesterScreen() {
         </nav>
       </header>
 
-      {activePage === "create" ? (
+      {activePage === "tickets" ? (
+        <MyTickets
+          key={selectedRequester?.id}
+          onCreateTicket={() => setActivePage("create")}
+        />
+      ) : activePage === "create" ? (
         <CreateTicket onBack={() => setActivePage("summary")} />
       ) : (
         <section
