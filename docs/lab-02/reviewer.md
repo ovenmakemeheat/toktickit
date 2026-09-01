@@ -11,7 +11,7 @@ and the approval before the feature is merged.
 ## Reviewer
 
 - Reviewer: Pending human assignment
-- Feature PR: Pending PR creation
+- Feature PR: [#64](https://github.com/ovenmakemeheat/toktickit/pull/64), open and awaiting peer review
 - Approval: Pending
 
 Automated implementation and visual evidence are ready for peer review:
@@ -23,6 +23,7 @@ requester lifecycle, and 15 responsive screenshots are stored under
 
 | Date | Reviewer | PR/comment | Author response or decision | Status |
 | --- | --- | --- | --- | --- |
+| 2026-09-02 | Pending | [PR #64](https://github.com/ovenmakemeheat/toktickit/pull/64) | Awaiting peer review and approval. | Open |
 | Pending | Pending | Pending feature PR and review comments | Pending human review | Pending |
 
 ## Review checklist
