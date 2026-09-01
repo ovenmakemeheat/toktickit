@@ -5,6 +5,8 @@
       "*.json",
       "*.jsonc",
       "docs/lab-01/report/build-report.ts",
+      "playwright.config.ts",
+      "e2e/**/*.{js,jsx,ts,tsx,json,jsonc}",
       "client/**/*.{js,jsx,ts,tsx,json,jsonc,css}",
       "server/**/*.{js,jsx,ts,tsx,json,jsonc,css}",
       "!**/.bun",

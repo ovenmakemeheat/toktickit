@@ -1,6 +1,7 @@
 # TokTickIT
 
-TokTickIT is the Lab 1 full-stack foundation for the IT service desk application.
+TokTickIT is the Lab 1 full-stack foundation and Lab 2 requester-facing MVP for
+the IT service desk application.
 
 ## Stack
 
@@ -12,6 +13,7 @@ TokTickIT is the Lab 1 full-stack foundation for the IT service desk application
 - Biome formatter and linter
 - Lefthook staged-file checks
 - Vitest and Supertest
+- Playwright E2E tests and visual evidence
 
 ## Prerequisites
 
@@ -27,6 +29,7 @@ bun run hooks:install
 bun run db:up
 bun run db:generate
 bun run db:validate
+bunx playwright install chromium
 ```
 
 On Windows PowerShell, use `Copy-Item server/.env.example server/.env` instead of `cp`.
@@ -65,6 +68,25 @@ bun run verify
 `verify` runs Biome checks, Lefthook configuration validation, Prisma schema validation, TypeScript checks, tests, and both workspace builds.
 API tests use the exported Express application and do not start a listener. The isolated test database workflow is completed with the API test setup in Issue #30.
 
+The Lab 2 requester flow can be run against the seeded development database with
+the client and API started by Playwright:
+
+```sh
+bun run db:up
+bun run db:migrate
+bun run db:seed
+bun run test:e2e
+```
+
+The E2E test creates a uniquely named ticket, captures responsive screenshots
+under `artifacts/lab-02/screenshots/`, and expects the local database and
+Chromium browser to be available. It does not reset or remove the development
+database.
+
 ## Scope
 
-Lab 1 proves the client, API, Prisma, PostgreSQL, and test tooling as one vertical slice. Authentication, tickets, uploads, and later-lab screens are intentionally out of scope.
+Lab 1 proves the client, API, Prisma, PostgreSQL, and test tooling as one
+vertical slice. Lab 2 adds the temporary Development Requester context, ticket
+creation/list/detail, and permitted attachment lifecycle. Authentication,
+staff workflows, administration, comments, and other later-lab screens remain
+out of scope.

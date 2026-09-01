@@ -109,6 +109,7 @@ textarea.form-control {
 
 .lab2-panel {
   width: min(100%, 38rem);
+  min-width: 0;
   padding: clamp(1.5rem, 4vw, 3rem);
   background: var(--zen-surface);
   border: 1px solid var(--zen-border);
@@ -237,6 +238,8 @@ textarea.form-control {
 }
 
 .lab2-ticket-table-wrapper {
+  width: 100%;
+  min-width: 0;
   max-width: 100%;
   overflow-x: auto;
   border: 1px solid var(--zen-border);
