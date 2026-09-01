@@ -22,7 +22,7 @@
     "enabled": true,
     "indentStyle": "space",
     "indentWidth": 2,
-    "lineEnding": "lf"
+    "lineEnding": "auto"
   },
   "linter": {
     "enabled": true,

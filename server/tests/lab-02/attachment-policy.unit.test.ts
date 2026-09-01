@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   attachmentMaxSizeBytes,
+  sanitizeDisplayName,
   validateAttachmentContent,
   validateAttachmentFile,
   validateRemovalReason,
@@ -89,5 +90,14 @@ describe("attachment policy", () => {
     expect(() => validateRemovalReason("x".repeat(201))).toThrowError(
       "REMOVAL_REASON_INVALID",
     );
+  });
+
+  it("repairs UTF-8 filenames decoded as Latin-1 before sanitizing", () => {
+    const multipartDecodedName = Buffer.from(
+      "evidence-📄.pdf",
+      "utf8",
+    ).toString("latin1");
+
+    expect(sanitizeDisplayName(multipartDecodedName)).toBe("evidence-📄.pdf");
   });
 });

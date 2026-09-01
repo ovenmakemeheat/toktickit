@@ -1,6 +1,6 @@
 # Lab 2 test plan
 
-Status: implementation evidence recorded; database-backed integration passed; peer visual review pending
+Status: automated and visual evidence recorded; peer visual review pending
 
 Issue: #51 - Lab 2 - Sprint specification and test plan
 
@@ -60,7 +60,7 @@ Tests use seeded active Requesters A, B, C, and D plus one inactive Requester, t
 | API-10 | BR-07, BR-23, AC-16, AC-21 | Detail ownership protection | Missing and cross-Requester Ticket requests both return non-disclosing `404`. | `server/tests/lab-02/ticket-detail.api.test.ts` | Passed in the full server run. |
 | API-11 | FR-12, BR-22, AC-17 | Attachment metadata | Active and removed metadata are returned; removed records have no download URL. | `server/tests/lab-02/attachments.api.test.ts` | Passed in the full server run. |
 | API-12 | BR-18, BR-19, BR-20, AC-18 | Attachment constraints | Unsupported type, over-5-MB file, and sixth active file return documented errors and do not create invalid active rows. | `server/tests/lab-02/attachments.api.test.ts` | Passed in the full server run. |
-| API-13 | FR-14, BR-23, AC-19, AC-21 | Active download | Owned active file returns bytes and safe content headers; missing, removed, and cross-owner cases are rejected. | `server/tests/lab-02/attachments.api.test.ts` | Partial; all active-download cases passed except the existing Unicode display-name header assertion. |
+| API-13 | FR-14, BR-23, AC-19, AC-21 | Active download | Owned active file returns bytes and safe content headers; missing, removed, and cross-owner cases are rejected. | `server/tests/lab-02/attachments.api.test.ts` | Passed; all active-download cases, including the Unicode display-name header assertion, passed. |
 | API-14 | FR-15, BR-22, BR-24, AC-20 | Soft removal | Valid reason returns `204`, sets removal metadata, retains the row, and removes active download access. | `server/tests/lab-02/attachments.api.test.ts` | Passed in the full server run. |
 | API-15 | BR-23, BR-24, AC-21 | Attachment ownership and repeat removal | Cross-owner mutation is `404`; removed mutation is `409`; invalid reason is `400`. | `server/tests/lab-02/attachments.api.test.ts` | Passed in the full server run. |
 | API-16 | FR-17, AC-24 | Safe error contract | Validation, missing-resource, ownership, upload, conflict, storage, and unexpected failures use stable safe bodies with no stack/path leakage. | `server/tests/lab-02/create-ticket.api.test.ts` and `server/tests/lab-02/attachments.api.test.ts` | Passed in the full server run. |
@@ -80,15 +80,15 @@ Tests use seeded active Requesters A, B, C, and D plus one inactive Requester, t
 | UI-09 | FR-12, BR-22, AC-17 | Attachment metadata presentation | Active and removed records are visible with correct labels; removed records have no preview/download action. | `client/tests/lab-02/AttachmentSection.test.tsx` | Passed; three AttachmentSection tests passed. |
 | UI-10 | FR-13, BR-18, BR-19, AC-18 | Attachment validation and upload states | Type, size, count, uploading, success, and failure feedback is visible and actionable. | `client/tests/lab-02/AttachmentSection.test.tsx` | Passed; three AttachmentSection tests passed. |
 | UI-11 | FR-14, FR-15, BR-24, AC-19, AC-20, AC-21 | Download, confirmation, reason, and removal | Active download is available; removal requires reason and confirmation; removed state blocks download. | `client/tests/lab-02/AttachmentSection.test.tsx` | Passed; three AttachmentSection tests passed. |
-| UI-12 | FR-18, FR-19, AC-22, AC-23 | Shared labels, focus, live states, and controls | Required labels, accessible names, focus indicators, status text, disabled actions, and keyboard flow are observable. | `client/src/lab-02/ZenGreenResponsive.test.tsx` | Pending |
+| UI-12 | FR-18, FR-19, AC-22, AC-23 | Shared labels, focus, live states, and controls | Required labels, accessible names, focus indicators, status text, disabled actions, and keyboard flow are observable. | `client/tests/lab-02/ZenGreenResponsive.test.tsx` | Passed; four Zen Green contract tests passed. |
 
 ### 3.4 Style, responsive, visual, and E2E tests
 
 | Test ID | Requirement / AC | What it tests | Expected result | Automated test file or evidence | Final result |
 | --- | --- | --- | --- | --- | --- |
-| STYLE-01 | FR-18, AC-22, AC-23 | Zen Green tokens and reusable component states | Required colors, field states, badges, focus, messages, and button behavior match `ui-spec.md`. | `client/src/lab-02/ZenGreenResponsive.test.tsx` | Pending |
+| STYLE-01 | FR-18, AC-22, AC-23 | Zen Green tokens and reusable component states | Required colors, field states, badges, focus, messages, and button behavior match `ui-spec.md`. | `client/tests/lab-02/ZenGreenResponsive.test.tsx` | Passed; four Zen Green contract tests passed. |
 | RESP-01 | FR-18, AC-22 | Desktop, tablet, and mobile layout | No clipping, overlap, hidden action, or horizontal scrolling at >=992px, 768-991px, and <768px. | `e2e/lab-02/requester-ticket-flow.spec.ts` | Passed; the E2E flow checked 1280px, 820px, and 390px viewports. |
-| VIS-01 | FR-18, FR-19, AC-22, AC-23 | Visual checklist and screenshots | Required states and screen representations are captured under the three Lab 2 screenshot directories and reviewed against `ui-spec.md`. | `artifacts/lab-02/screenshots/` and `docs/lab-02/reviewer.md` | Evidence captured: 15 screenshots across five states and three viewports; peer visual review pending. |
+| VIS-01 | FR-18, FR-19, AC-22, AC-23 | Visual checklist and screenshots | Required states and screen representations are captured under the three Lab 2 screenshot directories and reviewed against `ui-spec.md`. | `artifacts/lab-02/screenshots/` and `docs/lab-02/reviewer.md` | Evidence captured and visually inspected: 15 screenshots across five states and three viewports; peer visual review pending. |
 | E2E-01 | AC-01, AC-02, AC-03, AC-04, AC-05, AC-11, AC-12, AC-15 | Full requester flow | Select active Requester, load references, create Ticket, see Ticket Number, find it, switch Requester, and open owned detail. | `e2e/lab-02/requester-ticket-flow.spec.ts` | Passed; one Playwright test completed the requester flow. |
 | E2E-02 | AC-09, AC-10, AC-17, AC-18, AC-19, AC-20, AC-21 | Full Attachment lifecycle | Upload permitted file, observe metadata, download active file, soft-remove with reason, and verify blocked removed download. | `e2e/lab-02/requester-ticket-flow.spec.ts` | Passed; upload, download, soft removal, and `410 ATTACHMENT_REMOVED` checks completed. |
 
@@ -152,12 +152,12 @@ Visual evidence is stored under `artifacts/lab-02/screenshots/create-ticket/`, `
 
 | Phase | Command | Current validation result |
 | --- | --- | --- |
-| Client iteration | `bun run test:client` | Passed; 7 files and 28 tests. |
-| Server iteration | `bun run test:server` | 67 of 68 tests passed; one existing Unicode attachment-header assertion failed in `server/tests/lab-02/attachments.api.test.ts`. |
+| Client iteration | `bun run test:client` | Passed; 8 files and 32 tests. |
+| Server iteration | `bun run test:server` | Passed; 13 files and 69 tests. |
 | Type checking | `bun run typecheck` | Passed; client and server TypeScript checks. |
-| Full test suite | `bun run test` | Not run as a combined command; the separately executed client suite passed and the server suite has the one Unicode assertion failure above. |
-| Browser E2E and evidence | `bun run test:e2e` | Passed; one test completed and generated 15 screenshots under `artifacts/lab-02/screenshots/`. |
-| Full repository gate | `bun run verify` | Blocked at repository-wide Biome formatting because 64 existing CRLF diagnostics are reported; targeted new-file checks pass. |
+| Full test suite | `bun run test` | Passed; 21 files and 101 tests across the client and server suites. |
+| Browser E2E and evidence | `bun run test:e2e` | Passed; one test completed and regenerated 15 screenshots under `artifacts/lab-02/screenshots/` after the active-navigation fix. |
+| Full repository gate | `bun run verify` | Passed; Biome, Lefthook, Prisma validation, client/server type checks, 21 test files with 101 tests, and both workspace builds completed successfully. |
 
 The E2E and visual rows were rerun with Docker PostgreSQL available. The
 handoff must still state the commands run, environment prerequisites, and any
@@ -171,7 +171,7 @@ manual visual checks.
 - `bun run build:client` and `bun run build:server`: passed.
 - `bun run hooks:validate` and `bun run db:validate`: passed.
 - `bun run db:up`, `bun run db:migrate`, `bun run db:seed`, and `bun run db:test:setup`: passed with PostgreSQL at `localhost:15434`.
-- `bun run test:server`: 67 of 68 tests passed; one existing Unicode display-name header assertion failed in `server/tests/lab-02/attachments.api.test.ts`.
+- `bun run test:server`: passed 13 files and 69 tests, including the Unicode display-name header assertion.
 - `bun run test:e2e`: passed one test after validating ticket creation, ownership isolation, detail, upload, download, soft removal, removed-download rejection, and all responsive states; 15 screenshots were generated under `artifacts/lab-02/screenshots/`.
 - `bunx tsc --noEmit --target ES2022 --module NodeNext --moduleResolution NodeNext --strict --skipLibCheck --types node e2e/lab-02/requester-ticket-flow.spec.ts playwright.config.ts`: passed.
 - `bunx playwright test --list`: passed and listed one non-skipped test.

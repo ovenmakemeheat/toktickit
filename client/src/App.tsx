@@ -61,7 +61,9 @@ function SelectedRequesterScreen({ route }: { route: AppRoute }) {
         <nav className="lab2-shell-nav" aria-label="Requester navigation">
           <button
             type="button"
-            className="btn btn-sm btn-outline-success"
+            className={`btn btn-sm ${
+              activePage === "summary" ? "btn-success" : "btn-outline-success"
+            }`}
             aria-current={activePage === "summary" ? "page" : undefined}
             onClick={() => navigate("/")}
           >
@@ -69,7 +71,9 @@ function SelectedRequesterScreen({ route }: { route: AppRoute }) {
           </button>
           <button
             type="button"
-            className="btn btn-sm btn-outline-success"
+            className={`btn btn-sm ${
+              activePage === "tickets" ? "btn-success" : "btn-outline-success"
+            }`}
             aria-current={activePage === "tickets" ? "page" : undefined}
             onClick={() => navigate("/tickets")}
           >
@@ -77,7 +81,9 @@ function SelectedRequesterScreen({ route }: { route: AppRoute }) {
           </button>
           <button
             type="button"
-            className="btn btn-sm btn-success"
+            className={`btn btn-sm ${
+              activePage === "create" ? "btn-success" : "btn-outline-success"
+            }`}
             aria-current={activePage === "create" ? "page" : undefined}
             onClick={() => navigate("/tickets/new")}
           >
