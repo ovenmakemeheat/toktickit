@@ -112,6 +112,13 @@ export function validateAttachmentContent(
   }
 }
 
+function repairMultipartFilenameEncoding(value: string) {
+  const latin1Bytes = Buffer.from(value, "latin1");
+  const decoded = latin1Bytes.toString("utf8");
+
+  return Buffer.from(decoded, "utf8").equals(latin1Bytes) ? decoded : value;
+}
+
 export function validateRemovalReason(value: unknown) {
   if (typeof value !== "string") {
     throw new RemovalReasonInvalidError();
@@ -126,7 +133,7 @@ export function validateRemovalReason(value: unknown) {
 }
 
 export function sanitizeDisplayName(value: string) {
-  const sanitized = [...value]
+  const sanitized = [...repairMultipartFilenameEncoding(value)]
     .filter((character) => {
       const codePoint = character.codePointAt(0) ?? 0;
       return codePoint >= 0x20 && codePoint !== 0x7f;

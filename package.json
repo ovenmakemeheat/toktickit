@@ -27,6 +27,7 @@
     "test": "bun run test:client && bun run test:server",
     "test:client": "bun run --cwd client test",
     "test:server": "bun run --cwd server test",
+    "test:e2e": "playwright test",
     "typecheck": "bun run typecheck:client && bun run typecheck:server",
     "typecheck:client": "bun run --cwd client typecheck",
     "typecheck:server": "bun run --cwd server typecheck",
@@ -38,6 +39,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.7",
+    "@playwright/test": "1.62.1",
     "concurrently": "^9.2.1",
     "lefthook": "2.1.10"
   }
