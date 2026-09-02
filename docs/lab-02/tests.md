@@ -39,10 +39,10 @@ Tests use seeded active Requesters A, B, C, and D plus one inactive Requester, t
 
 | Test ID | Requirement / AC | What it tests | Expected result | Automated test file | Final result |
 | --- | --- | --- | --- | --- | --- |
-| UNIT-01 | BR-01, AC-05 | Ticket Number format and uniqueness retry | Generates `TT-YYYYMMDD-XXXXXX` and retries a collision without returning a duplicate. | `server/tests/lab-02/ticket-number.unit.test.ts` | Passed; 30 unit tests passed across the four unit files. |
-| UNIT-02 | BR-09, BR-10, AC-06, AC-07 | Text normalization and field validation | Trims fields, accepts inclusive boundaries, and rejects empty, too short, too long, and invalid enum values. | `server/tests/lab-02/ticket-validation.unit.test.ts` | Passed; 30 unit tests passed across the four unit files. |
-| UNIT-03 | BR-14, BR-16, BR-17, AC-12 | Ticket query parser and deterministic ordering | Accepts documented parameters, applies defaults, and rejects invalid page, page size, filter, and sort values. | `server/tests/lab-02/ticket-query.unit.test.ts` | Passed; 30 unit tests passed across the four unit files. |
-| UNIT-04 | BR-18, BR-19, BR-20, BR-24, AC-18, AC-20 | Attachment policy | Accepts only permitted type/size/count combinations, generates safe storage keys, and validates removal reasons. | `server/tests/lab-02/attachment-policy.unit.test.ts` | Passed; 30 unit tests passed across the four unit files. |
+| UNIT-01 | BR-01, AC-05 | Ticket Number format and uniqueness retry | Generates `TT-YYYYMMDD-XXXXXX` and retries a collision without returning a duplicate. | `server/tests/lab-02/ticket-number.unit.test.ts` | Passed; 31 unit tests passed across the four unit files, including deterministic collision-retry coverage. |
+| UNIT-02 | BR-09, BR-10, AC-06, AC-07 | Text normalization and field validation | Trims fields, accepts inclusive boundaries, and rejects empty, too short, too long, and invalid enum values. | `server/tests/lab-02/ticket-validation.unit.test.ts` | Passed; 31 unit tests passed across the four unit files. |
+| UNIT-03 | BR-14, BR-16, BR-17, AC-12 | Ticket query parser and deterministic ordering | Accepts documented parameters, applies defaults, and rejects invalid page, page size, filter, and sort values. | `server/tests/lab-02/ticket-query.unit.test.ts` | Passed; 31 unit tests passed across the four unit files. |
+| UNIT-04 | BR-18, BR-19, BR-20, BR-24, AC-18, AC-20 | Attachment policy | Accepts only permitted type/size/count combinations, generates safe storage keys, and validates removal reasons. | `server/tests/lab-02/attachment-policy.unit.test.ts` | Passed; 31 unit tests passed across the four unit files. |
 
 ### 3.2 API and integration tests
 
@@ -69,8 +69,8 @@ Tests use seeded active Requesters A, B, C, and D plus one inactive Requester, t
 
 | Test ID | Requirement / AC | What it tests | Expected result | Automated test file | Final result |
 | --- | --- | --- | --- | --- | --- |
-| UI-01 | FR-01, FR-02, AC-01, AC-02 | Requester Selection initial and loading states | No requester-specific request occurs without selection; active options, loading, empty, failure, labels, and Continue behavior are visible. | `client/tests/lab-02/RequesterSelection.test.tsx` | Passed; six RequesterSelection tests are included in the 28-test client suite. |
-| UI-02 | FR-03, FR-04, BR-06, AC-03 | Select and Change Requester | Shell shows selected name; changing context clears stale list/detail data and reloads the new context. | `client/tests/lab-02/RequesterSelection.test.tsx` | Passed; six RequesterSelection tests are included in the 28-test client suite. |
+| UI-01 | FR-01, FR-02, AC-01, AC-02 | Requester Selection initial and loading states | No requester-specific request occurs without selection; active options, loading, empty, failure, labels, and Continue behavior are visible. | `client/tests/lab-02/RequesterSelection.test.tsx` | Passed; six RequesterSelection tests are included in the 32-test client suite. |
+| UI-02 | FR-03, FR-04, BR-06, AC-03 | Select and Change Requester | Shell shows selected name; changing context clears stale list/detail data and reloads the new context. | `client/tests/lab-02/RequesterSelection.test.tsx` | Passed; six RequesterSelection tests are included in the 32-test client suite. |
 | UI-03 | FR-04, FR-06, FR-07, AC-04, AC-05 | Create Ticket valid form | Active reference controls load, valid fields submit once, success shows generated Ticket Number, and next action is visible. | `client/tests/lab-02/CreateTicket.test.tsx` | Passed; six CreateTicket tests passed. |
 | UI-04 | BR-08, BR-09, BR-10, AC-06 | Create Ticket field validation | Required, trimming, length, priority, and reference errors appear near fields; invalid submit does not call the API. | `client/tests/lab-02/CreateTicket.test.tsx` | Passed; six CreateTicket tests passed. |
 | UI-05 | BR-13, BR-21, AC-08, AC-10 | Busy, failure preservation, and partial upload | Submit disables while busy; API failure preserves values; partial upload keeps Ticket Number and exposes retry. | `client/tests/lab-02/CreateTicket.test.tsx` | Passed; six CreateTicket tests passed. |
@@ -88,7 +88,7 @@ Tests use seeded active Requesters A, B, C, and D plus one inactive Requester, t
 | --- | --- | --- | --- | --- | --- |
 | STYLE-01 | FR-18, AC-22, AC-23 | Zen Green tokens and reusable component states | Required colors, field states, badges, focus, messages, and button behavior match `ui-spec.md`. | `client/tests/lab-02/ZenGreenResponsive.test.tsx` | Passed; four Zen Green contract tests passed. |
 | RESP-01 | FR-18, AC-22 | Desktop, tablet, and mobile layout | No clipping, overlap, hidden action, or horizontal scrolling at >=992px, 768-991px, and <768px. | `e2e/lab-02/requester-ticket-flow.spec.ts` | Passed; the E2E flow checked 1280px, 820px, and 390px viewports. |
-| VIS-01 | FR-18, FR-19, AC-22, AC-23 | Visual checklist and screenshots | Required states and screen representations are captured under the three Lab 2 screenshot directories and reviewed against `ui-spec.md`. | `artifacts/lab-02/screenshots/` and `docs/lab-02/reviewer.md` | Evidence captured and visually inspected: 15 screenshots across five states and three viewports; peer visual review pending. |
+| VIS-01 | FR-18, FR-19, AC-22, AC-23 | Visual checklist and screenshots | Required states and screen representations are captured under the three Lab 2 screenshot directories and reviewed against `ui-spec.md`. | `artifacts/lab-02/screenshots/` and `docs/lab-02/reviewer.md` | Evidence captured and visually inspected: 36 screenshots across 12 states and three viewports, including loading, empty, failure, validation, invalid attachment, and blocked download; peer visual review pending. |
 | E2E-01 | AC-01, AC-02, AC-03, AC-04, AC-05, AC-11, AC-12, AC-15 | Full requester flow | Select active Requester, load references, create Ticket, see Ticket Number, find it, switch Requester, and open owned detail. | `e2e/lab-02/requester-ticket-flow.spec.ts` | Passed; one Playwright test completed the requester flow. |
 | E2E-02 | AC-09, AC-10, AC-17, AC-18, AC-19, AC-20, AC-21 | Full Attachment lifecycle | Upload permitted file, observe metadata, download active file, soft-remove with reason, and verify blocked removed download. | `e2e/lab-02/requester-ticket-flow.spec.ts` | Passed; upload, download, soft removal, and `410 ATTACHMENT_REMOVED` checks completed. |
 
@@ -146,18 +146,18 @@ e2e/lab-02/
 
 Additional unit, requester-selection, and responsive test files listed in the matrix are allowed and expected where they keep the contract boundaries clear.
 
-Visual evidence is stored under `artifacts/lab-02/screenshots/create-ticket/`, `artifacts/lab-02/screenshots/my-tickets/`, and `artifacts/lab-02/screenshots/ticket-detail/`. Review notes and AI-use evidence are stored in `docs/lab-02/reviewer.md` and `docs/lab-02/ai-use.md` during later Issues.
+Visual evidence is stored under `artifacts/lab-02/screenshots/create-ticket/`, `artifacts/lab-02/screenshots/my-tickets/`, and `artifacts/lab-02/screenshots/ticket-detail/`. The evidence prefixes are `create-ticket-reference-loading`, `create-ticket-validation`, `create-ticket-api-failure`, `create-ticket-success`, `my-tickets-empty`, `my-tickets-api-failure`, `my-tickets-filtered`, `my-tickets-ownership-isolation`, `ticket-detail-invalid-attachment`, `ticket-detail-active`, `ticket-detail-blocked-download`, and `ticket-detail-removed`; each has desktop, tablet, and mobile captures. Review notes and AI-use evidence are stored in `docs/lab-02/reviewer.md` and `docs/lab-02/ai-use.md` during later Issues.
 
 ## 6. Planned commands and results
 
 | Phase | Command | Current validation result |
 | --- | --- | --- |
 | Client iteration | `bun run test:client` | Passed; 8 files and 32 tests. |
-| Server iteration | `bun run test:server` | Passed; 13 files and 69 tests. |
+| Server iteration | `bun run test:server` | Passed; 13 files and 70 tests. |
 | Type checking | `bun run typecheck` | Passed; client and server TypeScript checks. |
-| Full test suite | `bun run test` | Passed; 21 files and 101 tests across the client and server suites. |
-| Browser E2E and evidence | `bun run test:e2e` | Passed; one test completed and regenerated 15 screenshots under `artifacts/lab-02/screenshots/` after the active-navigation fix. |
-| Full repository gate | `bun run verify` | Passed; Biome, Lefthook, Prisma validation, client/server type checks, 21 test files with 101 tests, and both workspace builds completed successfully. |
+| Full test suite | `bun run test` | Passed; 21 files and 102 tests across the client and server suites. |
+| Browser E2E and evidence | `bun run test:e2e` | Passed; one test completed and regenerated 36 screenshots across the required visual states and three viewports. |
+| Full repository gate | `bun run verify` | Passed after reviewer-feedback fixes; Biome, Lefthook, Prisma validation, client/server type checks, 21 test files with 102 tests, and both workspace builds completed successfully. |
 
 The E2E and visual rows were rerun with Docker PostgreSQL available. The
 handoff must still state the commands run, environment prerequisites, and any
@@ -165,13 +165,13 @@ manual visual checks.
 
 ## 7. Issue #57 execution record
 
-- `bun run test:client`: passed, 7 files and 28 tests.
-- `bun run --cwd server test -- tests/lab-02/ticket-number.unit.test.ts tests/lab-02/ticket-validation.unit.test.ts tests/lab-02/ticket-query.unit.test.ts tests/lab-02/attachment-policy.unit.test.ts`: passed, 4 files and 30 tests.
+- `bun run test:client`: passed, 8 files and 32 tests.
+- `bun run --cwd server test -- tests/lab-02/ticket-number.unit.test.ts tests/lab-02/ticket-validation.unit.test.ts tests/lab-02/ticket-query.unit.test.ts tests/lab-02/attachment-policy.unit.test.ts`: passed, 4 files and 31 tests, including the deterministic Ticket Number collision-retry test.
 - `bun run typecheck`: passed for client and server.
 - `bun run build:client` and `bun run build:server`: passed.
 - `bun run hooks:validate` and `bun run db:validate`: passed.
 - `bun run db:up`, `bun run db:migrate`, `bun run db:seed`, and `bun run db:test:setup`: passed with PostgreSQL at `localhost:15434`.
-- `bun run test:server`: passed 13 files and 69 tests, including the Unicode display-name header assertion.
-- `bun run test:e2e`: passed one test after validating ticket creation, ownership isolation, detail, upload, download, soft removal, removed-download rejection, and all responsive states; 15 screenshots were generated under `artifacts/lab-02/screenshots/`.
+- `bun run test:server`: passed 13 files and 70 tests, including the Unicode display-name header assertion and deterministic collision-retry test.
+- `bun run test:e2e`: passed one test after validating ticket creation, ownership isolation, detail, upload, download, soft removal, removed-download rejection, all required loading/empty/failure/validation/invalid-attachment/blocked-download states, and all responsive viewports; 36 screenshots were generated under `artifacts/lab-02/screenshots/`.
 - `bunx tsc --noEmit --target ES2022 --module NodeNext --moduleResolution NodeNext --strict --skipLibCheck --types node e2e/lab-02/requester-ticket-flow.spec.ts playwright.config.ts`: passed.
 - `bunx playwright test --list`: passed and listed one non-skipped test.

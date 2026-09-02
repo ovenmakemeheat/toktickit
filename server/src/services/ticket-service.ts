@@ -16,6 +16,7 @@ type TicketStore = Pick<
   PrismaClient,
   "developmentRequester" | "category" | "relatedSystem" | "ticket"
 >;
+type TicketNumberGenerator = (ticketDate: Date) => string;
 
 export const ticketDetailInclude = {
   requester: { select: { id: true, name: true } },
@@ -213,6 +214,7 @@ export async function createTicket(
   requesterHeader: string | undefined,
   rawInput: unknown,
   ticketDate = new Date(),
+  ticketNumberGenerator: TicketNumberGenerator = generateTicketNumber,
 ): Promise<CreateTicketResult> {
   const requester = await requireActiveRequester(prisma, requesterHeader);
   const input = validateCreateTicketInput(rawInput);
@@ -252,7 +254,7 @@ export async function createTicket(
     try {
       const ticket = await prisma.ticket.create({
         data: {
-          ticketNumber: generateTicketNumber(ticketDate),
+          ticketNumber: ticketNumberGenerator(ticketDate),
           clientRequestId: input.clientRequestId,
           ticketDate,
           requesterId: requester.id,

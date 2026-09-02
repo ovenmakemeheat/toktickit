@@ -169,6 +169,11 @@ describe("Issue #55 AttachmentSection", () => {
     const user = userEvent.setup();
 
     renderAttachments();
+    expect(
+      screen.getByText(
+        "Download unavailable: removed attachments cannot be previewed or downloaded.",
+      ),
+    ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Download" }));
     expect(fetchMock.mock.calls[0]?.[1]).toEqual({
       headers: { "X-Development-Requester-Id": "1" },

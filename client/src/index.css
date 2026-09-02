@@ -512,6 +512,12 @@ textarea.form-control {
   color: var(--zen-error);
 }
 
+.lab2-attachment-unavailable {
+  color: var(--zen-error);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
 .lab2-attachment-removal {
   display: grid;
   gap: 0.5rem;

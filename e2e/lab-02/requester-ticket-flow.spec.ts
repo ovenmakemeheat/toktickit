@@ -27,6 +27,18 @@ type UploadedAttachment = {
   displayName: string;
 };
 
+const emptyTicketList = {
+  items: [],
+  page: 1,
+  pageSize: 10,
+  totalItems: 0,
+  totalPages: 0,
+};
+
+const unavailableApiResponse = {
+  error: { code: "INTERNAL_ERROR" },
+};
+
 async function prepareEvidenceDirectories(rootDir: string) {
   await Promise.all(
     evidenceDirectories.map((directory) =>
@@ -132,6 +144,14 @@ test.describe("Issue #57 requester ticket flow", () => {
     await page.getByRole("button", { name: "Continue", exact: true }).click();
     await expect(page.getByText("Testing context: Requester A")).toBeVisible();
 
+    let releaseReferenceLoading!: () => void;
+    const referenceLoadingReleased = new Promise<void>((resolve) => {
+      releaseReferenceLoading = resolve;
+    });
+    await page.route("**/api/categories", async (route) => {
+      await referenceLoadingReleased;
+      await route.continue();
+    });
     await page
       .getByRole("button", { name: "Create Ticket", exact: true })
       .click();
@@ -139,8 +159,46 @@ test.describe("Issue #57 requester ticket flow", () => {
       page.getByRole("heading", { name: "Create Ticket", exact: true }),
     ).toBeVisible();
     await expect(
+      page.getByText("Loading Categories and Related Systems...", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await captureResponsiveEvidence(
+      page,
+      "create-ticket",
+      "create-ticket-reference-loading",
+      () => [
+        page.getByRole("heading", { name: "Create Ticket", exact: true }),
+        page.getByText("Loading Categories and Related Systems...", {
+          exact: true,
+        }),
+      ],
+    );
+    releaseReferenceLoading();
+    await expect(
       page.getByRole("combobox", { name: "Category" }),
     ).toBeVisible();
+    await page.unroute("**/api/categories");
+
+    await page.getByRole("button", { name: "Submit", exact: true }).click();
+    await expect(
+      page.getByText("Category is required.", { exact: true }),
+    ).toBeVisible();
+    await captureResponsiveEvidence(
+      page,
+      "create-ticket",
+      "create-ticket-validation",
+      () => [
+        page.getByRole("heading", { name: "Create Ticket", exact: true }),
+        page.getByText("Category is required.", { exact: true }),
+        page.getByText(
+          "Description must contain 20-4000 characters after trimming.",
+          {
+            exact: true,
+          },
+        ),
+      ],
+    );
 
     await page.getByRole("combobox", { name: "Category" }).selectOption({
       label: "Hardware",
@@ -153,6 +211,41 @@ test.describe("Issue #57 requester ticket flow", () => {
       .selectOption("HIGH");
     await page.getByRole("textbox", { name: "Summary" }).fill(summary);
     await page.getByRole("textbox", { name: "Description" }).fill(description);
+
+    await page.route("**/api/tickets", async (route) => {
+      if (route.request().method() === "POST") {
+        await route.fulfill({
+          status: 503,
+          contentType: "application/json",
+          body: JSON.stringify(unavailableApiResponse),
+        });
+        return;
+      }
+
+      await route.continue();
+    });
+    await page.getByRole("button", { name: "Submit", exact: true }).click();
+    await expect(
+      page.getByRole("alert").filter({
+        hasText: "Unable to connect to TokTickIT API",
+      }),
+    ).toBeVisible();
+    await expect(page.getByRole("textbox", { name: "Summary" })).toHaveValue(
+      summary,
+    );
+    await captureResponsiveEvidence(
+      page,
+      "create-ticket",
+      "create-ticket-api-failure",
+      () => [
+        page.getByRole("heading", { name: "Create Ticket", exact: true }),
+        page.getByRole("alert").filter({
+          hasText: "Unable to connect to TokTickIT API",
+        }),
+        page.getByRole("textbox", { name: "Summary" }),
+      ],
+    );
+    await page.unroute("**/api/tickets");
 
     const createResponsePromise = page.waitForResponse(
       (response) =>
@@ -206,6 +299,102 @@ test.describe("Issue #57 requester ticket flow", () => {
     );
 
     await page.setViewportSize(viewportSizes.desktop);
+    let requesterDId = "";
+    await page.route("**/api/tickets**", async (route) => {
+      const request = route.request();
+      const requestUrl = new URL(request.url());
+      if (
+        request.method() === "GET" &&
+        requestUrl.pathname === "/api/tickets" &&
+        request.headers()["x-development-requester-id"] === requesterDId
+      ) {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(emptyTicketList),
+        });
+        return;
+      }
+
+      await route.continue();
+    });
+    await page
+      .getByRole("button", { name: "Change Requester", exact: true })
+      .click();
+    await expect(
+      page.getByRole("combobox", { name: "Development Requester" }),
+    ).toBeVisible();
+    requesterDId = await chooseRequester(page, "Requester D");
+    await page.getByRole("button", { name: "Continue", exact: true }).click();
+    await page.getByRole("button", { name: "My Tickets", exact: true }).click();
+    await expect(
+      page.getByRole("heading", { name: "My Tickets", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("Requester D has no tickets yet.", { exact: true }),
+    ).toBeVisible();
+    await captureResponsiveEvidence(
+      page,
+      "my-tickets",
+      "my-tickets-empty",
+      () => [
+        page.getByRole("heading", { name: "My Tickets", exact: true }),
+        page.getByText("Requester D has no tickets yet.", { exact: true }),
+        page.getByRole("button", { name: "Create Ticket", exact: true }).last(),
+      ],
+    );
+    await page.unroute("**/api/tickets**");
+
+    let requesterCId = "";
+    await page.route("**/api/tickets**", async (route) => {
+      const request = route.request();
+      const requestUrl = new URL(request.url());
+      if (
+        request.method() === "GET" &&
+        requestUrl.pathname === "/api/tickets" &&
+        request.headers()["x-development-requester-id"] === requesterCId
+      ) {
+        await route.fulfill({
+          status: 503,
+          contentType: "application/json",
+          body: JSON.stringify(unavailableApiResponse),
+        });
+        return;
+      }
+
+      await route.continue();
+    });
+    await page
+      .getByRole("button", { name: "Change Requester", exact: true })
+      .click();
+    await expect(
+      page.getByRole("combobox", { name: "Development Requester" }),
+    ).toBeVisible();
+    requesterCId = await chooseRequester(page, "Requester C");
+    await page.getByRole("button", { name: "Continue", exact: true }).click();
+    await page.getByRole("button", { name: "My Tickets", exact: true }).click();
+    await expect(
+      page.getByRole("heading", { name: "My Tickets", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("alert").filter({
+        hasText: "Your current ticket list was not kept as current",
+      }),
+    ).toBeVisible();
+    await captureResponsiveEvidence(
+      page,
+      "my-tickets",
+      "my-tickets-api-failure",
+      () => [
+        page.getByRole("heading", { name: "My Tickets", exact: true }),
+        page.getByRole("alert").filter({
+          hasText: "Your current ticket list was not kept as current",
+        }),
+        page.getByRole("button", { name: "Try again", exact: true }),
+      ],
+    );
+    await page.unroute("**/api/tickets**");
+
     await page
       .getByRole("button", { name: "Change Requester", exact: true })
       .click();
@@ -264,6 +453,32 @@ test.describe("Issue #57 requester ticket flow", () => {
     ).toBeVisible();
 
     const attachmentInput = page.getByLabel("Upload attachment");
+    await attachmentInput.setInputFiles({
+      name: "lab2-invalid-attachment.exe",
+      mimeType: "application/octet-stream",
+      buffer: Buffer.from("not an allowed attachment"),
+    });
+    await expect(
+      page.getByText("Only JPG, JPEG, PNG, WEBP, and PDF files are allowed.", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await captureResponsiveEvidence(
+      page,
+      "ticket-detail",
+      "ticket-detail-invalid-attachment",
+      () => [
+        page.getByRole("heading", {
+          name: createdTicket.ticketNumber,
+          exact: true,
+        }),
+        page.getByRole("heading", { name: "Attachments", exact: true }),
+        page.getByText(
+          "Only JPG, JPEG, PNG, WEBP, and PDF files are allowed.",
+          { exact: true },
+        ),
+      ],
+    );
     await attachmentInput.setInputFiles({
       name: attachmentName,
       mimeType: "application/pdf",
@@ -371,6 +586,12 @@ test.describe("Issue #57 requester ticket flow", () => {
     await expect(
       page.getByRole("button", { name: "Download", exact: true }),
     ).toHaveCount(0);
+    await expect(
+      removedAttachment.getByText(
+        "Download unavailable: removed attachments cannot be previewed or downloaded.",
+        { exact: true },
+      ),
+    ).toBeVisible();
 
     const removedDownloadResponse = await page.request.get(
       new URL(
@@ -383,6 +604,23 @@ test.describe("Issue #57 requester ticket flow", () => {
     expect(await removedDownloadResponse.json()).toMatchObject({
       error: { code: "ATTACHMENT_REMOVED" },
     });
+
+    await captureResponsiveEvidence(
+      page,
+      "ticket-detail",
+      "ticket-detail-blocked-download",
+      () => [
+        page.getByRole("heading", {
+          name: createdTicket.ticketNumber,
+          exact: true,
+        }),
+        page.getByRole("heading", { name: "Attachments", exact: true }),
+        removedAttachment.getByText(
+          "Download unavailable: removed attachments cannot be previewed or downloaded.",
+          { exact: true },
+        ),
+      ],
+    );
 
     await captureResponsiveEvidence(
       page,

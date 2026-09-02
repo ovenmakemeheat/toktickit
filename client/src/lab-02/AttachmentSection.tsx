@@ -308,15 +308,21 @@ export default function AttachmentSection({
                 {attachment.isActive ? (
                   <span className="lab2-attachment-ready">Active</span>
                 ) : (
-                  <span className="lab2-attachment-removed">
-                    Removed
-                    {attachment.removedAt
-                      ? ` ${formatDate(attachment.removedAt)}`
-                      : ""}
-                    {attachment.removalReason
-                      ? `: ${attachment.removalReason}`
-                      : ""}
-                  </span>
+                  <>
+                    <span className="lab2-attachment-removed">
+                      Removed
+                      {attachment.removedAt
+                        ? ` ${formatDate(attachment.removedAt)}`
+                        : ""}
+                      {attachment.removalReason
+                        ? `: ${attachment.removalReason}`
+                        : ""}
+                    </span>
+                    <span className="lab2-attachment-unavailable">
+                      Download unavailable: removed attachments cannot be
+                      previewed or downloaded.
+                    </span>
+                  </>
                 )}
               </div>
 

@@ -15,8 +15,9 @@ and the approval before the feature is merged.
 - Approval: Pending
 
 Automated implementation and visual evidence are ready for peer review:
-`bun run test` passed 21 files and 101 tests, `bun run test:e2e` passed the
-requester lifecycle, and 15 responsive screenshots are stored under
+`bun run test` passed 21 files and 102 tests, `bun run test:e2e` passed the
+requester lifecycle, and 36 responsive screenshots covering all required
+visual states are stored under
 `artifacts/lab-02/screenshots/`.
 
 ## Review log
