@@ -217,7 +217,8 @@ main
     ├── feature/8-my-tickets            (#54)
     ├── feature/9-ticket-detail         (#55)
     ├── feature/10-zen-green            (#56)
-    └── feature/11-e2e-evidence          (#57)
+    ├── feature/11-e2e-evidence          (#57)
+    └── feature/12-report-compliance     (#65)
 
 Each feature branch ── peer-reviewed PR ──> lab2-staging
 lab2-staging ── release PR after integration ──> main
@@ -234,10 +235,11 @@ The dependency order in the table below controls implementation readiness; it do
 | #55 | `feature/9-ticket-detail` | #51, #52, #53 |
 | #56 | `feature/10-zen-green` | #51, #53, #54, #55 |
 | #57 | `feature/11-e2e-evidence` | #51, #52, #53, #54, #55, #56 |
+| #65 | `feature/12-report-compliance` | #57 |
 
 Branch workflow:
 
-- The seven Lab 2 feature branches above are created locally from `lab2-staging`; the active branch is `feature/5-sprint-specification`.
+- The eight Lab 2 feature branches above are created locally from `lab2-staging`; the active report branch is `feature/12-report-compliance`.
 - Each feature branch targets `lab2-staging` through its own peer-reviewed Pull Request linked to the corresponding Issue.
 - The PR author does not merge their own PR. The reviewer merges only after review comments have been answered.
 - Run integration testing on `lab2-staging` after the feature PRs are integrated.
@@ -265,4 +267,4 @@ Before handoff, also review `git status`, `git diff --check`, changed dependenci
 
 ## Immediate next action
 
-Review and approve `specification.md`, `tests.md`, `ui-spec.md`, and `api-spec.md` on `feature/5-sprint-specification`. Then open the linked PR into `lab2-staging`; after the reviewer merges it, begin product implementation on `feature/6-requester-context`.
+Complete the single submission PDF for Issue #65 on `feature/12-report-compliance`, then open its linked PR into `lab2-staging` for peer review.
