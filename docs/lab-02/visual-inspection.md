@@ -1,7 +1,7 @@
 # Lab 2 visual inspection record
 
 Scope: Issues #56-#57 - Lab 2 Zen Green UI, visual inspection, and E2E evidence
-Date: 2026-09-03 (updated)
+Date: 2026-09-04 (updated)
 Contract: `docs/lab-02/ui-spec.md`
 
 This record covers the integrated Lab 2 visual work on `lab2-staging`, not only
@@ -93,6 +93,12 @@ requester selection, selected-user display, Change Requester, the initial Create
 Ticket form, the submitting/busy state, mixed attachment validation, and a
 non-default filter/sort/page state. These captures are stored under
 `docs/lab-02/report/evidence/`.
+
+The `browser-use` CLI additionally captured the remote `lab2-staging` repository
+tree/README, `.gitignore`, rendered `specification.md`, and merged PR #58
+timeline. These are repository and contract-sequence evidence, not final-main
+application or release evidence. The Project board could not be captured because
+GitHub rendered its Sign in page in the CLI session.
 
 - Record the human visual review, approval evidence, and final-main rerun in
   `reviewer.md` after the release PR is merged.

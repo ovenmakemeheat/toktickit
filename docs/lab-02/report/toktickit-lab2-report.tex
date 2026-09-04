@@ -128,7 +128,7 @@
     Stack & React, TypeScript, Vite, Bootstrap, Express, Prisma, PostgreSQL \\
   \end{tabular}
   \vfill
-  \statusnote{\textbf{DRAFT - 2026-09-04.} Lab 2 implementation and recorded evidence are integrated on \texttt{lab2-staging}. Eight additional report-state captures are now recorded. The release PR to final \texttt{main}, final-main test output, human visual sign-off, and several submission captures are still pending.}
+  \statusnote{\textbf{DRAFT - 2026-09-04.} Lab 2 implementation and recorded evidence are integrated on \texttt{lab2-staging}. Eight UI report-state captures and five browser-use repository/contract captures are now recorded. The release PR to final \texttt{main}, final-main test output, human visual sign-off, and several submission captures are still pending.}
   \vfill
   {\small One concise PDF is required by the labsheet; this source is the LaTeX draft for that PDF.}
 \end{titlepage}
@@ -178,15 +178,20 @@ The complete review index and response summaries are in
 author responses for PRs \#59, \#61, \#62, and \#64. GitHub currently exposes
 human ready-to-merge or approve comments, but its formal \texttt{reviewDecision}
 is empty for PRs \#58-\#64; the report must not label those comments as formal
-\texttt{APPROVED} reviews. The project-board state also needs a human capture;
-the current CLI token cannot read the board without the \texttt{read:project}
-scope.
+\texttt{APPROVED} reviews. The Project board was opened with the
+\texttt{browser-use} CLI, but GitHub rendered its Sign in page, so the final
+board state still needs an authenticated human capture.
 
 \textbf{Required Part 1 captures}
 
 \twocaptures{docs/lab-02/report/evidence/final-main-history.png}{Capture final main history after the release PR is merged.}{Final \texttt{main} history showing feature branches, staging merges, and the release merge.}{docs/lab-02/report/evidence/final-kanban.png}{Capture the final Lab 2 Project board.}{Final Kanban with the Lab 2 Issues in Done.}
 
-\twocaptures{docs/lab-02/report/evidence/readme-gitignore.png}{Capture rendered README and .gitignore content.}{README and .gitignore evidence.}{docs/lab-02/report/evidence/repository-tree.png}{Capture the repository tree in the IDE.}{Repository directory structure.}
+\twocaptures{docs/lab-02/report/evidence/readme.png}{Rendered README on \texttt{lab2-staging}.}{Repository README and Lab 2 setup/scope summary.}{docs/lab-02/report/evidence/gitignore.png}{Rendered .gitignore on \texttt{lab2-staging}.}{Secrets, dependencies, build output, and LaTeX artifact exclusions.}
+
+The repository tree capture was taken from the GitHub branch view with
+\texttt{browser-use}; it shows the remote \texttt{lab2-staging} tree and the
+rendered README. It is repository evidence, not final-\texttt{main} release
+evidence.
 
 \section{Answer Part 2: Spec DD}
 
@@ -201,9 +206,10 @@ GitHub records the contract commit as
 \href{https://github.com/ovenmakemeheat/toktickit/commit/8f372bd5f7dc687686b61273817c30e9ce24d14b}{\texttt{8f372bd}}
 (2026-08-24 06:30 UTC). PR \#58 was opened at 06:31 UTC and merged into
 \texttt{lab2-staging} at 09:14 UTC; the next implementation PR, PR \#59, was
-opened later that day. This is the available timestamp evidence for the
-contract-before-implementation sequence; the final report still needs a
-readable screenshot of the source and PR timeline.
+opened later that day. The browser-use capture below shows PR \#58's merged
+state, source branch, contract-only summary, commit \texttt{8f372bd}, and merge
+into \texttt{lab2-staging}; this supports the contract-before-implementation
+sequence. Final-\texttt{main} release evidence remains pending.
 
 \begin{center}
 \small
@@ -221,9 +227,9 @@ readable screenshot of the source and PR timeline.
 
 \textbf{Rendered contract evidence}
 
-\statusnote{The source contract is complete and implemented on \texttt{lab2-staging}. The final report still needs a readable rendered copy and one screenshot proving that the specification existed before the main implementation PRs were completed.}
+\statusnote{The source contract is complete and implemented on \texttt{lab2-staging}. The browser-use captures below provide a rendered contract view and the merged contract PR timeline. They are staging evidence; final-\texttt{main} release evidence remains pending.}
 
-\twocaptures{docs/lab-02/report/evidence/spec-before-implementation.png}{Capture the specification commit before implementation PR completion.}{Specification-before-implementation proof, associated with the contract PR.}{docs/lab-02/report/evidence/specification-rendered.png}{Capture the rendered specification.}{Rendered \texttt{specification.md} with numbered FR, BR, AC, and DoD sections.}
+\twocaptures{docs/lab-02/report/evidence/spec-before-implementation.png}{Merged contract PR timeline captured with \texttt{browser-use}.}{PR \#58 source branch, contract-only summary, commit, and merge into \texttt{lab2-staging}.}{docs/lab-02/report/evidence/specification-rendered.png}{Rendered specification captured with \texttt{browser-use}.}{Rendered \texttt{specification.md} with numbered FR, BR, AC, and DoD sections.}
 
 \section{Answer Part 3: Test DD and Traceability}
 

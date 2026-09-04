@@ -18,17 +18,18 @@ As of 2026-09-04, the whole Lab 2 implementation is integrated on
 `lab2-staging` at `83da75e`. Issues #51-#57 are closed and PRs #58-#64 are
 merged by the human reviewer `MadMax168`. The active report branch is
 `feature/12-report-compliance`; it contains the LaTeX draft, checkpoint PDF,
-and collected report-state evidence. `main` remains at `b9903e8`,
+and collected report-state and browser-use repository/contract evidence. `main` remains at `b9903e8`,
 and no Lab 2 release PR to `main` exists. Issue #65 remains open. The Project
-board status is not asserted because the current GitHub token lacks the
-`read:project` scope.
+board status is not asserted because both the current token and the
+`browser-use` CLI session require GitHub authentication for the board.
 
 The recorded staging validation passes: 8 client test files/32 tests, 13
 server test files/70 tests, both builds, type checks, hooks/Prisma validation,
 and `bun run verify`. Issue #57 records one non-skipped lifecycle E2E flow and
 36 responsive screenshots; the report branch adds one targeted evidence test
-and eight desktop report captures. The final submission is not complete because
-final-`main` reruns and human visual/approval evidence remain pending.
+and eight desktop report captures. Five additional repository/contract captures
+were collected with the `browser-use` CLI. The final submission is not complete
+because final-`main` reruns and human visual/approval evidence remain pending.
 
 ## Scope boundary
 
@@ -213,7 +214,7 @@ Capture evidence under:
 - `artifacts/lab-02/screenshots/my-tickets/`
 - `artifacts/lab-02/screenshots/ticket-detail/`
 
-Capture desktop at `>= 992 px`, tablet at `768-991 px`, and mobile below `768 px`. Include the states required for the nine submission parts: requester selection, reference-data loading, invalid form, submitting, success with backend Ticket Number, API failure with preserved values, invalid attachment, ownership isolation, search/filter/sort/page, empty/no-results, active download, soft removal, blocked removed download, and responsive visual checks. The current 36-file inventory covers 12 state prefixes. The report branch adds dedicated requester-selection, initial-form, submitting, mixed-attachment, and query-control captures under `docs/lab-02/report/evidence/`.
+Capture desktop at `>= 992 px`, tablet at `768-991 px`, and mobile below `768 px`. Include the states required for the nine submission parts: requester selection, reference-data loading, invalid form, submitting, success with backend Ticket Number, API failure with preserved values, invalid attachment, ownership isolation, search/filter/sort/page, empty/no-results, active download, soft removal, blocked removed download, and responsive visual checks. The current 36-file inventory covers 12 state prefixes. The report branch adds dedicated requester-selection, initial-form, submitting, mixed-attachment, and query-control captures under `docs/lab-02/report/evidence/`. Use `browser-use` CLI captures for repository tree/README, `.gitignore`, rendered specification, and the merged contract PR timeline; do not claim staging captures as final-`main` evidence.
 
 ### 9. Review, integration, and submission
 
