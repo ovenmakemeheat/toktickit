@@ -1,0 +1,410 @@
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[a4paper,margin=15mm,headheight=14pt]{geometry}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{float}
+\usepackage{fontspec}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{microtype}
+\usepackage{parskip}
+\usepackage{tabularx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+
+\definecolor{ink}{HTML}{1F2937}
+\definecolor{muted}{HTML}{64748B}
+\definecolor{accent}{HTML}{006B3C}
+\definecolor{secondary}{HTML}{0B7A46}
+\definecolor{pale}{HTML}{EAF6EF}
+\definecolor{panel}{HTML}{F5F7F6}
+\definecolor{pending}{HTML}{FEF3C7}
+\definecolor{line}{HTML}{CBD5E1}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=accent,
+  urlcolor=secondary,
+  pdftitle={TokTickIT Lab 2 Report Draft},
+  pdfauthor={GUNTEE DOUNGMANEE},
+}
+
+\setmainfont{Latin Modern Roman}
+\setlength{\parindent}{0pt}
+\setlist{nosep,leftmargin=*}
+\setlist[itemize]{label=\textcolor{accent}{\small\textbullet}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{TokTickIT Lab 2}
+\rhead{Submission evidence draft}
+\cfoot{\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+
+\newcommand{\captureplaceholder}[1]{%
+  \fcolorbox{muted}{pending}{%
+    \parbox[c][0.18\textheight][c]{0.93\linewidth}{%
+      \centering\textcolor{ink}{\textbf{Evidence pending}}\\[3pt]
+      \small #1
+    }%
+  }%
+}
+
+\newcommand{\evidenceimage}[2]{%
+  \IfFileExists{#1}{%
+    \includegraphics[width=\linewidth,height=0.18\textheight,keepaspectratio]{#1}%
+  }{\captureplaceholder{#2}}%
+}
+
+\newcommand{\workflowimage}[2]{%
+  \IfFileExists{#1}{%
+    \includegraphics[width=\linewidth,height=0.25\textheight,keepaspectratio]{#1}%
+  }{\captureplaceholder{#2}}%
+}
+
+\newcommand{\twocaptures}[6]{%
+\begin{figure}[H]
+  \centering
+  \begin{minipage}[t]{0.48\linewidth}
+    \centering
+    \evidenceimage{#1}{#2}
+    \captionof{figure}{#3}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\linewidth}
+    \centering
+    \evidenceimage{#4}{#5}
+    \captionof{figure}{#6}
+  \end{minipage}
+\end{figure}
+}
+
+\newcommand{\threecapture}[9]{%
+\begin{figure}[H]
+  \centering
+  \begin{minipage}[t]{0.31\linewidth}
+    \centering
+    \evidenceimage{#1}{#2}
+    \captionof{figure}{#3}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.31\linewidth}
+    \centering
+    \evidenceimage{#4}{#5}
+    \captionof{figure}{#6}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.31\linewidth}
+    \centering
+    \evidenceimage{#7}{#8}
+    \captionof{figure}{#9}
+  \end{minipage}
+\end{figure}
+}
+
+\newcommand{\statusnote}[1]{%
+  \fcolorbox{accent}{pale}{\parbox{0.96\linewidth}{\small #1}}%
+}
+
+\begin{document}
+
+\begin{titlepage}
+  \thispagestyle{empty}
+  \vspace*{15mm}
+  {\Large\textcolor{accent}{CPE 334 \textbar\ Lab 2}}\par
+  \vspace{8mm}
+  {\Huge\bfseries TokTickIT}\par
+  \vspace{3mm}
+  {\Large Requester-facing ticket workflow}\par
+  \vfill
+  \begin{tabular}{@{}>{\bfseries}p{42mm}p{105mm}@{}}
+    Student & GUNTEE DOUNGMANEE \\
+    Repository & \href{https://github.com/ovenmakemeheat/toktickit}{ovenmakemeheat/toktickit} \\
+    Report Issue & \href{https://github.com/ovenmakemeheat/toktickit/issues/65}{Issue \#65 - Lab 2 final submission report} \\
+    Integrated baseline & \texttt{lab2-staging} at \texttt{83da75e} \\
+    Stable branch & \texttt{main} at \texttt{b9903e8} (Lab 1 release) \\
+    Stack & React, TypeScript, Vite, Bootstrap, Express, Prisma, PostgreSQL \\
+  \end{tabular}
+  \vfill
+  \statusnote{\textbf{DRAFT - 2026-09-04.} Lab 2 implementation and recorded evidence are integrated on \texttt{lab2-staging}. The release PR to final \texttt{main}, final-main test output, human visual sign-off, and several submission captures are still pending.}
+  \vfill
+  {\small One concise PDF is required by the labsheet; this source is the LaTeX draft for that PDF.}
+\end{titlepage}
+
+\tableofcontents
+\clearpage
+
+\section{Answer Part 1: Git Use with Engineering Workflow}
+
+Lab 2 uses one feature branch per Issue and integrates each reviewed Pull
+Request into \texttt{lab2-staging}. The human reviewer merges the feature PR;
+the PR author does not merge it. The current repository state is:
+
+\begin{verbatim}
+main (b9903e8, Lab 1 release)
+`-- lab2-staging (83da75e)
+    |-- feature/5-sprint-specification   (#51 -> PR #58)
+    |-- feature/6-requester-context     (#52 -> PR #59)
+    |-- feature/7-create-ticket         (#53 -> PR #60)
+    |-- feature/8-my-tickets            (#54 -> PR #61)
+    |-- feature/9-ticket-detail         (#55 -> PR #62)
+    |-- feature/10-zen-green            (#56 -> PR #63)
+    |-- feature/11-e2e-evidence          (#57 -> PR #64)
+    `-- feature/12-report-compliance     (#65, active report branch)
+\end{verbatim}
+
+\begin{center}
+\small
+\begin{tabular}{@{}p{12mm}p{49mm}p{24mm}p{66mm}@{}}
+  \toprule
+  Issue & Feature branch & PR & Current state \\
+  \midrule
+  \href{https://github.com/ovenmakemeheat/toktickit/issues/51}{\#51} & \path{feature/5-sprint-specification} & \href{https://github.com/ovenmakemeheat/toktickit/pull/58}{\#58} & Merged into \texttt{lab2-staging} by \texttt{MadMax168}. \\
+  \href{https://github.com/ovenmakemeheat/toktickit/issues/52}{\#52} & \path{feature/6-requester-context} & \href{https://github.com/ovenmakemeheat/toktickit/pull/59}{\#59} & Merged into \texttt{lab2-staging} by \texttt{MadMax168}. \\
+  \href{https://github.com/ovenmakemeheat/toktickit/issues/53}{\#53} & \path{feature/7-create-ticket} & \href{https://github.com/ovenmakemeheat/toktickit/pull/60}{\#60} & Merged into \texttt{lab2-staging} by \texttt{MadMax168}. \\
+  \href{https://github.com/ovenmakemeheat/toktickit/issues/54}{\#54} & \path{feature/8-my-tickets} & \href{https://github.com/ovenmakemeheat/toktickit/pull/61}{\#61} & Merged into \texttt{lab2-staging} by \texttt{MadMax168}. \\
+  \href{https://github.com/ovenmakemeheat/toktickit/issues/55}{\#55} & \path{feature/9-ticket-detail} & \href{https://github.com/ovenmakemeheat/toktickit/pull/62}{\#62} & Merged into \texttt{lab2-staging} by \texttt{MadMax168}. \\
+  \href{https://github.com/ovenmakemeheat/toktickit/issues/56}{\#56} & \path{feature/10-zen-green} & \href{https://github.com/ovenmakemeheat/toktickit/pull/63}{\#63} & Merged into \texttt{lab2-staging} by \texttt{MadMax168}. \\
+  \href{https://github.com/ovenmakemeheat/toktickit/issues/57}{\#57} & \path{feature/11-e2e-evidence} & \href{https://github.com/ovenmakemeheat/toktickit/pull/64}{\#64} & Merged into \texttt{lab2-staging} by \texttt{MadMax168}. \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+The complete review index and response summaries are in
+\href{https://github.com/ovenmakemeheat/toktickit/blob/main/docs/lab-02/reviewer.md}{\texttt{docs/lab-02/reviewer.md}}. The record identifies
+\texttt{MadMax168} as the human reviewer and records the requested changes and
+author responses for PRs \#59, \#61, \#62, and \#64. GitHub currently exposes
+human ready-to-merge or approve comments, but its formal \texttt{reviewDecision}
+is empty for PRs \#58-\#64; the report must not label those comments as formal
+\texttt{APPROVED} reviews. The project-board state also needs a human capture;
+the current CLI token cannot read the board without the \texttt{read:project}
+scope.
+
+\textbf{Required Part 1 captures}
+
+\twocaptures{docs/lab-02/report/evidence/final-main-history.png}{Capture final main history after the release PR is merged.}{Final \texttt{main} history showing feature branches, staging merges, and the release merge.}{docs/lab-02/report/evidence/final-kanban.png}{Capture the final Lab 2 Project board.}{Final Kanban with the Lab 2 Issues in Done.}
+
+\twocaptures{docs/lab-02/report/evidence/readme-gitignore.png}{Capture rendered README and .gitignore content.}{README and .gitignore evidence.}{docs/lab-02/report/evidence/repository-tree.png}{Capture the repository tree in the IDE.}{Repository directory structure.}
+
+\section{Answer Part 2: Spec DD}
+
+The complete contract is linked at
+\href{https://github.com/ovenmakemeheat/toktickit/blob/main/docs/lab-02/specification.md}{\texttt{docs/lab-02/specification.md}} and is cross-referenced by the
+API, UI, and test contracts. It contains 19 functional requirements, 26
+business rules, 24 acceptance criteria, and a Definition of Done. The
+contract-first document was delivered in PR \#58 before the implementation PRs
+were completed.
+
+\begin{center}
+\small
+\begin{tabular}{@{}p{42mm}p{55mm}p{59mm}@{}}
+  \toprule
+  Contract area & Selected decision & Traceability source \\
+  \midrule
+  Requester context & Development Requester selection is a test context, not authentication. & FR-01--FR-04, BR-03--BR-07, AC-01--AC-03 \\
+  Ticket creation & The server owns Ticket Number, Ticket Date, requester ownership, and initial \texttt{NEW} status. & FR-06--FR-08, BR-01--BR-13, AC-05--AC-10 \\
+  Ownership & List, detail, and attachment operations are scoped to the selected Requester. & FR-09--FR-16, BR-23, AC-11--AC-21 \\
+  Scope boundary & Authentication, IT Staff workflow, collaboration, and later status transitions remain excluded. & Scope and DoD sections \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Rendered contract evidence}
+
+\statusnote{The source contract is complete and implemented on \texttt{lab2-staging}. The final report still needs a readable rendered copy and one screenshot proving that the specification existed before the main implementation PRs were completed.}
+
+\twocaptures{docs/lab-02/report/evidence/spec-before-implementation.png}{Capture the specification commit before implementation PR completion.}{Specification-before-implementation proof, associated with the contract PR.}{docs/lab-02/report/evidence/specification-rendered.png}{Capture the rendered specification.}{Rendered \texttt{specification.md} with numbered FR, BR, AC, and DoD sections.}
+
+\section{Answer Part 3: Test DD and Traceability}
+
+The planned matrix and acceptance-criteria mapping are maintained in
+\href{https://github.com/ovenmakemeheat/toktickit/blob/main/docs/lab-02/tests.md}{\texttt{docs/lab-02/tests.md}}. The current integrated staging validation
+record contains the following results:
+
+\begin{center}
+\small
+\begin{tabular}{@{}p{47mm}p{28mm}p{74mm}@{}}
+  \toprule
+  Boundary & Result & Main evidence path \\
+  \midrule
+  Client unit/UI suite & 8 files, 32 tests passed & \texttt{client/tests/lab-01/} and \texttt{client/tests/lab-02/} \\
+  Server unit/API suite & 13 files, 70 tests passed & \texttt{server/tests/lab-01/} and \texttt{server/tests/lab-02/} \\
+  Combined test command & 21 files, 102 tests passed & \texttt{bun run test} \\
+  Browser E2E & 1 non-skipped test and 36 screenshots & \texttt{e2e/lab-02/requester-ticket-flow.spec.ts} \\
+  Full repository gate & Passed on the integrated staging baseline & \texttt{bun run verify}; final-main rerun pending \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+The principal Lab 2 test paths are:
+
+\begin{itemize}
+  \item \path{server/tests/lab-02/create-ticket.api.test.ts}, \path{server/tests/lab-02/my-tickets.api.test.ts}, \path{server/tests/lab-02/ticket-detail.api.test.ts}, and \path{server/tests/lab-02/attachments.api.test.ts};
+  \item \path{client/tests/lab-02/CreateTicket.test.tsx}, \path{client/tests/lab-02/MyTickets.test.tsx}, \path{client/tests/lab-02/RequesterTicketDetail.test.tsx}, and \path{client/tests/lab-02/AttachmentSection.test.tsx}.
+\end{itemize}
+
+Every AC is mapped to at least one test ID in the Markdown matrix.
+
+The 2026-09-03 \texttt{bun run verify} run passed on the report branch above
+the \texttt{lab2-staging} product baseline. It checked Biome, Lefthook,
+Prisma, type checking, 21 test files with 102 tests, and both workspace builds.
+The labsheet requires complete unit, API, and UI output from final \texttt{main};
+that evidence cannot be claimed until the release is merged and rerun.
+
+\begin{figure}[H]
+  \centering
+  \workflowimage{docs/lab-02/report/evidence/final-main-test-output.png}{Capture complete unit, API, and UI passing output from final main.}
+  \caption{Final-main test output required by the labsheet.}
+\end{figure}
+
+\section{Answer Part 4: AI Use with Reflection}
+
+The AI-use record is linked at
+\href{https://github.com/ovenmakemeheat/toktickit/blob/main/docs/lab-02/ai-use.md}{\texttt{docs/lab-02/ai-use.md}}. The implementation assistant was OpenAI
+Codex using GPT-5. The student reviewed the PDF-derived contracts, generated
+changes, tests, screenshots, and review responses.
+
+\begin{center}
+\small
+\begin{longtable}{@{}p{9mm}p{65mm}p{77mm}@{}}
+  \toprule
+  ID & Selected prompt focus & Effect \\
+  \midrule
+  P1 & Read the Lab 2 PDF and convert workflows and submission parts into a contract. & Established numbered FR, BR, AC, and DoD traceability. \\
+  P2 & Create the Issue and branch plan from the contract. & Kept one feature branch per Lab 2 Issue and preserved the staging flow. \\
+  P3 & Implement data, seed, requester context, API, and ownership boundaries. & Added the requester-facing backend contract without authentication or later-lab scope. \\
+  P4 & Implement Create Ticket, My Tickets, Detail, and attachments. & Connected the four product areas to the approved API and UI decisions. \\
+  P5 & Add tests with explicit FR/BR/AC traceability. & Produced unit, API, client UI, responsive, and E2E coverage. \\
+  P6 & Inspect the requester flow at desktop, tablet, and mobile sizes. & Generated the responsive screenshot inventory and overflow assertions. \\
+  P7 & Review the complete Lab 2 PR sequence and address comments. & Updated implementation, tests, evidence, and reviewer records after human feedback. \\
+  P8 & Check report readiness against Answer Parts 1-9. & Separated staging evidence from final-main and missing-capture work. \\
+  \bottomrule
+\end{longtable}
+\end{center}
+
+\textbf{My Reflection}
+
+AI assistance was most useful for translating the labsheet into small,
+traceable contracts and checking the relationships between implementation,
+tests, evidence, and review records. Human responsibility remained essential:
+the student confirmed scope, reviewed generated changes, inspected screenshots,
+validated the environment, and did not treat automated review output as peer
+approval.
+
+\section{Answer Part 5: Development Requester Select Screen}
+
+Lab 2 uses a simulated login screen to select an active Development Requester
+for the session. It is explicitly not authentication. Inactive seeded
+Requesters are excluded, Continue is disabled until a valid active selection is
+made, and Change Requester clears the previous requester-specific view.
+
+\begin{figure}[H]
+  \centering
+  \workflowimage{docs/lab-02/report/evidence/requester-selection.png}{Capture the Development Requester selection screen, active dropdown, selected-user display, loading/failure state, and Change Requester action.}
+  \caption{Development Requester selection screen required for the final report.}
+\end{figure}
+
+The current client tests and E2E flow exercise these states, but the current
+36-file screenshot inventory does not contain a dedicated requester-selection
+capture. This evidence must be added before the final PDF.
+
+\section{Answer Part 6: Working Ticket Screen - Create Mode}
+
+Create Ticket accepts Category, Related System, Requested Priority, Summary,
+Description, and permitted attachments. The selected requester is displayed as
+read-only context. The server generates the official Ticket Number, Ticket Date,
+requester ownership, and initial \texttt{NEW} status. Attachment upload is a
+separate operation so a saved Ticket remains visible if an upload fails.
+
+\twocaptures{docs/lab-02/report/evidence/requester-selection.png}{Capture requester context before entering Create Ticket.}{Requester selection and matching context.}{artifacts/lab-02/screenshots/create-ticket/create-ticket-reference-loading-desktop.png}{Capture the reference-data loading state.}{Reference data loading from the API.}
+
+\twocaptures{docs/lab-02/report/evidence/create-ticket-initial-desktop.png}{Capture the initial empty Create Ticket form.}{Initial editable form with required indicators.}{artifacts/lab-02/screenshots/create-ticket/create-ticket-validation-desktop.png}{Existing validation evidence.}{Field-level messages for an invalid submission.}
+
+\twocaptures{docs/lab-02/report/evidence/create-ticket-submitting-desktop.png}{Capture the disabled busy Submit state.}{Submitting state and duplicate-submit protection.}{artifacts/lab-02/screenshots/create-ticket/create-ticket-success-desktop.png}{Existing success evidence.}{Backend-generated Ticket Number and saved values.}
+
+\twocaptures{artifacts/lab-02/screenshots/create-ticket/create-ticket-api-failure-desktop.png}{Existing API failure evidence.}{Safe API failure with entered values preserved.}{docs/lab-02/report/evidence/create-ticket-invalid-attachment.png}{Capture Create Ticket with one valid and one invalid attachment.}{Attachment policy feedback in Create mode.}
+
+The current UI/API tests and E2E evidence support the following contract
+claims:
+
+\begin{itemize}
+  \item API-02 and E2E-01 verify a successful create response, saved Ticket, backend Ticket Number, and requester context.
+  \item UI-04 and API-03 verify field-level validation and no invalid Ticket persistence.
+  \item UI-05 and API-05 verify busy-submit protection, preserved values, and separate attachment failure behavior.
+  \item The final report still needs readable evidence of the saved \texttt{requesterId} and database values, not only the UI success message.
+\end{itemize}
+
+\section{Answer Part 7: Working My Tickets Screen}
+
+My Tickets is always scoped by the selected Development Requester. It supports
+search over Ticket Number and Summary, Category/Related System/Priority/Status
+filters, deterministic sorting, one-based pagination, empty and no-results
+states, and recoverable API failure.
+
+\twocaptures{artifacts/lab-02/screenshots/my-tickets/my-tickets-filtered-desktop.png}{Existing filtered-ticket evidence.}{Requester-owned results with list controls.}{artifacts/lab-02/screenshots/my-tickets/my-tickets-ownership-isolation-desktop.png}{Existing ownership evidence.}{A different Requester cannot see the original Requester's Tickets.}
+
+\twocaptures{artifacts/lab-02/screenshots/my-tickets/my-tickets-empty-desktop.png}{Existing empty-list evidence.}{No Tickets for the current Requester.}{artifacts/lab-02/screenshots/my-tickets/my-tickets-api-failure-desktop.png}{Existing API-failure evidence.}{Recoverable list failure.}
+
+The client and server tests verify search, filters, sorting, pagination,
+ownership isolation, empty/no-results distinction, stale-response protection,
+and API failure. The final report should add a clearly identifiable capture
+showing a non-default filter, sort direction, and page transition together;
+the current filtered screenshot is useful evidence but does not prove every
+query control separately.
+
+\section{Answer Part 8: Working Ticket Screen - View Mode and Attachments}
+
+Owned Ticket Detail renders Ticket fields read-only and separates the
+Attachment section. Active attachments can be uploaded and downloaded. Removal
+requires confirmation and a 3-200 character reason, retains metadata, and
+returns \texttt{410 ATTACHMENT\_REMOVED} when a removed file is requested.
+Cross-Requester Ticket and Attachment access is rejected safely.
+
+\twocaptures{artifacts/lab-02/screenshots/ticket-detail/ticket-detail-active-desktop.png}{Existing owned-detail evidence.}{Read-only Ticket Detail with active attachment.}{artifacts/lab-02/screenshots/ticket-detail/ticket-detail-invalid-attachment-desktop.png}{Existing invalid-attachment evidence.}{Unsupported attachment feedback.}
+
+\twocaptures{artifacts/lab-02/screenshots/ticket-detail/ticket-detail-removed-desktop.png}{Existing removal evidence.}{Retained removed metadata and reason.}{artifacts/lab-02/screenshots/ticket-detail/ticket-detail-blocked-download-desktop.png}{Existing blocked-download evidence.}{Removed content is not downloadable or previewable.}
+
+API-09 through API-16 and E2E-02 cover owned detail, attachment metadata,
+upload, active download, soft removal, repeat removal, invalid files, storage
+errors, removed-download rejection, and cross-owner access. The final report
+should include a readable test-output or API excerpt for the unauthorized
+Ticket/Attachment requests in addition to the UI screenshots.
+
+\begin{figure}[H]
+  \centering
+  \workflowimage{docs/lab-02/report/evidence/unauthorized-access-test.png}{Capture the API test output showing a different Requester receives the safe ownership rejection.}
+  \caption{Unauthorized Ticket and Attachment access evidence required for Part 8.}
+\end{figure}
+
+\section{Answer Part 9: Zen Green UI and Responsive Evidence}
+
+The complete visual contract is linked at
+\href{https://github.com/ovenmakemeheat/toktickit/blob/main/docs/lab-02/ui-spec.md}{\texttt{docs/lab-02/ui-spec.md}}. The integrated E2E flow checks
+1280x900, 820x900, and 390x844 viewports, and the current inventory contains 36
+captures across 12 state prefixes.
+
+\threecapture{artifacts/lab-02/screenshots/create-ticket/create-ticket-validation-desktop.png}{Capture a readable desktop state.}{Desktop validation.}{artifacts/lab-02/screenshots/my-tickets/my-tickets-filtered-tablet.png}{Capture a readable tablet state.}{Tablet list controls.}{artifacts/lab-02/screenshots/ticket-detail/ticket-detail-blocked-download-mobile.png}{Capture a readable mobile state.}{Mobile blocked-download state.}
+
+\begin{center}
+\small
+\begin{tabular}{@{}p{59mm}p{35mm}p{62mm}@{}}
+  \toprule
+  Visual checklist item & Integrated evidence & Final report status \\
+  \midrule
+  Zen Green colors and shared components & Client contract tests and screenshots & Rendered \texttt{ui-spec.md} and human sign-off pending \\
+  Editable/read-only fields & Create and Detail UI tests & Representative screenshots available \\
+  Validation placement and state text & Client tests and validation captures & Representative evidence available \\
+  Button hierarchy and disabled busy state & Client tests and UI contract & Dedicated submitting capture pending \\
+  Clipping, overlap, and horizontal overflow & E2E viewport assertions & Final-main rerun and visual sign-off pending \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+The final report must include the completed visual checklist and all readable
+desktop, tablet, and mobile evidence. The current screenshot set is a strong
+integrated staging baseline, but it is not yet the complete final-main
+submission package.
+
+\end{document}
