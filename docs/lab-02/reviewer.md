@@ -4,7 +4,19 @@ Scope: Issues #51-#57, Issue #68, and their feature Pull Requests #58-#64 and #6
 
 Target branch for feature work: `lab2-staging`
 
-Human reviewer: `MadMax168`
+Student: `GUNTEE DOUNGMANEE`
+
+Student ID: `67070501003`
+
+Student GitHub: [`ovenmakemeheat`](https://github.com/ovenmakemeheat)
+
+Peer reviewer: `POLWARIT WATTHANAHEMMARAT` (`MadMax168`)
+
+Peer reviewer ID: `67070501067`
+
+Peer reviewer GitHub: [`MadMax168`](https://github.com/MadMax168)
+
+Human reviewer account: `MadMax168`
 
 Record date: 2026-09-04
 

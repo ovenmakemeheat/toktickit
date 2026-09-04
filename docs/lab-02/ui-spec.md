@@ -1,6 +1,6 @@
 # Lab 2 Zen Green UI specification
 
-Status: implementation contract completed; UI integrated on `lab2-staging`; final-main release pending (2026-09-03)
+Status: implementation contract completed; UI released to final `main` at `538b5da`; final visual review pending (2026-09-04)
 
 Origin issue: #51 - Lab 2 - Sprint specification and test plan
 Applies to: Issues #51-#57 and the integrated Lab 2 result

@@ -55,6 +55,17 @@
   }%
 }
 
+\newcommand{\identitycard}[5]{%
+  \fcolorbox{accent}{panel}{%
+    \parbox[t]{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{%
+      {\small\bfseries\textcolor{accent}{#1}}\par
+      {\bfseries #2}\par
+      {\small ID: #3}\par
+      {\small GitHub: \href{#4}{#5}}%
+    }%
+  }%
+}
+
 \newcommand{\evidenceimage}[2]{%
   \IfFileExists{#1}{%
     \includegraphics[width=\linewidth,height=0.18\textheight,keepaspectratio]{#1}%
@@ -155,6 +166,8 @@
   \vfill
   \begin{tabular}{@{}>{\bfseries}p{42mm}p{105mm}@{}}
     Student & GUNTEE DOUNGMANEE \\
+    Student ID & 67070501003 \\
+    Peer reviewer & POLWARIT WATTHANAHEMMARAT (MadMax168), ID 67070501067 \\
     Repository & \href{https://github.com/ovenmakemeheat/toktickit}{ovenmakemeheat/toktickit} \\
     Report Issue & \href{https://github.com/ovenmakemeheat/toktickit/issues/65}{Issue \#65 - Lab 2 final submission report} \\
     Integrated baseline & \texttt{lab2-staging} at \texttt{f6d00cb} \\
@@ -211,6 +224,47 @@ main (538b5da, Lab 2 release; PR #70)
 \end{tabular}
 \end{center}
 
+\textbf{Student and peer reviewer}
+
+\vspace{1mm}
+\begin{tabular}{@{}p{0.47\linewidth}@{\hspace{4mm}}p{0.47\linewidth}@{}}
+  \identitycard{Student}{GUNTEE DOUNGMANEE}{67070501003}{https://github.com/ovenmakemeheat}{ovenmakemeheat}
+  &
+  \identitycard{Peer reviewer}{POLWARIT WATTHANAHEMMARAT}{67070501067}{https://github.com/MadMax168}{MadMax168}
+\end{tabular}
+
+\vspace{3mm}
+\textbf{Rendered \texttt{reviewer.md}}
+
+The reviewer record identifies the same student and peer reviewer used for Lab 1.
+It records the Issue-to-PR links, reviewer comments, author responses, merge
+accounts, and the two delivery items that still require human action: formal
+GitHub \texttt{APPROVED} events and final visual sign-off.
+
+{\scriptsize
+\begin{longtable}{@{}p{13mm}p{52mm}p{65mm}p{25mm}@{}}
+  \toprule
+  PR & Human review comment or decision & Author response / resulting change & State \\
+  \midrule
+  \endfirsthead
+  \toprule
+  PR & Human review comment or decision & Author response / resulting change & State \\
+  \midrule
+  \endhead
+  \href{https://github.com/ovenmakemeheat/toktickit/pull/58}{\#58} & \texttt{MadMax168}: ``ready to merge, Approve it.'' & No change request was recorded before merge. & Merged; formal approval pending \\
+  \href{https://github.com/ovenmakemeheat/toktickit/pull/59}{\#59} & Requested a UI loading-state test and responsive selector coverage; then said ``All well, Ready to merge.'' & Added requester-loading coverage and responsive selector assertions in commit \texttt{68838e2}. & Addressed and merged \\
+  \href{https://github.com/ovenmakemeheat/toktickit/pull/60}{\#60} & \texttt{MadMax168} reported no bug and approved the merge in a PR comment. & No change request was recorded. & Merged; formal approval pending \\
+  \href{https://github.com/ovenmakemeheat/toktickit/pull/61}{\#61} & Requested protection against stale/out-of-order list responses and restoration of the visible Open Ticket action. & Added \texttt{AbortController}, a latest-request guard, and a deferred-response regression test in commit \texttt{6719a96}; restored the visible action. & Addressed and merged \\
+  \href{https://github.com/ovenmakemeheat/toktickit/pull/62}{\#62} & Requested ownership/context validation before multipart parsing and enforcement of the active-attachment limit. & Addressed both findings in commit \texttt{c0a410a}, including the cross-owner multipart regression. & Addressed and merged \\
+  \href{https://github.com/ovenmakemeheat/toktickit/pull/63}{\#63} & \texttt{MadMax168}: ``Good, Ready to merge.'' & No change request was recorded. & Merged; formal approval pending \\
+  \href{https://github.com/ovenmakemeheat/toktickit/pull/64}{\#64} & Requested deterministic Ticket Number collision-retry coverage, corrected test traceability, and complete responsive evidence. & Added collision-retry coverage and corrected the evidence/count records in commit \texttt{9380c9c}; the author replied to the discussion. & Addressed and merged \\
+  \bottomrule
+\end{longtable}
+}
+
+\emph{The feature PRs were merged by \texttt{MadMax168}, not by the PR author.
+The record does not convert ready-to-merge comments into formal approvals.}
+
 The complete review index and response summaries are in
 \href{https://github.com/ovenmakemeheat/toktickit/blob/main/docs/lab-02/reviewer.md}{\texttt{docs/lab-02/reviewer.md}}. The record identifies
 \texttt{MadMax168} as the human reviewer and records the requested changes and
@@ -229,6 +283,22 @@ authenticated View 1 capture shows Issues \#51-\#57 in \texttt{Done}.
 \twocapturescrop{docs/lab-02/report/evidence/final-main-readme.png}{210pt 650pt 210pt 0pt}{Render final-main README.}{Repository README setup evidence (cropped to the readable content area).}{docs/lab-02/report/evidence/final-main-gitignore.png}{210pt 0pt 210pt 0pt}{Render final-main .gitignore.}{Secrets, dependencies, build output, and LaTeX artifact exclusions.}
 
 \widecapturecrop{docs/lab-02/report/evidence/final-main-repository-tree.png}{210pt 1770pt 210pt 0pt}{Capture the final main repository tree.}{Final \texttt{main} repository tree captured with \texttt{browser-use} (cropped to the tree and README entry).}
+
+\textbf{Repository directory structure}
+
+The final-main repository tree follows the directory-structure evidence format
+used in the Lab 1 report. The Lab 2 paths visible in the repository are:
+
+\begin{verbatim}
+docs/lab-02/        specification.md  tests.md  ui-spec.md  api-spec.md
+                   reviewer.md  ai-use.md  report/
+server/tests/lab-02/  create-ticket.api.test.ts  my-tickets.api.test.ts
+                      ticket-detail.api.test.ts  attachments.api.test.ts
+client/tests/lab-02/  CreateTicket.test.tsx  MyTickets.test.tsx
+                      RequesterTicketDetail.test.tsx  AttachmentSection.test.tsx
+e2e/lab-02/           requester-ticket-flow.spec.ts  report-evidence.spec.ts
+artifacts/lab-02/screenshots/  create-ticket/  my-tickets/  ticket-detail/
+\end{verbatim}
 
 The final-main tree, README, \texttt{.gitignore}, history, and Project board
 captures were taken from GitHub with \texttt{browser-use}. The authenticated
@@ -271,6 +341,22 @@ show the released contract and merge timeline.
 \end{tabular}
 \end{center}
 
+\textbf{Rendered \texttt{specification.md} index}
+
+\begin{center}
+\small
+\begin{tabular}{@{}p{42mm}p{112mm}@{}}
+  \toprule
+  Contract section & Numbered content rendered in the final-main contract \\
+  \midrule
+  Functional requirements & FR-01 through FR-19: requester context, ticket creation, owned list/detail, attachments, errors, and responsive accessibility. \\
+  Business rules & BR-01 through BR-26: server-owned values, validation, ownership, query behavior, attachment policy, and explicit state handling. \\
+  Acceptance criteria & AC-01 through AC-24: selection, creation, list/detail, attachment lifecycle, ownership, responsive behavior, and safe errors. \\
+  Definition of Done & Product completion, traceable passing tests, contract conformance, final-main verification, peer review, visual review, and submission material. \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
 \textbf{Rendered contract evidence}
 
 \statusnote{The source contract is complete, implemented, and present on final \texttt{main}. The browser-use captures below provide the rendered final-main contract and the merged release PR timeline.}
@@ -282,6 +368,65 @@ show the released contract and merge timeline.
 The planned matrix and acceptance-criteria mapping are maintained in
 \href{https://github.com/ovenmakemeheat/toktickit/blob/main/docs/lab-02/tests.md}{\texttt{docs/lab-02/tests.md}}. The current final-main validation
 record contains the following results:
+
+\textbf{Rendered \texttt{tests.md}: planned tests and actual paths}
+
+{\scriptsize
+\begin{longtable}{@{}p{21mm}p{24mm}p{89mm}p{21mm}@{}}
+  \toprule
+  ID & Boundary & Actual test-file path or evidence path & Result \\
+  \midrule
+  \endfirsthead
+  \toprule
+  ID & Boundary & Actual test-file path or evidence path & Result \\
+  \midrule
+  \endhead
+  UNIT-01 & Unit & \path{server/tests/lab-02/ticket-number.unit.test.ts} & Passed \\
+  UNIT-02 & Unit & \path{server/tests/lab-02/ticket-validation.unit.test.ts} & Passed \\
+  UNIT-03 & Unit & \path{server/tests/lab-02/ticket-query.unit.test.ts} & Passed \\
+  UNIT-04 & Unit & \path{server/tests/lab-02/attachment-policy.unit.test.ts} & Passed \\
+  \mbox{API-01--API-04} & API & \path{server/tests/lab-02/create-ticket.api.test.ts} & Passed \\
+  API-05 & API & \path{server/tests/lab-02/attachments.api.test.ts} & Passed \\
+  \mbox{API-06--API-08} & API & \path{server/tests/lab-02/my-tickets.api.test.ts} & Passed \\
+  \mbox{API-09--API-10} & API & \path{server/tests/lab-02/ticket-detail.api.test.ts} & Passed \\
+  \mbox{API-11--API-15} & API & \path{server/tests/lab-02/attachments.api.test.ts} & Passed \\
+  API-16 & API & \path{server/tests/lab-02/create-ticket.api.test.ts}; \path{server/tests/lab-02/attachments.api.test.ts} & Passed \\
+  UI-01--UI-02 & UI & \path{client/tests/lab-02/RequesterSelection.test.tsx} & Passed \\
+  UI-03--UI-05 & UI & \path{client/tests/lab-02/CreateTicket.test.tsx} & Passed \\
+  UI-06--UI-07 & UI & \path{client/tests/lab-02/MyTickets.test.tsx} & Passed \\
+  UI-08 & UI & \path{client/tests/lab-02/RequesterTicketDetail.test.tsx} & Passed \\
+  UI-09--UI-11 & UI & \path{client/tests/lab-02/AttachmentSection.test.tsx} & Passed \\
+  UI-12 & UI & \path{client/tests/lab-02/ZenGreenResponsive.test.tsx} & Passed \\
+  STYLE-01 & Style & \path{client/tests/lab-02/ZenGreenResponsive.test.tsx} & Passed \\
+  RESP-01 & Responsive & \path{e2e/lab-02/requester-ticket-flow.spec.ts} & Passed \\
+  VIS-01 & Visual & \path{artifacts/lab-02/screenshots/}; \path{docs/lab-02/report/evidence/} & Evidence recorded; sign-off pending \\
+  E2E-01--E2E-02 & E2E & \path{e2e/lab-02/requester-ticket-flow.spec.ts} & Passed \\
+  \bottomrule
+\end{longtable}
+}
+
+\textbf{Acceptance-criterion traceability rendered from \texttt{tests.md}}
+
+{\scriptsize
+\begin{tabular}{@{}p{13mm}p{66mm}p{13mm}p{66mm}@{}}
+  \toprule
+  AC & Planned test IDs & AC & Planned test IDs \\
+  \midrule
+  AC-01 & UI-01, E2E-01 & AC-13 & API-08, UI-06 \\
+  AC-02 & API-01, UI-01, E2E-01 & AC-14 & API-08, UI-07 \\
+  AC-03 & UI-02, E2E-01 & AC-15 & API-09, UI-08, E2E-01 \\
+  AC-04 & API-01, UI-03, E2E-01 & AC-16 & API-10, UI-08 \\
+  AC-05 & UNIT-01, API-02, UI-03, E2E-01 & AC-17 & API-11, UI-09, E2E-02 \\
+  AC-06 & UNIT-02, UI-04 & AC-18 & UNIT-04, API-05, API-12, UI-10, E2E-02 \\
+  AC-07 & UNIT-02, API-03 & AC-19 & API-13, UI-11, E2E-02 \\
+  AC-08 & API-04, UI-05 & AC-20 & UNIT-04, API-14, UI-11, E2E-02 \\
+  AC-09 & API-05, E2E-02 & AC-21 & API-10, API-13, API-15, UI-11, E2E-02 \\
+  AC-10 & API-05, UI-05, E2E-02 & AC-22 & STYLE-01, RESP-01, VIS-01, E2E-01, E2E-02 \\
+  AC-11 & API-06, UI-06, E2E-01 & AC-23 & UI-12, STYLE-01, VIS-01 \\
+  AC-12 & UNIT-03, API-07, UI-06, E2E-01 & AC-24 & API-16 \\
+  \bottomrule
+\end{tabular}
+}
 
 \begin{center}
 \small
@@ -332,7 +477,7 @@ with 8 files/32 tests and 13 files/70 tests.
 
 The AI-use record is linked at
 \href{https://github.com/ovenmakemeheat/toktickit/blob/main/docs/lab-02/ai-use.md}{\texttt{docs/lab-02/ai-use.md}}. The implementation assistant was OpenAI
-Codex using GPT-5. The student reviewed the PDF-derived contracts, generated
+Codex using GPT-5.6 Luna max. The student reviewed the PDF-derived contracts, generated
 changes, tests, screenshots, and review responses.
 
 \begin{center}
