@@ -61,6 +61,14 @@
   }{\captureplaceholder{#2}}%
 }
 
+% Long browser-use pages are kept intact in evidence but cropped in the PDF
+% presentation so that the relevant labels remain readable.
+\newcommand{\evidenceimagecrop}[3]{%
+  \IfFileExists{#1}{%
+    \includegraphics[width=\linewidth,height=0.26\textheight,keepaspectratio,trim=#2,clip]{#1}%
+  }{\captureplaceholder{#3}}%
+}
+
 \newcommand{\workflowimage}[2]{%
   \IfFileExists{#1}{%
     \includegraphics[width=\linewidth,height=0.25\textheight,keepaspectratio]{#1}%
@@ -80,6 +88,32 @@
     \evidenceimage{#4}{#5}
     \captionof{figure}{#6}
   \end{minipage}
+\end{figure}
+}
+
+\newcommand{\twocapturescrop}[8]{%
+\begin{figure}[H]
+  \centering
+  \begin{minipage}[t]{0.48\linewidth}
+    \centering
+    \evidenceimagecrop{#1}{#2}{#3}
+    \captionof{figure}{#4}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\linewidth}
+    \centering
+    \evidenceimagecrop{#5}{#6}{#7}
+    \captionof{figure}{#8}
+  \end{minipage}
+\end{figure}
+}
+
+\newcommand{\widecapturecrop}[4]{%
+\begin{figure}[H]
+  \centering
+  \IfFileExists{#1}{%
+    \includegraphics[width=0.92\linewidth,height=0.30\textheight,keepaspectratio,trim=#2,clip]{#1}%
+  }{\captureplaceholder{#3}}%
+  \caption{#4}
 \end{figure}
 }
 
@@ -123,12 +157,12 @@
     Student & GUNTEE DOUNGMANEE \\
     Repository & \href{https://github.com/ovenmakemeheat/toktickit}{ovenmakemeheat/toktickit} \\
     Report Issue & \href{https://github.com/ovenmakemeheat/toktickit/issues/65}{Issue \#65 - Lab 2 final submission report} \\
-    Integrated baseline & \texttt{lab2-staging} at \texttt{83da75e} \\
-    Stable branch & \texttt{main} at \texttt{b9903e8} (Lab 1 release) \\
+    Integrated baseline & \texttt{lab2-staging} at \texttt{f6d00cb} \\
+    Stable branch & \texttt{main} at \texttt{538b5da} (Lab 2 release) \\
     Stack & React, TypeScript, Vite, Bootstrap, Express, Prisma, PostgreSQL \\
   \end{tabular}
   \vfill
-  \statusnote{\textbf{DRAFT - 2026-09-04.} Lab 2 implementation and recorded evidence are integrated on \texttt{lab2-staging}. Eight UI report-state captures and five browser-use repository/contract captures are now recorded. The release PR to final \texttt{main}, final-main test output, human visual sign-off, and several submission captures are still pending.}
+  \statusnote{\textbf{DRAFT - 2026-09-04.} Lab 2 implementation is integrated on \texttt{lab2-staging} and released to final \texttt{main}. Eight UI report-state captures, seven final-main \texttt{browser-use} captures, final-main client/server test output, the final-main-aligned E2E rerun, and authenticated Project board evidence are recorded. Human visual sign-off and formal GitHub \texttt{APPROVED} review evidence remain pending.}
   \vfill
   {\small One concise PDF is required by the labsheet; this source is the LaTeX draft for that PDF.}
 \end{titlepage}
@@ -143,8 +177,8 @@ Request into \texttt{lab2-staging}. The human reviewer merges the feature PR;
 the PR author does not merge it. The current repository state is:
 
 \begin{verbatim}
-main (b9903e8, Lab 1 release)
-`-- lab2-staging (83da75e)
+main (538b5da, Lab 2 release; PR #70)
+|-- lab2-staging (f6d00cb, integrated Lab 2 baseline)
     |-- feature/5-sprint-specification   (#51 -> PR #58)
     |-- feature/6-requester-context     (#52 -> PR #59)
     |-- feature/7-create-ticket         (#53 -> PR #60)
@@ -152,7 +186,9 @@ main (b9903e8, Lab 1 release)
     |-- feature/9-ticket-detail         (#55 -> PR #62)
     |-- feature/10-zen-green            (#56 -> PR #63)
     |-- feature/11-e2e-evidence          (#57 -> PR #64)
-    `-- feature/12-report-compliance     (#65, active report branch)
+    |-- feature/12-report-compliance     (#65 -> PR #66)
+    `-- feature/13-test-isolation        (#68 -> PR #69)
+`-- docs/lab2-docs (current evidence branch, based on main)
 \end{verbatim}
 
 \begin{center}
@@ -168,35 +204,43 @@ main (b9903e8, Lab 1 release)
   \href{https://github.com/ovenmakemeheat/toktickit/issues/55}{\#55} & \path{feature/9-ticket-detail} & \href{https://github.com/ovenmakemeheat/toktickit/pull/62}{\#62} & Merged into \texttt{lab2-staging} by \texttt{MadMax168}. \\
   \href{https://github.com/ovenmakemeheat/toktickit/issues/56}{\#56} & \path{feature/10-zen-green} & \href{https://github.com/ovenmakemeheat/toktickit/pull/63}{\#63} & Merged into \texttt{lab2-staging} by \texttt{MadMax168}. \\
   \href{https://github.com/ovenmakemeheat/toktickit/issues/57}{\#57} & \path{feature/11-e2e-evidence} & \href{https://github.com/ovenmakemeheat/toktickit/pull/64}{\#64} & Merged into \texttt{lab2-staging} by \texttt{MadMax168}. \\
+  \href{https://github.com/ovenmakemeheat/toktickit/issues/65}{\#65} & \path{feature/12-report-compliance} & \href{https://github.com/ovenmakemeheat/toktickit/pull/66}{\#66} & Merged into \texttt{lab2-staging} by \texttt{MadMax168}. \\
+  \href{https://github.com/ovenmakemeheat/toktickit/issues/68}{\#68} & \path{feature/13-test-isolation} & \href{https://github.com/ovenmakemeheat/toktickit/pull/69}{\#69} & Merged into \texttt{lab2-staging} by \texttt{MadMax168}. \\
+  Release & \path{lab2-staging} & \href{https://github.com/ovenmakemeheat/toktickit/pull/70}{\#70} & Merged into final \texttt{main} by \texttt{MadMax168}. \\
   \bottomrule
 \end{tabular}
 \end{center}
 
 The complete review index and response summaries are in
-\href{https://github.com/ovenmakemeheat/toktickit/blob/lab2-staging/docs/lab-02/reviewer.md}{\texttt{docs/lab-02/reviewer.md}}. The record identifies
+\href{https://github.com/ovenmakemeheat/toktickit/blob/main/docs/lab-02/reviewer.md}{\texttt{docs/lab-02/reviewer.md}}. The record identifies
 \texttt{MadMax168} as the human reviewer and records the requested changes and
 author responses for PRs \#59, \#61, \#62, and \#64. GitHub currently exposes
 human ready-to-merge or approve comments, but its formal \texttt{reviewDecision}
 is empty for PRs \#58-\#64; the report must not label those comments as formal
-\texttt{APPROVED} reviews. The Project board was opened with the
-\texttt{browser-use} CLI, but GitHub rendered its Sign in page, so the final
-board state still needs an authenticated human capture.
+\texttt{APPROVED} reviews. The final release PR \#70 records the merge from
+\texttt{lab2-staging} into \texttt{main}. The Project board was opened with the
+\texttt{browser-use} CLI at \texttt{/users/ovenmakemeheat/projects/2/}; the
+authenticated View 1 capture shows Issues \#51-\#57 in \texttt{Done}.
 
 \textbf{Required Part 1 captures}
 
-\twocaptures{docs/lab-02/report/evidence/final-main-history.png}{Capture final main history after the release PR is merged.}{Final \texttt{main} history showing feature branches, staging merges, and the release merge.}{docs/lab-02/report/evidence/final-kanban.png}{Capture the final Lab 2 Project board.}{Final Kanban with the Lab 2 Issues in Done.}
+\twocapturescrop{docs/lab-02/report/evidence/final-main-history.png}{210pt 1450pt 210pt 0pt}{Capture final-main history.}{Final \texttt{main} history showing the latest release, staging, and Lab 2 commits (cropped for legibility).}{docs/lab-02/report/evidence/final-lab2-project-board.png}{0pt 0pt 0pt 0pt}{Capture the final Lab 2 Project board.}{View 1 shows Issues \#51-\#57 with status \texttt{Done}.}
 
-\twocaptures{docs/lab-02/report/evidence/readme.png}{Rendered README on \texttt{lab2-staging}.}{Repository README and Lab 2 setup/scope summary.}{docs/lab-02/report/evidence/gitignore.png}{Rendered .gitignore on \texttt{lab2-staging}.}{Secrets, dependencies, build output, and LaTeX artifact exclusions.}
+\twocapturescrop{docs/lab-02/report/evidence/final-main-readme.png}{210pt 650pt 210pt 0pt}{Render final-main README.}{Repository README setup evidence (cropped to the readable content area).}{docs/lab-02/report/evidence/final-main-gitignore.png}{210pt 0pt 210pt 0pt}{Render final-main .gitignore.}{Secrets, dependencies, build output, and LaTeX artifact exclusions.}
 
-The repository tree capture was taken from the GitHub branch view with
-\texttt{browser-use}; it shows the remote \texttt{lab2-staging} tree and the
-rendered README. It is repository evidence, not final-\texttt{main} release
-evidence.
+\widecapturecrop{docs/lab-02/report/evidence/final-main-repository-tree.png}{210pt 1770pt 210pt 0pt}{Capture the final main repository tree.}{Final \texttt{main} repository tree captured with \texttt{browser-use} (cropped to the tree and README entry).}
+
+The final-main tree, README, \texttt{.gitignore}, history, and Project board
+captures were taken from GitHub with \texttt{browser-use}. The authenticated
+board capture records the seven Lab 2 scope Issues as \texttt{Done}; human
+visual sign-off remains a separate review responsibility. The original full
+browser captures remain in the evidence directory; the long pages are
+content-focused crops in this PDF for legibility.
 
 \section{Answer Part 2: Spec DD}
 
 The complete contract is linked at
-\href{https://github.com/ovenmakemeheat/toktickit/blob/lab2-staging/docs/lab-02/specification.md}{\texttt{docs/lab-02/specification.md}} and is cross-referenced by the
+\href{https://github.com/ovenmakemeheat/toktickit/blob/main/docs/lab-02/specification.md}{\texttt{docs/lab-02/specification.md}} and is cross-referenced by the
 API, UI, and test contracts. It contains 19 functional requirements, 26
 business rules, 24 acceptance criteria, and a Definition of Done. The
 contract-first document was delivered in PR \#58 before the implementation PRs
@@ -209,7 +253,9 @@ GitHub records the contract commit as
 opened later that day. The browser-use capture below shows PR \#58's merged
 state, source branch, contract-only summary, commit \texttt{8f372bd}, and merge
 into \texttt{lab2-staging}; this supports the contract-before-implementation
-sequence. Final-\texttt{main} release evidence remains pending.
+sequence. The final release PR \#70 was subsequently merged into
+\texttt{main} at \texttt{538b5da}. The final-main browser-use captures below
+show the released contract and merge timeline.
 
 \begin{center}
 \small
@@ -227,14 +273,14 @@ sequence. Final-\texttt{main} release evidence remains pending.
 
 \textbf{Rendered contract evidence}
 
-\statusnote{The source contract is complete and implemented on \texttt{lab2-staging}. The browser-use captures below provide a rendered contract view and the merged contract PR timeline. They are staging evidence; final-\texttt{main} release evidence remains pending.}
+\statusnote{The source contract is complete, implemented, and present on final \texttt{main}. The browser-use captures below provide the rendered final-main contract and the merged release PR timeline.}
 
-\twocaptures{docs/lab-02/report/evidence/spec-before-implementation.png}{Merged contract PR timeline captured with \texttt{browser-use}.}{PR \#58 source branch, contract-only summary, commit, and merge into \texttt{lab2-staging}.}{docs/lab-02/report/evidence/specification-rendered.png}{Rendered specification captured with \texttt{browser-use}.}{Rendered \texttt{specification.md} with numbered FR, BR, AC, and DoD sections.}
+\twocapturescrop{docs/lab-02/report/evidence/final-main-release-pr.png}{210pt 0pt 210pt 0pt}{Capture final release PR.}{PR \#70 merged \texttt{lab2-staging} into final \texttt{main}, including the test-isolation release.}{docs/lab-02/report/evidence/final-main-specification.png}{210pt 5660pt 210pt 0pt}{Render final-main specification overview.}{Rendered \texttt{specification.md} overview with numbered FR, BR, AC, and DoD content (cropped for legibility).}
 
 \section{Answer Part 3: Test DD and Traceability}
 
 The planned matrix and acceptance-criteria mapping are maintained in
-\href{https://github.com/ovenmakemeheat/toktickit/blob/lab2-staging/docs/lab-02/tests.md}{\texttt{docs/lab-02/tests.md}}. The current integrated staging validation
+\href{https://github.com/ovenmakemeheat/toktickit/blob/main/docs/lab-02/tests.md}{\texttt{docs/lab-02/tests.md}}. The current final-main validation
 record contains the following results:
 
 \begin{center}
@@ -246,8 +292,8 @@ record contains the following results:
   Client unit/UI suite & 8 files, 32 tests passed & \texttt{client/tests/lab-01/} and \texttt{client/tests/lab-02/} \\
   Server unit/API suite & 13 files, 70 tests passed & \texttt{server/tests/lab-01/} and \texttt{server/tests/lab-02/} \\
   Combined test command & 21 files, 102 tests passed & \texttt{bun run test} \\
-  Browser E2E & 2 non-skipped tests and 44 screenshots & \path{e2e/lab-02/} \\
-  Full repository gate & Passed on the integrated staging baseline & \texttt{bun run verify}; final-main rerun pending \\
+  Browser E2E & 2 tests passed and 44 screenshots & \path{e2e/lab-02/} \\
+  Full repository gate & Passed on final-main baseline & \texttt{bun run verify}; Biome, hooks, Prisma, types, tests, and builds \\
   \bottomrule
 \end{tabular}
 \end{center}
@@ -267,24 +313,25 @@ additional desktop captures for requester selection, Create Ticket states, and
 the combined My Tickets filter/sort/page state.
 
 The 2026-09-04 elevated local run of \texttt{bun run verify} passed on the
-report branch above the \texttt{lab2-staging} product baseline. It checked
+\texttt{docs/lab2-docs} branch, which points to final \texttt{main} at
+\texttt{538b5da}. It checked
 Biome, Lefthook, Prisma, client and server type checking, 21 test files with
 102 tests, and both workspace builds. The normal sandbox invocation stopped at
 Prisma dependency access with an OS \texttt{EPERM}; this is recorded as an
-environment limitation, not as a passing test result.
-The labsheet requires complete unit, API, and UI output from final \texttt{main};
-that evidence cannot be claimed until the release is merged and rerun.
+environment limitation, not as a passing test result. The supplied final-main
+test capture separately shows the client and server test commands completing
+with 8 files/32 tests and 13 files/70 tests.
 
 \begin{figure}[H]
   \centering
-  \workflowimage{docs/lab-02/report/evidence/final-main-test-output.png}{Capture complete unit, API, and UI passing output from final main.}
-  \caption{Final-main test output required by the labsheet.}
+  \includegraphics[height=0.23\textheight,keepaspectratio]{docs/lab-02/report/evidence/final-main-test-output.png}
+  \caption{Final-main client and server test output captured after the Lab 2 release (resized for the report).}
 \end{figure}
 
 \section{Answer Part 4: AI Use with Reflection}
 
 The AI-use record is linked at
-\href{https://github.com/ovenmakemeheat/toktickit/blob/lab2-staging/docs/lab-02/ai-use.md}{\texttt{docs/lab-02/ai-use.md}}. The implementation assistant was OpenAI
+\href{https://github.com/ovenmakemeheat/toktickit/blob/main/docs/lab-02/ai-use.md}{\texttt{docs/lab-02/ai-use.md}}. The implementation assistant was OpenAI
 Codex using GPT-5. The student reviewed the PDF-derived contracts, generated
 changes, tests, screenshots, and review responses.
 
@@ -380,8 +427,8 @@ The client and server tests verify search, filters, sorting, pagination,
 ownership isolation, empty/no-results distinction, stale-response protection,
 and API failure. The additional report capture makes the non-default Category,
 Summary sort, ascending direction, and page 2 transition visible together.
-It is a controlled UI-state fixture for the query controls; final-main rerun
-evidence is still required before submission.
+It is a controlled UI-state fixture for the query controls; the final-main
+browser captures document the released source and test baseline.
 
 \section{Answer Part 8: Working Ticket Screen - View Mode and Attachments}
 
@@ -417,9 +464,13 @@ summary is disclosed to the other Requester.
 \section{Answer Part 9: Zen Green UI and Responsive Evidence}
 
 The complete visual contract is linked at
-\href{https://github.com/ovenmakemeheat/toktickit/blob/lab2-staging/docs/lab-02/ui-spec.md}{\texttt{docs/lab-02/ui-spec.md}}. The integrated E2E flow checks
+\href{https://github.com/ovenmakemeheat/toktickit/blob/main/docs/lab-02/ui-spec.md}{\texttt{docs/lab-02/ui-spec.md}}. The final-main-aligned E2E flow checks
 1280x900, 820x900, and 390x844 viewports. The current inventory contains 36
-responsive lifecycle captures plus eight desktop report-state captures.
+responsive lifecycle captures plus eight desktop report-state captures. The
+final-main evidence set adds seven \texttt{browser-use} captures and one
+client/server test-output capture.
+
+\widecapturecrop{docs/lab-02/report/evidence/final-main-ui-specification.png}{210pt 3970pt 210pt 0pt}{Render final-main UI specification overview.}{Rendered final-main \texttt{ui-spec.md} overview captured with \texttt{browser-use} (cropped for legibility).}
 
 \threecapture{artifacts/lab-02/screenshots/create-ticket/create-ticket-validation-desktop.png}{Capture a readable desktop state.}{Desktop validation.}{artifacts/lab-02/screenshots/my-tickets/my-tickets-filtered-tablet.png}{Capture a readable tablet state.}{Tablet list controls.}{artifacts/lab-02/screenshots/ticket-detail/ticket-detail-blocked-download-mobile.png}{Capture a readable mobile state.}{Mobile blocked-download state.}
 
@@ -429,18 +480,18 @@ responsive lifecycle captures plus eight desktop report-state captures.
   \toprule
   Visual checklist item & Integrated evidence & Final report status \\
   \midrule
-  Zen Green colors and shared components & Client contract tests and screenshots & Rendered \texttt{ui-spec.md} and human sign-off pending \\
+  Zen Green colors and shared components & Client contract tests and screenshots & Rendered final-main \texttt{ui-spec.md}; human sign-off pending \\
   Editable/read-only fields & Create and Detail UI tests & Representative screenshots available \\
   Validation placement and state text & Client tests and validation captures & Representative evidence available \\
   Button hierarchy and disabled busy state & Client tests and UI contract & Dedicated submitting capture available \\
-  Clipping, overlap, and horizontal overflow & E2E viewport assertions & Final-main rerun and visual sign-off pending \\
+  Clipping, overlap, and horizontal overflow & E2E viewport assertions & Final-main-aligned E2E passed; human visual sign-off pending \\
   \bottomrule
 \end{tabular}
 \end{center}
 
-The final report must include the completed visual checklist and all readable
-desktop, tablet, and mobile evidence. The current screenshot set is a strong
-integrated staging baseline, but it is not yet the complete final-main
-submission package.
+The visual checklist is supported by the final-main-aligned E2E screenshot
+inventory, the final-main rendered contract/repository/release/test evidence,
+and the authenticated Project board capture. Human visual sign-off remains
+explicitly open rather than being inferred from the release.
 
 \end{document}

@@ -1,6 +1,6 @@
 # Lab 2 engineering specification
 
-Status: implementation contract completed; Lab 2 integrated on `lab2-staging`; final-main release pending (2026-09-04)
+Status: implementation contract completed; Lab 2 released to `main`; final evidence review pending (2026-09-04)
 
 Origin issue: #51 - Lab 2 - Sprint specification and test plan
 Applies to: Issues #51-#57 and the integrated Lab 2 result
@@ -11,7 +11,7 @@ This document is the implementation contract for the Lab 2 requester-facing incr
 
 ## Current Lab 2 state
 
-As of 2026-09-04, Issues #51-#57 are closed and their feature Pull Requests #58-#64 are merged into `lab2-staging`. The implementation, tests, and visual artifacts described here are present on that integrated branch. `main` still points to the Lab 1 release, so final-main verification, the release Pull Request, and the submission PDF are not complete. Human review evidence is consolidated in `reviewer.md`; it must not be inferred from automated review output.
+As of 2026-09-04, Issues #51-#57 are closed and their feature Pull Requests #58-#64 are merged into `lab2-staging`. Follow-up Issue #68 and PR #69 isolate the shared test fixtures, and release PR #70 merged the integrated result into final `main` at `538b5da`. The implementation, tests, and visual artifacts described here are present on that released baseline. Human review evidence is consolidated in `reviewer.md`; it must not be inferred from automated review output.
 
 ## 1. Sprint goal
 
@@ -189,16 +189,18 @@ Every criterion maps to at least one planned test in `tests.md`.
 
 ## 10. Definition of Done
 
-The checkboxes below distinguish completed Lab 2 implementation work from the remaining final-submission gate. They are not a claim that the release is already present on `main`.
+The checkboxes below distinguish completed Lab 2 implementation work from the
+remaining final-submission review gate. The implementation release is present
+on `main` at `538b5da`.
 
 - [ ] This specification and the companion test, UI, and API contracts have complete human approval evidence recorded for the final submission.
 - [x] Every FR, BR, and AC has a stable identifier and a planned test path.
 - [x] The integrated implementation stays within the included scope and does not add authentication, IT Staff workflow, collaboration, or later status transitions.
 - [x] Unit, API/integration, client UI, style/responsive, visual, and E2E tests are implemented from the plan; the recorded required tests are not skipped, disabled, or flaky.
-- [x] `bun run verify` passes on the recorded integrated Lab 2 staging result; the final-main rerun is still pending.
+- [x] `bun run verify` passes on the final-main-aligned `docs/lab2-docs` baseline at `538b5da`.
 - [ ] Desktop, tablet, and mobile screenshots and the visual checklist have complete human review evidence against `ui-spec.md`.
 - [ ] Every feature Pull Request has complete human approval evidence, an Issue link, answered review comments, and a reviewer merge into `lab2-staging` recorded in `reviewer.md`.
-- [x] The integrated Lab 2 test run on `lab2-staging` passes before the release Pull Request to `main`.
+- [x] The integrated Lab 2 test run on `lab2-staging` passes before the release Pull Request to `main`, and release PR #70 is merged.
 - [ ] `reviewer.md`, `ai-use.md`, final evidence, and the required submission material are complete.
 
 ## 11. Assumptions and decisions
