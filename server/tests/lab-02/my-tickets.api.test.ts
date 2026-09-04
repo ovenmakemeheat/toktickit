@@ -76,6 +76,7 @@ describe("GET /api/tickets", () => {
     const [
       requesterA,
       requesterB,
+      requesterC,
       inactiveRequester,
       hardware,
       software,
@@ -88,6 +89,10 @@ describe("GET /api/tickets", () => {
       }),
       prisma.developmentRequester.findUnique({
         where: { email: "requester-b@toktickit.test" },
+        select: { id: true },
+      }),
+      prisma.developmentRequester.findUnique({
+        where: { email: "requester-c@toktickit.test" },
         select: { id: true },
       }),
       prisma.developmentRequester.findUnique({
@@ -115,6 +120,7 @@ describe("GET /api/tickets", () => {
     if (
       !requesterA ||
       !requesterB ||
+      !requesterC ||
       !inactiveRequester ||
       !hardware ||
       !software ||
@@ -131,17 +137,8 @@ describe("GET /api/tickets", () => {
     softwareCategoryId = software.id;
     vpnSystemId = vpn.id;
     emailSystemId = email.id;
+    emptyRequesterId = requesterC.id;
     marker = `LIST-${randomUUID().slice(0, 8).toUpperCase()}`;
-
-    const emptyRequester = await prisma.developmentRequester.create({
-      data: {
-        name: `Empty list requester ${marker}`,
-        email: `empty-${randomUUID()}@toktickit.test`,
-        active: true,
-      },
-      select: { id: true },
-    });
-    emptyRequesterId = emptyRequester.id;
 
     await Promise.all(
       Array.from({ length: 12 }, (_, index) =>
@@ -168,11 +165,6 @@ describe("GET /api/tickets", () => {
       });
     }
 
-    if (emptyRequesterId) {
-      await prisma.developmentRequester.delete({
-        where: { id: emptyRequesterId },
-      });
-    }
     await prisma.$disconnect();
   });
 
