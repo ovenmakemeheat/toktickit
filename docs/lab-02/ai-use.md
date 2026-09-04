@@ -1,34 +1,40 @@
 # Lab 2 AI-use record
 
-Issue: #57 - Lab 2 - E2E tests, evidence, and release integration
-Feature branch: `feature/11-e2e-evidence`
+Scope: Whole Lab 2 implementation, evidence, review, and report preparation
+
+Record date: 2026-09-03
 
 ## LLM used
 
-OpenAI Codex (GPT-5) was used as an implementation assistant. The student
-retains responsibility for checking the Lab 2 PDF-derived contracts, reviewing
-the generated changes, running the tests, and responding to peer-review
-comments.
+OpenAI Codex (GPT-5.6 Luna max) was used as an implementation assistant across the Lab 2
+contract, database/API work, requester UI, tests, E2E evidence, review fixes,
+and report preparation. The student retains responsibility for checking the
+Lab 2 PDF-derived contracts, reviewing generated changes, running the tests,
+and responding to peer-review comments.
 
 ## Key prompts used
 
-1. Read the current Lab 2 issue and implementation plan before implementing the
-   E2E/evidence scope.
-2. Verify that the feature branch is based on the latest `lab2-staging` commit.
-3. Inspect the current requester selection, ticket creation, My Tickets, detail,
-   and attachment interfaces for stable user-observable selectors.
-4. Implement the Playwright requester flow required by E2E-01 and E2E-02.
-5. Add desktop, tablet, and mobile overflow assertions and the required
-   screenshot directories.
-6. Add the Playwright runner configuration without changing the Lab 2 product
-   scope or adding later-lab controls.
-7. Update README, test traceability, reviewer notes, and this AI-use record with
-   truthful prerequisites and pending human-review fields.
-8. Run targeted formatting, test listing, type checks, integration tests, and
-   inspect the final diff before handoff.
+1. Read the Lab 2 PDF and convert its requester workflows, boundaries, and
+   submission parts into a numbered engineering contract.
+2. Create the Issues/branch plan and verify that each feature branch starts from
+   the Lab 2 staging baseline.
+3. Implement the database, seed data, requester test context, API contract, and
+   ownership/error boundaries without adding authentication or later-lab scope.
+4. Implement Create Ticket, My Tickets, Ticket Detail, and attachment lifecycle
+   behavior against the approved contracts.
+5. Add unit, API/integration, client UI, responsive, and E2E tests with explicit
+   FR/BR/AC traceability.
+6. Inspect the requester flow at desktop, tablet, and mobile sizes and generate
+   the required screenshot evidence.
+7. Review the complete Lab 2 PR sequence, address reviewer comments, and update
+   the reviewer, test, visual, and AI-use records with verified current state.
+8. Check report readiness against Answer Parts 1-9 and distinguish staging
+   evidence from evidence that must be rerun on final `main`.
 
 ## Review decisions made during implementation
 
+- The temporary requester selector is documented as a testing context, not
+  authentication or authorization.
 - The E2E test uses accessible roles and labels for the user flow; CSS selectors
   are limited to choosing the visible table/card representation and removed
   attachment state for responsive assertions.
@@ -40,12 +46,15 @@ comments.
 - Retries remain disabled so a flaky or failed required test cannot be hidden.
 - The test runner starts or reuses the local client/API process but does not
   perform destructive database resets.
+- Review records separate automated Codex suggestions from human reviewer
+  decisions and do not treat a bot comment as peer approval.
 
 ## Reflection
 
-The main value of AI assistance was translating the existing Lab 2 contracts and
-accessible UI vocabulary into a repeatable browser flow. The important manual
-responsibilities are confirming that the test follows the approved requester
-context, checking the screenshot states against `ui-spec.md`, validating the
-environment prerequisites, and recording human review responses in
-`reviewer.md` rather than treating generated code as approval.
+The main value of AI assistance was translating the PDF into traceable contracts
+and then keeping implementation, tests, evidence, and review records aligned.
+The important manual responsibilities are confirming the scope, checking the
+requester context and ownership behavior, inspecting screenshots against
+`ui-spec.md`, validating environment prerequisites, reviewing every generated
+change, and recording human review responses in `reviewer.md` rather than
+treating generated code or automated review as approval.

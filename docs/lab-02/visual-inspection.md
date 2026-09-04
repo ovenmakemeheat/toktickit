@@ -1,8 +1,12 @@
 # Lab 2 visual inspection record
 
-Issue: #56 - Lab 2 - Zen Green responsive UI and visual inspection
-Date: 2026-09-02 (updated)
+Scope: Issues #56-#57 - Lab 2 Zen Green UI, visual inspection, and E2E evidence
+Date: 2026-09-04 (updated)
 Contract: `docs/lab-02/ui-spec.md`
+
+This record covers the integrated Lab 2 visual work on `lab2-staging`, not only
+the current report branch. The implementation PRs #58-#64 are merged; final
+visual sign-off and final-main evidence remain open.
 
 ## Design direction
 
@@ -22,13 +26,13 @@ visual language.
 
 ## State coverage
 
-| Area | Covered states |
+| Area | Covered states and evidence basis |
 | --- | --- |
-| Requester Selection | Loading, ready, empty, failure, retry, disabled Continue, and Change Requester. |
-| Create Ticket | Reference loading, validation, submitting, success, API failure with preserved values, and invalid attachments. |
-| My Tickets | Loading, normal results, empty list, no results, API failure/retry, filters, pagination, and Open Ticket action. |
-| Ticket Detail | Loading, owned detail, safe failure, read-only fields, and Back to My Tickets. |
-| Attachments | Active, removed, upload, invalid file, download, removal confirmation, and explicit blocked-download explanation. |
+| Requester Selection | Loading, ready, empty, failure, retry, disabled Continue, and Change Requester are covered by client tests and the E2E assertions; no dedicated selection screenshot is in the current artifact inventory. |
+| Create Ticket | Reference loading, validation, submitting, success, API failure with preserved values, and invalid attachments are covered by client tests/E2E; the screenshot inventory has reference-loading, validation, success, API-failure, and invalid-attachment evidence but no separate initial or submitting capture. |
+| My Tickets | Loading, normal results, empty list, no results, API failure/retry, filters, pagination, and Open Ticket action are covered by client tests/E2E; the inventory has empty, failure, filtered, and ownership-isolation captures. |
+| Ticket Detail | Loading, owned detail, safe failure, read-only fields, and Back to My Tickets are covered by client tests/E2E; the inventory has active, removed, blocked-download, and invalid-attachment captures. |
+| Attachments | Active, removed, upload, invalid file, download, removal confirmation, and explicit blocked-download explanation are covered by client/API tests and E2E evidence. |
 
 ## Findings fixed
 
@@ -82,11 +86,27 @@ visual language.
 Every prefix has `desktop`, `tablet`, and `mobile` captures. The E2E test
 asserts the corresponding state-specific text or control before each capture.
 
-- A human peer review is still required to record the reviewer identity,
-  comments, responses, approval, and merge in `reviewer.md`.
+## Current evidence gaps
+
+The report-evidence Playwright test now provides dedicated desktop captures for
+requester selection, selected-user display, Change Requester, the initial Create
+Ticket form, the submitting/busy state, mixed attachment validation, and a
+non-default filter/sort/page state. These captures are stored under
+`docs/lab-02/report/evidence/`.
+
+The `browser-use` CLI additionally captured the remote `lab2-staging` repository
+tree/README, `.gitignore`, rendered `specification.md`, and merged PR #58
+timeline. These are repository and contract-sequence evidence, not final-main
+application or release evidence. The Project board could not be captured because
+GitHub rendered its Sign in page in the CLI session.
+
+- Record the human visual review, approval evidence, and final-main rerun in
+  `reviewer.md` after the release PR is merged.
+- Repeat the required capture flow from final `main`; staging or controlled UI
+  fixtures must not be presented as final-main evidence.
 
 ## Follow-up
 
-The remaining Issue #57 follow-up is the human PR review and integration into
-`lab2-staging`; the release PR to `main` is prepared only after that staging
-integration.
+Issue #57 is implemented and its PR #64 is merged into `lab2-staging`. The
+remaining Lab 2 follow-up is final release integration into `main`, final-main
+verification, and human visual-review recording.
