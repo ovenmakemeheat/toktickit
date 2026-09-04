@@ -1,12 +1,12 @@
 import { PrismaClient } from "@prisma/client";
 
-import { seedCategories } from "./seed-categories.js";
+import { seedReferenceData } from "./seed-reference-data.js";
 
 const prisma = new PrismaClient();
 
-seedCategories(prisma)
+seedReferenceData(prisma)
   .then(() => {
-    console.log("TokTickIT Lab 1 categories seeded.");
+    console.log("TokTickIT Lab 2 reference data seeded.");
   })
   .catch((error: unknown) => {
     console.error("TokTickIT seed failed.", error);

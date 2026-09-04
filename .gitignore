@@ -15,11 +15,14 @@ build/
 coverage/
 .nyc_output/
 *.tsbuildinfo
+playwright-report/
+test-results/
 
 # Logs and local databases
 *.log
 *.db
 *.db-journal
+.local-storage/
 
 # Temporary files and OS metadata
 tmp/

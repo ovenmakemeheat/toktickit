@@ -1,94 +1,168 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
+import CreateTicket from "./lab-02/CreateTicket";
+import RequesterTicketDetail from "./lab-02/RequesterTicketDetail";
+import MyTickets from "./lab-02/MyTickets";
+import RequesterSelection from "./lab-02/RequesterSelection";
+import { navigate } from "./lib/navigation";
 import {
-  apiErrorMessage,
-  fetchCategories,
-  fetchHealth,
-  type Category,
-} from "./lib/api";
+  DevelopmentRequesterProvider,
+  useDevelopmentRequester,
+} from "./lab-02/requester-context";
 
-type HealthStatus = "unknown" | "checking" | "online" | "offline";
+type AppRoute =
+  | { page: "summary" }
+  | { page: "tickets" }
+  | { page: "create" }
+  | { page: "detail"; ticketId: string };
 
-const healthStatusLabels: Record<HealthStatus, string> = {
-  unknown: "Not checked",
-  checking: "Checking...",
-  online: "Online",
-  offline: "Offline",
-};
+function readRoute(): AppRoute {
+  const detailTicketId = window.location.pathname.match(
+    /^\/tickets\/([1-9]\d*)$/,
+  )?.[1];
+  if (detailTicketId) {
+    return { page: "detail", ticketId: detailTicketId };
+  }
 
-export default function App() {
-  const [healthStatus, setHealthStatus] = useState<HealthStatus>("unknown");
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  if (window.location.pathname === "/tickets/new") {
+    return { page: "create" };
+  }
 
-  async function checkSystem() {
-    setHealthStatus("checking");
-    setCategories([]);
-    setErrorMessage(null);
+  if (window.location.pathname === "/tickets") {
+    return { page: "tickets" };
+  }
 
-    try {
-      const [health, categoryList] = await Promise.all([
-        fetchHealth(),
-        fetchCategories(),
-      ]);
+  return { page: "summary" };
+}
 
-      if (health.status !== "ok") {
-        throw new Error("Unexpected health response");
-      }
+function SelectedRequesterScreen({ route }: { route: AppRoute }) {
+  const { selectedRequester, clearRequester } = useDevelopmentRequester();
+  const activePage =
+    route.page === "create" ||
+    route.page === "tickets" ||
+    route.page === "summary"
+      ? route.page
+      : undefined;
 
-      setHealthStatus("online");
-      setCategories(categoryList);
-    } catch {
-      setHealthStatus("offline");
-      setCategories([]);
-      setErrorMessage(apiErrorMessage);
-    }
+  function changeRequester() {
+    navigate("/");
+    clearRequester();
   }
 
   return (
-    <main className="container min-vh-100 d-flex align-items-center py-5">
-      <section
-        className="card border-0 shadow-sm w-100"
-        aria-labelledby="app-title"
-      >
-        <div className="card-body p-4 p-md-5">
-          <p className="text-uppercase text-primary fw-semibold small mb-2">
-            IT Service Desk
-          </p>
-          <h1 id="app-title" className="display-6 fw-bold">
-            TokTickIT IT Service Desk
-          </h1>
-          <p className="lead text-secondary mb-4">
-            Lab 1 full-stack foundation is ready for the system check.
-          </p>
-          <p className="mb-3" role="status" aria-live="polite">
-            System Status: {healthStatusLabels[healthStatus]}
-          </p>
-          {errorMessage ? (
-            <p className="text-danger" role="alert">
-              {errorMessage}
-            </p>
-          ) : null}
-          {categories.length > 0 ? (
-            <div className="mb-4">
-              <h2 className="h5">Supported categories</h2>
-              <ul aria-label="IT request categories">
-                {categories.map((category) => (
-                  <li key={category.id}>{category.name}</li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
+    <div className="lab2-shell">
+      <header className="lab2-shell-header">
+        <div>
+          <p className="lab2-eyebrow">TokTickIT</p>
+          <span className="lab2-shell-context">
+            Testing context: {selectedRequester?.name}
+          </span>
+        </div>
+        <nav className="lab2-shell-nav" aria-label="Requester navigation">
           <button
             type="button"
-            className="btn btn-primary"
-            onClick={checkSystem}
-            disabled={healthStatus === "checking"}
+            className={`btn btn-sm ${
+              activePage === "summary" ? "btn-success" : "btn-outline-success"
+            }`}
+            aria-current={activePage === "summary" ? "page" : undefined}
+            onClick={() => navigate("/")}
           >
-            {healthStatus === "checking" ? "Checking..." : "Check System"}
+            Requester Summary
           </button>
-        </div>
-      </section>
+          <button
+            type="button"
+            className={`btn btn-sm ${
+              activePage === "tickets" ? "btn-success" : "btn-outline-success"
+            }`}
+            aria-current={activePage === "tickets" ? "page" : undefined}
+            onClick={() => navigate("/tickets")}
+          >
+            My Tickets
+          </button>
+          <button
+            type="button"
+            className={`btn btn-sm ${
+              activePage === "create" ? "btn-success" : "btn-outline-success"
+            }`}
+            aria-current={activePage === "create" ? "page" : undefined}
+            onClick={() => navigate("/tickets/new")}
+          >
+            Create Ticket
+          </button>
+          <button
+            type="button"
+            className="btn btn-sm btn-outline-secondary"
+            onClick={changeRequester}
+          >
+            Change Requester
+          </button>
+        </nav>
+      </header>
+
+      {route.page === "detail" ? (
+        <RequesterTicketDetail
+          ticketId={route.ticketId}
+          onBack={() => navigate("/tickets")}
+        />
+      ) : route.page === "tickets" ? (
+        <MyTickets
+          key={selectedRequester?.id}
+          onCreateTicket={() => navigate("/tickets/new")}
+        />
+      ) : route.page === "create" ? (
+        <CreateTicket onBack={() => navigate("/tickets")} />
+      ) : (
+        <section
+          className="lab2-panel"
+          aria-labelledby="selected-requester-title"
+        >
+          <p className="lab2-eyebrow">Lab 2 testing context</p>
+          <h1 id="selected-requester-title">Requester context selected</h1>
+          <p className="lab2-introduction">
+            Requester-facing screens will use this selected context. It is not a
+            login or authenticated identity.
+          </p>
+          <div className="lab2-requester-summary">
+            <span className="lab2-summary-label">
+              Current Development Requester
+            </span>
+            <strong>{selectedRequester?.name}</strong>
+            <span>{selectedRequester?.email}</span>
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
+
+function AppContent() {
+  const { selectedRequester } = useDevelopmentRequester();
+  const [route, setRoute] = useState<AppRoute>(readRoute);
+
+  useEffect(() => {
+    function handlePopState() {
+      setRoute(readRoute());
+    }
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  return (
+    <main className="lab2-page">
+      {selectedRequester ? (
+        <SelectedRequesterScreen route={route} />
+      ) : (
+        <RequesterSelection />
+      )}
     </main>
+  );
+}
+
+export default function App() {
+  return (
+    <DevelopmentRequesterProvider>
+      <AppContent />
+    </DevelopmentRequesterProvider>
   );
 }

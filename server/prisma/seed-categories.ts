@@ -13,8 +13,8 @@ export async function seedCategories(prisma: CategoryStore) {
   for (const name of categoryNames) {
     await prisma.category.upsert({
       where: { name },
-      update: {},
-      create: { name },
+      update: { active: true },
+      create: { name, active: true },
     });
   }
 }
