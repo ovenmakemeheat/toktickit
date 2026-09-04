@@ -1,6 +1,6 @@
 # Lab 2 implementation plan
 
-Status: Lab 2 implementation integrated on `lab2-staging`; final-main release and submission evidence pending (2026-09-03)
+Status: Lab 2 implementation integrated on `lab2-staging`; final-main release and submission evidence pending (2026-09-04)
 
 Source: [Lab 2 requirements](../requirements/UTF-8_Lab_02_labsheet-1.pdf)
 
@@ -14,21 +14,21 @@ contract-first Lab 2 workflow. The current integrated result is on
 
 ## Current Lab 2 state
 
-As of 2026-09-03, the whole Lab 2 implementation is integrated on
+As of 2026-09-04, the whole Lab 2 implementation is integrated on
 `lab2-staging` at `83da75e`. Issues #51-#57 are closed and PRs #58-#64 are
 merged by the human reviewer `MadMax168`. The active report branch is
-`feature/12-report-compliance` at `e784001`; it currently contains the report
-planning update and no LaTeX source or final PDF. `main` remains at `b9903e8`,
+`feature/12-report-compliance`; it contains the LaTeX draft, checkpoint PDF,
+and collected report-state evidence. `main` remains at `b9903e8`,
 and no Lab 2 release PR to `main` exists. Issue #65 remains open. The Project
 board status is not asserted because the current GitHub token lacks the
 `read:project` scope.
 
 The recorded staging validation passes: 8 client test files/32 tests, 13
 server test files/70 tests, both builds, type checks, hooks/Prisma validation,
-and `bun run verify`. Issue #57 also records one non-skipped E2E flow and 36
-responsive screenshots. The final submission is not complete because final-
-`main` reruns, human visual/approval evidence, and several required report
-captures remain pending.
+and `bun run verify`. Issue #57 records one non-skipped lifecycle E2E flow and
+36 responsive screenshots; the report branch adds one targeted evidence test
+and eight desktop report captures. The final submission is not complete because
+final-`main` reruns and human visual/approval evidence remain pending.
 
 ## Scope boundary
 
@@ -213,7 +213,7 @@ Capture evidence under:
 - `artifacts/lab-02/screenshots/my-tickets/`
 - `artifacts/lab-02/screenshots/ticket-detail/`
 
-Capture desktop at `>= 992 px`, tablet at `768-991 px`, and mobile below `768 px`. Include the states required for the nine submission parts: requester selection, reference-data loading, invalid form, submitting, success with backend Ticket Number, API failure with preserved values, invalid attachment, ownership isolation, search/filter/sort/page, empty/no-results, active download, soft removal, blocked removed download, and responsive visual checks. The current 36-file inventory covers 12 state prefixes but still needs separate requester-selection, initial-form, and submitting captures.
+Capture desktop at `>= 992 px`, tablet at `768-991 px`, and mobile below `768 px`. Include the states required for the nine submission parts: requester selection, reference-data loading, invalid form, submitting, success with backend Ticket Number, API failure with preserved values, invalid attachment, ownership isolation, search/filter/sort/page, empty/no-results, active download, soft removal, blocked removed download, and responsive visual checks. The current 36-file inventory covers 12 state prefixes. The report branch adds dedicated requester-selection, initial-form, submitting, mixed-attachment, and query-control captures under `docs/lab-02/report/evidence/`.
 
 ### 9. Review, integration, and submission
 
@@ -286,16 +286,18 @@ bun run verify
 
 Before handoff, also review `git status`, `git diff --check`, changed dependencies, migrations, generated files, screenshot readability, and the final contract-to-test traceability. Do not use `docker compose down -v` during normal development.
 
-The 2026-09-03 staging run of `bun run verify` passed on the report branch
-above the `lab2-staging` baseline. It is not final-main evidence until Lab 2 is
-released to `main` and the gate is rerun there.
+The 2026-09-04 elevated local run of `bun run verify` passed on the report
+branch above the `lab2-staging` baseline. A normal sandbox invocation stopped
+at Prisma dependency access with `EPERM` before schema validation. The passing
+run is still not final-main evidence until Lab 2 is released to `main` and the
+gate is rerun there.
 
 ## Immediate next actions
 
 1. Open the Lab 2 release Pull Request from `lab2-staging` to `main` and have
    the human reviewer review and merge it.
 2. Rerun the required verification and E2E commands from final `main`, capture
-   complete output, and finish the missing screenshots and human review record.
+   complete output, and record the human visual review.
 3. Complete the single submission PDF for Issue #65 on
    `feature/12-report-compliance`, then open its linked PR into `lab2-staging`
    for peer review.

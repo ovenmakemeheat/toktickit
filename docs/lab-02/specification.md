@@ -1,6 +1,6 @@
 # Lab 2 engineering specification
 
-Status: implementation contract completed; Lab 2 integrated on `lab2-staging`; final-main release pending (2026-09-03)
+Status: implementation contract completed; Lab 2 integrated on `lab2-staging`; final-main release pending (2026-09-04)
 
 Origin issue: #51 - Lab 2 - Sprint specification and test plan
 Applies to: Issues #51-#57 and the integrated Lab 2 result
@@ -11,7 +11,7 @@ This document is the implementation contract for the Lab 2 requester-facing incr
 
 ## Current Lab 2 state
 
-As of 2026-09-03, Issues #51-#57 are closed and their feature Pull Requests #58-#64 are merged into `lab2-staging`. The implementation, tests, and visual artifacts described here are present on that integrated branch. `main` still points to the Lab 1 release, so final-main verification, the release Pull Request, and the submission PDF are not complete. Human review evidence is consolidated in `reviewer.md`; it must not be inferred from automated review output.
+As of 2026-09-04, Issues #51-#57 are closed and their feature Pull Requests #58-#64 are merged into `lab2-staging`. The implementation, tests, and visual artifacts described here are present on that integrated branch. `main` still points to the Lab 1 release, so final-main verification, the release Pull Request, and the submission PDF are not complete. Human review evidence is consolidated in `reviewer.md`; it must not be inferred from automated review output.
 
 ## 1. Sprint goal
 

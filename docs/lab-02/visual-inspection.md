@@ -88,18 +88,19 @@ asserts the corresponding state-specific text or control before each capture.
 
 ## Current evidence gaps
 
-- Add dedicated screenshots for requester selection, including the active
-  dropdown, selected-user display, and Change Requester action.
-- Add dedicated screenshots for the initial Create Ticket form and the
-  submitting/busy state.
-- Add a clearly identifiable screenshot or report excerpt for non-default
-  filtering, sorting, and pagination.
+The report-evidence Playwright test now provides dedicated desktop captures for
+requester selection, selected-user display, Change Requester, the initial Create
+Ticket form, the submitting/busy state, mixed attachment validation, and a
+non-default filter/sort/page state. These captures are stored under
+`docs/lab-02/report/evidence/`.
+
 - Record the human visual review, approval evidence, and final-main rerun in
   `reviewer.md` after the release PR is merged.
+- Repeat the required capture flow from final `main`; staging or controlled UI
+  fixtures must not be presented as final-main evidence.
 
 ## Follow-up
 
 Issue #57 is implemented and its PR #64 is merged into `lab2-staging`. The
 remaining Lab 2 follow-up is final release integration into `main`, final-main
-verification, the missing submission captures above, and human visual-review
-recording.
+verification, and human visual-review recording.
