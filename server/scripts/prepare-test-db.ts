@@ -40,5 +40,5 @@ function runPrisma(args: string[]) {
   });
 }
 
-await runPrisma(["migrate", "deploy"]);
+await runPrisma(["migrate", "reset", "--force", "--skip-seed"]);
 await runPrisma(["db", "seed"]);
