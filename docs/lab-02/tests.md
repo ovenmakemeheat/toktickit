@@ -1,13 +1,23 @@
 # Lab 2 test plan
 
-Status: automated and visual evidence recorded; peer visual review pending
+Status: integrated staging validation recorded; final-main evidence and human visual review pending (2026-09-03)
 
-Issue: #51 - Lab 2 - Sprint specification and test plan
+Origin issue: #51 - Lab 2 - Sprint specification and test plan
+Applies to: Issues #51-#57 and the integrated Lab 2 result
 
 This plan is the test contract for `specification.md`, `ui-spec.md`, and
 `api-spec.md`. The `Final result` column records only executed results; a
 database or environment block is recorded explicitly rather than treated as a
 pass.
+
+## Current Lab 2 state
+
+This record covers the complete Lab 2 increment, not only the report branch.
+Issues #51-#57 are closed and PRs #58-#64 are merged into `lab2-staging`. The
+validation recorded below is staging evidence: the full repository gate was
+run on `feature/12-report-compliance` at `e784001`, whose product baseline is
+`lab2-staging` at `83da75e`. `main` still contains the Lab 1 release, so the
+required final-main rerun and report evidence are still pending.
 
 ## 1. Test strategy
 
@@ -88,7 +98,7 @@ Tests use seeded active Requesters A, B, C, and D plus one inactive Requester, t
 | --- | --- | --- | --- | --- | --- |
 | STYLE-01 | FR-18, AC-22, AC-23 | Zen Green tokens and reusable component states | Required colors, field states, badges, focus, messages, and button behavior match `ui-spec.md`. | `client/tests/lab-02/ZenGreenResponsive.test.tsx` | Passed; four Zen Green contract tests passed. |
 | RESP-01 | FR-18, AC-22 | Desktop, tablet, and mobile layout | No clipping, overlap, hidden action, or horizontal scrolling at >=992px, 768-991px, and <768px. | `e2e/lab-02/requester-ticket-flow.spec.ts` | Passed; the E2E flow checked 1280px, 820px, and 390px viewports. |
-| VIS-01 | FR-18, FR-19, AC-22, AC-23 | Visual checklist and screenshots | Required states and screen representations are captured under the three Lab 2 screenshot directories and reviewed against `ui-spec.md`. | `artifacts/lab-02/screenshots/` and `docs/lab-02/reviewer.md` | Evidence captured and visually inspected: 36 screenshots across 12 states and three viewports, including loading, empty, failure, validation, invalid attachment, and blocked download; peer visual review pending. |
+| VIS-01 | FR-18, FR-19, AC-22, AC-23 | Visual checklist and screenshots | Required states and screen representations are captured under the three Lab 2 screenshot directories and reviewed against `ui-spec.md`. | `artifacts/lab-02/screenshots/` and `docs/lab-02/reviewer.md` | 36 screenshots across 12 states and three viewports are captured and inspected. The inventory does not yet contain separate submission captures for requester selection, the initial Create Ticket form, or the submitting state; human peer visual review is pending. |
 | E2E-01 | AC-01, AC-02, AC-03, AC-04, AC-05, AC-11, AC-12, AC-15 | Full requester flow | Select active Requester, load references, create Ticket, see Ticket Number, find it, switch Requester, and open owned detail. | `e2e/lab-02/requester-ticket-flow.spec.ts` | Passed; one Playwright test completed the requester flow. |
 | E2E-02 | AC-09, AC-10, AC-17, AC-18, AC-19, AC-20, AC-21 | Full Attachment lifecycle | Upload permitted file, observe metadata, download active file, soft-remove with reason, and verify blocked removed download. | `e2e/lab-02/requester-ticket-flow.spec.ts` | Passed; upload, download, soft removal, and `410 ATTACHMENT_REMOVED` checks completed. |
 
@@ -157,13 +167,13 @@ Visual evidence is stored under `artifacts/lab-02/screenshots/create-ticket/`, `
 | Type checking | `bun run typecheck` | Passed; client and server TypeScript checks. |
 | Full test suite | `bun run test` | Passed; 21 files and 102 tests across the client and server suites. |
 | Browser E2E and evidence | `bun run test:e2e` | Passed; one test completed and regenerated 36 screenshots across the required visual states and three viewports. |
-| Full repository gate | `bun run verify` | Passed after reviewer-feedback fixes; Biome, Lefthook, Prisma validation, client/server type checks, 21 test files with 102 tests, and both workspace builds completed successfully. |
+| Full repository gate | `bun run verify` | Passed on 2026-09-03 from `feature/12-report-compliance` on the integrated Lab 2 baseline; Biome checked 69 files, Lefthook, Prisma validation, client/server type checks, 21 test files with 102 tests, and both workspace builds completed successfully. Final-main rerun remains pending. |
 
 The E2E and visual rows were rerun with Docker PostgreSQL available. The
 handoff must still state the commands run, environment prerequisites, and any
 manual visual checks.
 
-## 7. Issue #57 execution record
+## 7. Integrated Lab 2 execution record
 
 - `bun run test:client`: passed, 8 files and 32 tests.
 - `bun run --cwd server test -- tests/lab-02/ticket-number.unit.test.ts tests/lab-02/ticket-validation.unit.test.ts tests/lab-02/ticket-query.unit.test.ts tests/lab-02/attachment-policy.unit.test.ts`: passed, 4 files and 31 tests, including the deterministic Ticket Number collision-retry test.
@@ -175,3 +185,19 @@ manual visual checks.
 - `bun run test:e2e`: passed one test after validating ticket creation, ownership isolation, detail, upload, download, soft removal, removed-download rejection, all required loading/empty/failure/validation/invalid-attachment/blocked-download states, and all responsive viewports; 36 screenshots were generated under `artifacts/lab-02/screenshots/`.
 - `bunx tsc --noEmit --target ES2022 --module NodeNext --moduleResolution NodeNext --strict --skipLibCheck --types node e2e/lab-02/requester-ticket-flow.spec.ts playwright.config.ts`: passed.
 - `bunx playwright test --list`: passed and listed one non-skipped test.
+
+The E2E run and its 36 screenshots were produced for the Issue #57 implementation
+and merged by PR #64. They are evidence for the integrated Lab 2 behavior, but
+they do not replace the complete test output and screenshots that must be
+captured from final `main` for the submission PDF.
+
+## 8. Remaining final-main evidence
+
+- Merge the reviewed Lab 2 release from `lab2-staging` into `main` through a
+  release Pull Request.
+- Rerun `bun run verify` and the required E2E flow from final `main`, then retain
+  the complete output for the submission PDF.
+- Add explicit screenshots for requester selection, the initial Create Ticket
+  screen, and the submitting/busy state; add clear filter, sort, and pagination
+  evidence where the report needs it.
+- Record the human visual review and final approval evidence in `reviewer.md`.

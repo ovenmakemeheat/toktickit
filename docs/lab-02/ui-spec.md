@@ -1,10 +1,15 @@
 # Lab 2 Zen Green UI specification
 
-Status: draft for human approval
+Status: implementation contract completed; UI integrated on `lab2-staging`; final-main release pending (2026-09-03)
 
-Issue: #51 - Lab 2 - Sprint specification and test plan
+Origin issue: #51 - Lab 2 - Sprint specification and test plan
+Applies to: Issues #51-#57 and the integrated Lab 2 result
 
 This document defines the reusable visual and interaction contract for Requester Selection, the application shell, Create Ticket, My Tickets, Requester Ticket Detail, and the Attachment section. It is read with `specification.md` and `api-spec.md`.
+
+## Current Lab 2 state
+
+The UI contract was delivered with Issue #51 and the corresponding implementation is integrated through PRs #58-#64 on `lab2-staging`. Automated UI/responsive checks and the current screenshot inventory are recorded in `tests.md` and `visual-inspection.md`. Final-main evidence and complete human visual-review sign-off are still pending.
 
 ## 1. Design principles
 

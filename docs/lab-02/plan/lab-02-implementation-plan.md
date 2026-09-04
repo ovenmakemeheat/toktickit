@@ -1,6 +1,6 @@
 # Lab 2 implementation plan
 
-Status: contract drafted - awaiting human approval
+Status: Lab 2 implementation integrated on `lab2-staging`; final-main release and submission evidence pending (2026-09-03)
 
 Source: [Lab 2 requirements](../requirements/UTF-8_Lab_02_labsheet-1.pdf)
 
@@ -8,7 +8,27 @@ Source: [Lab 2 requirements](../requirements/UTF-8_Lab_02_labsheet-1.pdf)
 
 Extend the Lab 1 TokTickIT foundation into a requester-facing ticketing MVP. A selected Development Requester must be able to create a ticket, find only their own tickets, open ticket detail, and manage permitted attachments through a responsive Zen Green UI.
 
-The plan assumes the Lab 1 implementation is complete on `main`. Lab 2 work starts from `main` on `lab2-staging`; no Lab 2 coding begins until the engineering contract is reviewed and approved.
+The plan was created from the Lab 1 release on `main` and established the
+contract-first Lab 2 workflow. The current integrated result is on
+`lab2-staging`; no Lab 2 release has been merged into `main` yet.
+
+## Current Lab 2 state
+
+As of 2026-09-03, the whole Lab 2 implementation is integrated on
+`lab2-staging` at `83da75e`. Issues #51-#57 are closed and PRs #58-#64 are
+merged by the human reviewer `MadMax168`. The active report branch is
+`feature/12-report-compliance` at `e784001`; it currently contains the report
+planning update and no LaTeX source or final PDF. `main` remains at `b9903e8`,
+and no Lab 2 release PR to `main` exists. Issue #65 remains open. The Project
+board status is not asserted because the current GitHub token lacks the
+`read:project` scope.
+
+The recorded staging validation passes: 8 client test files/32 tests, 13
+server test files/70 tests, both builds, type checks, hooks/Prisma validation,
+and `bun run verify`. Issue #57 also records one non-skipped E2E flow and 36
+responsive screenshots. The final submission is not complete because final-
+`main` reruns, human visual/approval evidence, and several required report
+captures remain pending.
 
 ## Scope boundary
 
@@ -36,7 +56,8 @@ The supplied Ticket Detail illustration is a visual reference only. Its staff, c
 
 ## Contract-first deliverables
 
-Create and review these files before handing work to a coding agent:
+These files were created as the contract-first input to implementation and are
+now maintained as the current Lab 2 records:
 
 | File                             | Required content                                                                                                             | Exit condition                                                                                            |
 | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
@@ -98,7 +119,7 @@ Extend the importable Express app and keep listener startup in `server/src/index
 
 The contract must cover at least:
 
-| Capability            | Draft route family                                                                            |
+| Capability            | Route family                                                                               |
 | --------------------- | --------------------------------------------------------------------------------------------- |
 | Active reference data | `GET /api/categories`, `GET /api/related-systems`, `GET /api/development-requesters`    |
 | Ticket creation       | `POST /api/tickets`                                                                         |
@@ -177,10 +198,10 @@ Planned automated paths:
 | Server API/integration | `server/tests/lab-02/ticket-detail.api.test.ts`                             | Owned detail and cross-Requester rejection                                     |
 | Server API/integration | `server/tests/lab-02/attachments.api.test.ts`                               | Type/size/count limits, upload, download, soft removal                         |
 | Server unit            | `server/tests/lab-02/ticket-number.unit.test.ts` or the approved equivalent | Ticket Number format and uniqueness behavior                                   |
-| Client UI              | `client/src/lab-02/CreateTicket.test.tsx`                                   | Form states, validation, busy submit, success, failure preservation            |
-| Client UI              | `client/src/lab-02/MyTickets.test.tsx`                                      | Search, filters, sorting, pagination, empty/no-results/failure                 |
-| Client UI              | `client/src/lab-02/RequesterTicketDetail.test.tsx`                          | Read-only detail, ownership error, navigation                                  |
-| Client UI              | `client/src/lab-02/AttachmentSection.test.tsx`                              | Upload, invalid, active, removed, and blocked-download states                  |
+| Client UI              | `client/tests/lab-02/CreateTicket.test.tsx`                                  | Form states, validation, busy submit, success, failure preservation            |
+| Client UI              | `client/tests/lab-02/MyTickets.test.tsx`                                     | Search, filters, sorting, pagination, empty/no-results/failure                 |
+| Client UI              | `client/tests/lab-02/RequesterTicketDetail.test.tsx`                         | Read-only detail, ownership error, navigation                                  |
+| Client UI              | `client/tests/lab-02/AttachmentSection.test.tsx`                             | Upload, invalid, active, removed, and blocked-download states                  |
 | UI style/responsive    | Approved client style test path plus Playwright viewport assertions           | Zen Green tokens, labels, focus, breakpoints, no overflow                      |
 | E2E                    | `e2e/lab-02/requester-ticket-flow.spec.ts`                                  | Select Requester, create, find, switch Requester, detail, attachment lifecycle |
 
@@ -192,13 +213,13 @@ Capture evidence under:
 - `artifacts/lab-02/screenshots/my-tickets/`
 - `artifacts/lab-02/screenshots/ticket-detail/`
 
-Capture desktop at `>= 992 px`, tablet at `768-991 px`, and mobile below `768 px`. Include the states required for the nine submission parts: requester selection, reference-data loading, invalid form, submitting, success with backend Ticket Number, API failure with preserved values, invalid attachment, ownership isolation, search/filter/sort/page, empty/no-results, active download, soft removal, blocked removed download, and responsive visual checks.
+Capture desktop at `>= 992 px`, tablet at `768-991 px`, and mobile below `768 px`. Include the states required for the nine submission parts: requester selection, reference-data loading, invalid form, submitting, success with backend Ticket Number, API failure with preserved values, invalid attachment, ownership isolation, search/filter/sort/page, empty/no-results, active download, soft removal, blocked removed download, and responsive visual checks. The current 36-file inventory covers 12 state prefixes but still needs separate requester-selection, initial-form, and submitting captures.
 
 ### 9. Review, integration, and submission
 
 - Keep each feature branch focused on one approved issue and merge it into `lab2-staging` only through a peer-reviewed PR.
 - Run integration tests against the isolated test database after each merge.
-- Open one release PR from `lab2-staging` to `main`; do not change PR or main-issue state without human action.
+- Open one release PR from `lab2-staging` to `main`; the reviewer must merge it after approval. Do not change PR or main-issue state without human action.
 - Update `reviewer.md`, `ai-use.md`, README setup/usage instructions, and the final evidence links.
 - Produce exactly one concise submission PDF with headings `Answer Part 1` through `Answer Part 9` in order. Keep the repository and final `main` branch as the source of truth.
 
@@ -239,11 +260,11 @@ The dependency order in the table below controls implementation readiness; it do
 
 Branch workflow:
 
-- The eight Lab 2 feature branches above are created locally from `lab2-staging`; the active report branch is `feature/12-report-compliance`.
+- The seven implementation branches above were created from `lab2-staging`; the active report branch is `feature/12-report-compliance`, also based on the integrated staging branch.
 - Each feature branch targets `lab2-staging` through its own peer-reviewed Pull Request linked to the corresponding Issue.
 - The PR author does not merge their own PR. The reviewer merges only after review comments have been answered.
-- Run integration testing on `lab2-staging` after the feature PRs are integrated.
-- Open one release Pull Request from `lab2-staging` to `main` after integration testing.
+- Run integration testing on `lab2-staging` after the feature PRs are integrated. The current recorded run passes.
+- Open one release Pull Request from `lab2-staging` to `main` after integration testing. No such Lab 2 PR is open yet.
 - Do not commit directly to `main` or `lab2-staging`.
 - Continue the numbering with `feature/12-<feature-name>` for any newly approved Lab 2 feature.
 
@@ -265,6 +286,16 @@ bun run verify
 
 Before handoff, also review `git status`, `git diff --check`, changed dependencies, migrations, generated files, screenshot readability, and the final contract-to-test traceability. Do not use `docker compose down -v` during normal development.
 
-## Immediate next action
+The 2026-09-03 staging run of `bun run verify` passed on the report branch
+above the `lab2-staging` baseline. It is not final-main evidence until Lab 2 is
+released to `main` and the gate is rerun there.
 
-Complete the single submission PDF for Issue #65 on `feature/12-report-compliance`, then open its linked PR into `lab2-staging` for peer review.
+## Immediate next actions
+
+1. Open the Lab 2 release Pull Request from `lab2-staging` to `main` and have
+   the human reviewer review and merge it.
+2. Rerun the required verification and E2E commands from final `main`, capture
+   complete output, and finish the missing screenshots and human review record.
+3. Complete the single submission PDF for Issue #65 on
+   `feature/12-report-compliance`, then open its linked PR into `lab2-staging`
+   for peer review.
