@@ -18,7 +18,7 @@ Peer reviewer GitHub: [`MadMax168`](https://github.com/MadMax168)
 
 Human reviewer account: `MadMax168`
 
-Record date: 2026-09-04
+Record date: 2026-09-05
 
 This record describes the complete Lab 2 delivery, not only the report branch.
 It records the GitHub state of the implementation issues, their feature
@@ -39,8 +39,8 @@ release to `main` is recorded as PR #70.
 - GitHub currently reports an empty formal `reviewDecision` for PRs #58-#64.
   Human ready-to-merge/approve comments exist on the PR discussions, but this
   record does not convert those comments into a formal `APPROVED` review.
-- The authenticated `browser-use` CLI capture of Project 2 records View 1 with
-  Issues #51-#57 in `Done`. The board screenshot is stored at
+- The `browser-use` CLI capture of Project 2 records the Lab 2 Kanban view with
+  the six Lab 1-aligned workflow columns and Issues #51-#57 in `Done`. The board screenshot is stored at
   `docs/lab-02/report/evidence/final-lab2-project-board.png`.
 
 ## Feature PR index
@@ -85,7 +85,7 @@ release to `main` is recorded as PR #70.
 ## Final-release boundary
 
 The integrated Lab 2 implementation and its recorded tests/evidence were
-merged into `main` by release PR #70. The authenticated Project board capture
+merged into `main` by release PR #70. The Lab 2 Kanban Project board capture
 is now recorded; the final submission still requires human visual review. The
 final-main-aligned verification and two-test E2E flow have been rerun
 successfully on the released baseline.

@@ -22,7 +22,7 @@ reviewer `MadMax168`. Report Issue #65 was integrated by PR #66, and release
 PR #70 merged the result into `main` at `538b5da`. The current branch is
 `docs/lab2-docs`, based on final `main`, and contains the LaTeX update plus
 final-main repository, contract, release, and test-output evidence. The
-The authenticated `browser-use` CLI capture of Project 2 records the Lab 2
+The `browser-use` CLI capture of Project 2 records the Lab 2
 View 1 board with Issues #51-#57 in `Done`.
 
 The recorded final-main-aligned validation passes: 8 client test files/32

@@ -9,7 +9,7 @@ This document defines the reusable visual and interaction contract for Requester
 
 ## Current Lab 2 state
 
-The UI contract was delivered with Issue #51 and the corresponding implementation is integrated through PRs #58-#64 on `lab2-staging`; test-isolation PR #69 and release PR #70 are also merged. Automated UI/responsive checks and the screenshot inventory are recorded in `tests.md` and `visual-inspection.md`. Final-main repository, contract, release, test-output, and authenticated Project board evidence is recorded under `docs/lab-02/report/evidence/`; complete human visual-review sign-off is still pending.
+The UI contract was delivered with Issue #51 and the corresponding implementation is integrated through PRs #58-#64 on `lab2-staging`; test-isolation PR #69 and release PR #70 are also merged. Automated UI/responsive checks and the screenshot inventory are recorded in `tests.md` and `visual-inspection.md`. Final-main repository, contract, release, test-output, and Lab 2 Kanban Project board evidence is recorded under `docs/lab-02/report/evidence/`; complete human visual-review sign-off is still pending.
 
 ## 1. Design principles
 

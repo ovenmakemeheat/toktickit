@@ -2,7 +2,7 @@
 
 Scope: Whole Lab 2 implementation, evidence, review, and report preparation
 
-Record date: 2026-09-04
+Record date: 2026-09-05
 
 ## LLM used
 
@@ -54,8 +54,8 @@ and responding to peer-review comments.
   staging-to-main release PR #70.
 - The final-main browser-use captures cover the repository tree, README,
   `.gitignore`, history, rendered specification/UI specification, release PR,
-  and the authenticated Project 2 board; the board shows Issues #51-#57 in
-  `Done`.
+  and the Lab 2 Kanban Project 2 board; the board shows the six Lab 1-aligned
+  workflow columns and Issues #51-#57 in `Done`.
 
 ## Reflection
 

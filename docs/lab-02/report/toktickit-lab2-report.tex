@@ -175,7 +175,7 @@
     Stack & React, TypeScript, Vite, Bootstrap, Express, Prisma, PostgreSQL \\
   \end{tabular}
   \vfill
-  \statusnote{\textbf{DRAFT - 2026-09-04.} Lab 2 implementation is integrated on \texttt{lab2-staging} and released to final \texttt{main}. Eight UI report-state captures, seven final-main \texttt{browser-use} captures, final-main client/server test output, the final-main-aligned E2E rerun, and authenticated Project board evidence are recorded. Human visual sign-off and formal GitHub \texttt{APPROVED} review evidence remain pending.}
+  \statusnote{\textbf{DRAFT - 2026-09-05.} Lab 2 implementation is integrated on \texttt{lab2-staging} and released to final \texttt{main}. Eight UI report-state captures, seven final-main \texttt{browser-use} captures, final-main client/server test output, the final-main-aligned E2E rerun, and the current Project board capture are recorded. Human visual sign-off and formal GitHub \texttt{APPROVED} review evidence remain pending.}
   \vfill
   {\small One concise PDF is required by the labsheet; this source is the LaTeX draft for that PDF.}
 \end{titlepage}
@@ -272,13 +272,17 @@ author responses for PRs \#59, \#61, \#62, and \#64. GitHub currently exposes
 human ready-to-merge or approve comments, but its formal \texttt{reviewDecision}
 is empty for PRs \#58-\#64; the report must not label those comments as formal
 \texttt{APPROVED} reviews. The final release PR \#70 records the merge from
-\texttt{lab2-staging} into \texttt{main}. The Project board was opened with the
-\texttt{browser-use} CLI at \texttt{/users/ovenmakemeheat/projects/2/}; the
-authenticated View 1 capture shows Issues \#51-\#57 in \texttt{Done}.
+\texttt{lab2-staging} into \texttt{main}. The Lab 2 Kanban view was captured
+with the \texttt{browser-use} CLI at
+\texttt{/users/ovenmakemeheat/projects/2/views/2}; it shows the six Lab 1-aligned
+columns (\texttt{Backlog}, \texttt{Specified}, \texttt{Started}, \texttt{PR
+Review}, \texttt{Fixing}, and \texttt{Done}) with Issues \#51-\#57 in
+\texttt{Done}.
 
 \textbf{Required Part 1 captures}
 
-\twocapturescrop{docs/lab-02/report/evidence/final-main-history.png}{210pt 1450pt 210pt 0pt}{Capture final-main history.}{Final \texttt{main} history showing the latest release, staging, and Lab 2 commits (cropped for legibility).}{docs/lab-02/report/evidence/final-lab2-project-board.png}{0pt 0pt 0pt 0pt}{Capture the final Lab 2 Project board.}{View 1 shows Issues \#51-\#57 with status \texttt{Done}.}
+\widecapturecrop{docs/lab-02/report/evidence/final-main-history.png}{210pt 1450pt 210pt 0pt}{Capture final-main history.}{Final \texttt{main} history showing the latest release, staging, and Lab 2 commits (cropped for legibility).}
+\widecapturecrop{docs/lab-02/report/evidence/final-lab2-project-board.png}{0pt 0pt 0pt 0pt}{Capture the final Lab 2 Kanban board.}{Final Lab 2 Kanban board with the six Lab 1-aligned workflow columns; Issues \#51-\#57 are in \texttt{Done}.}
 
 \twocapturescrop{docs/lab-02/report/evidence/final-main-readme.png}{210pt 650pt 210pt 0pt}{Render final-main README.}{Repository README setup evidence (cropped to the readable content area).}{docs/lab-02/report/evidence/final-main-gitignore.png}{210pt 0pt 210pt 0pt}{Render final-main .gitignore.}{Secrets, dependencies, build output, and LaTeX artifact exclusions.}
 
@@ -301,9 +305,10 @@ artifacts/lab-02/screenshots/  create-ticket/  my-tickets/  ticket-detail/
 \end{verbatim}
 
 The final-main tree, README, \texttt{.gitignore}, history, and Project board
-captures were taken from GitHub with \texttt{browser-use}. The authenticated
-board capture records the seven Lab 2 scope Issues as \texttt{Done}; human
-visual sign-off remains a separate review responsibility. The original full
+captures were taken from GitHub with \texttt{browser-use}. The Kanban board
+capture records the six Lab 1-aligned columns and the seven Lab 2 scope Issues
+as \texttt{Done}; human visual sign-off remains a separate review
+responsibility. The original full
 browser captures remain in the evidence directory; the long pages are
 content-focused crops in this PDF for legibility.
 
@@ -636,7 +641,7 @@ client/server test-output capture.
 
 The visual checklist is supported by the final-main-aligned E2E screenshot
 inventory, the final-main rendered contract/repository/release/test evidence,
-and the authenticated Project board capture. Human visual sign-off remains
+and the Project board capture. Human visual sign-off remains
 explicitly open rather than being inferred from the release.
 
 \end{document}

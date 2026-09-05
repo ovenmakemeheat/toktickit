@@ -1,13 +1,14 @@
 # Lab 2 visual inspection record
 
 Scope: Issues #56-#57 - Lab 2 Zen Green UI, visual inspection, and E2E evidence
-Date: 2026-09-04 (updated)
+Date: 2026-09-05 (updated)
 Contract: `docs/lab-02/ui-spec.md`
 
 This record covers the integrated Lab 2 visual work and its final-main evidence
 update, not only the current report branch. Implementation PRs #58-#64, the
-test-isolation PR #69, and release PR #70 are merged. The authenticated Project
-board capture is recorded; human visual sign-off remains open.
+test-isolation PR #69, and release PR #70 are merged. The Lab 2 Kanban board
+capture records the six Lab 1-aligned columns and Issues #51-#57 in `Done`;
+human visual sign-off remains open.
 
 ## Design direction
 
@@ -102,10 +103,10 @@ non-default filter/sort/page state. These captures are stored under
 
 The `browser-use` CLI additionally captured the final `main` repository
 tree/README, `.gitignore`, commit history, rendered `specification.md`, rendered
-`ui-spec.md`, release PR #70, and the authenticated Project board. These are
+`ui-spec.md`, release PR #70, and the Lab 2 Kanban Project board. These are
 repository, contract/release, and workflow evidence; they do not replace
 application E2E screenshots. The board capture shows Issues #51-#57 in
-`Done`.
+`Done` across the six Lab 1-aligned workflow columns.
 
 - Record the human visual review and approval evidence in `reviewer.md`.
 - The final-main-aligned Playwright capture flow has now been rerun; the
