@@ -1,35 +1,47 @@
 # Lab 2 reviewer record
 
-Scope: Issues #51-#57 and their feature Pull Requests #58-#64
+Scope: Issues #51-#57, Issue #68, and their feature Pull Requests #58-#64 and #69
 
 Target branch for feature work: `lab2-staging`
 
-Human reviewer: `MadMax168`
+Student: `GUNTEE DOUNGMANEE`
 
-Record date: 2026-09-03
+Student ID: `67070501003`
+
+Student GitHub: [`ovenmakemeheat`](https://github.com/ovenmakemeheat)
+
+Peer reviewer: `POLWARIT WATTHANAHEMMARAT` (`MadMax168`)
+
+Peer reviewer ID: `67070501067`
+
+Peer reviewer GitHub: [`MadMax168`](https://github.com/MadMax168)
+
+Human reviewer account: `MadMax168`
+
+Record date: 2026-09-04
 
 This record describes the complete Lab 2 delivery, not only the report branch.
-It records the GitHub state of the seven implementation issues, their feature
-branches, review discussions, author responses, and reviewer merges. The
-final release to `main` is tracked separately because no Lab 2 release PR has
-been opened yet.
+It records the GitHub state of the implementation issues, their feature
+branches, review discussions, author responses, and reviewer merges. The final
+release to `main` is recorded as PR #70.
 
 ## Current GitHub state
 
-- Issues #51-#57 are closed.
-- PRs #58-#64 are merged into `lab2-staging`.
-- `lab2-staging` is at `83da75e` (`Merge pull request #64`).
-- `main` is still at `b9903e8` (the Lab 1 release).
+- Issues #51-#57 and #68 are closed.
+- PRs #58-#64 and #69 are merged into `lab2-staging`.
+- `lab2-staging` is at `f6d00cb` (`Merge pull request #69`).
+- Release PR #70 is merged into `main` at `538b5da`.
 - Issue #65, the final submission report, remains open.
-- Every Lab 2 PR was merged by the human reviewer `MadMax168`; the PR authors
+- Every Lab 2 feature PR was merged by the human reviewer `MadMax168`; the PR authors
   did not merge their own PRs.
 - The PR bodies reference their corresponding Issues (`Closes #51` for PR #58
   and `Refs #52` through `Refs #57` for PRs #59-#64).
 - GitHub currently reports an empty formal `reviewDecision` for PRs #58-#64.
   Human ready-to-merge/approve comments exist on the PR discussions, but this
   record does not convert those comments into a formal `APPROVED` review.
-- The Project board could not be read with the current GitHub token because it
-  lacks the `read:project` scope; board status is therefore not claimed here.
+- The authenticated `browser-use` CLI capture of Project 2 records View 1 with
+  Issues #51-#57 in `Done`. The board screenshot is stored at
+  `docs/lab-02/report/evidence/final-lab2-project-board.png`.
 
 ## Feature PR index
 
@@ -42,6 +54,8 @@ been opened yet.
 | #55 | `feature/9-ticket-detail` | [PR #62](https://github.com/ovenmakemeheat/toktickit/pull/62) | Merged by `MadMax168` on 2026-08-31 |
 | #56 | `feature/10-zen-green` | [PR #63](https://github.com/ovenmakemeheat/toktickit/pull/63) | Merged by `MadMax168` on 2026-09-01 |
 | #57 | `feature/11-e2e-evidence` | [PR #64](https://github.com/ovenmakemeheat/toktickit/pull/64) | Merged by `MadMax168` on 2026-09-02 |
+| #68 | `feature/13-test-isolation` | [PR #69](https://github.com/ovenmakemeheat/toktickit/pull/69) | Merged by `MadMax168` on 2026-09-04 |
+| Release | `lab2-staging` → `main` | [PR #70](https://github.com/ovenmakemeheat/toktickit/pull/70) | Merged by `MadMax168` on 2026-09-04 |
 
 ## Review discussion and responses
 
@@ -57,22 +71,24 @@ been opened yet.
 
 ## Review checklist
 
-- [x] All seven Lab 2 feature Issues are closed on GitHub.
+- [x] All eight Lab 2 implementation/follow-up Issues are closed on GitHub.
 - [x] Each feature PR links its corresponding Issue.
 - [x] Each feature PR targets `lab2-staging`.
 - [x] Human reviewer `MadMax168`, not the PR author, merged PRs #58-#64.
 - [x] Recorded human change requests have an author response and implementation reference.
 - [x] E2E evidence and test traceability are linked from the Lab 2 Markdown records.
 - [ ] Formal GitHub `APPROVED` review evidence is visible for every feature PR.
-- [ ] Final visual review and final-main verification are complete.
-- [ ] A release PR from `lab2-staging` to `main` has been reviewed and merged.
+- [ ] Final visual review is complete.
+- [x] Final-main verification passes on the released `main` baseline.
+- [x] Release PR #70 from `lab2-staging` to `main` was reviewed and merged.
 
 ## Final-release boundary
 
-The integrated Lab 2 implementation and its recorded tests/evidence are on
-`lab2-staging`. The final submission still requires a human-reviewed release
-PR to `main`, a rerun of the required tests from final `main`, completion of
-the missing submission screenshots, and the final reviewer/approval evidence.
+The integrated Lab 2 implementation and its recorded tests/evidence were
+merged into `main` by release PR #70. The authenticated Project board capture
+is now recorded; the final submission still requires human visual review. The
+final-main-aligned verification and two-test E2E flow have been rerun
+successfully on the released baseline.
 
 See [`tests.md`](tests.md), [`visual-inspection.md`](visual-inspection.md), and
 the [Lab 2 final-report Issue #65](https://github.com/ovenmakemeheat/toktickit/issues/65)

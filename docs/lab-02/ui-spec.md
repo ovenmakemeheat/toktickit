@@ -1,6 +1,6 @@
 # Lab 2 Zen Green UI specification
 
-Status: implementation contract completed; UI integrated on `lab2-staging`; final-main release pending (2026-09-03)
+Status: implementation contract completed; UI released to final `main` at `538b5da`; final visual review pending (2026-09-04)
 
 Origin issue: #51 - Lab 2 - Sprint specification and test plan
 Applies to: Issues #51-#57 and the integrated Lab 2 result
@@ -9,7 +9,7 @@ This document defines the reusable visual and interaction contract for Requester
 
 ## Current Lab 2 state
 
-The UI contract was delivered with Issue #51 and the corresponding implementation is integrated through PRs #58-#64 on `lab2-staging`. Automated UI/responsive checks and the current screenshot inventory are recorded in `tests.md` and `visual-inspection.md`. Final-main evidence and complete human visual-review sign-off are still pending.
+The UI contract was delivered with Issue #51 and the corresponding implementation is integrated through PRs #58-#64 on `lab2-staging`; test-isolation PR #69 and release PR #70 are also merged. Automated UI/responsive checks and the screenshot inventory are recorded in `tests.md` and `visual-inspection.md`. Final-main repository, contract, release, test-output, and authenticated Project board evidence is recorded under `docs/lab-02/report/evidence/`; complete human visual-review sign-off is still pending.
 
 ## 1. Design principles
 

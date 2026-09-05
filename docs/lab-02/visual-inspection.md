@@ -4,9 +4,10 @@ Scope: Issues #56-#57 - Lab 2 Zen Green UI, visual inspection, and E2E evidence
 Date: 2026-09-04 (updated)
 Contract: `docs/lab-02/ui-spec.md`
 
-This record covers the integrated Lab 2 visual work on `lab2-staging`, not only
-the current report branch. The implementation PRs #58-#64 are merged; final
-visual sign-off and final-main evidence remain open.
+This record covers the integrated Lab 2 visual work and its final-main evidence
+update, not only the current report branch. Implementation PRs #58-#64, the
+test-isolation PR #69, and release PR #70 are merged. The authenticated Project
+board capture is recorded; human visual sign-off remains open.
 
 ## Design direction
 
@@ -28,8 +29,8 @@ visual language.
 
 | Area | Covered states and evidence basis |
 | --- | --- |
-| Requester Selection | Loading, ready, empty, failure, retry, disabled Continue, and Change Requester are covered by client tests and the E2E assertions; no dedicated selection screenshot is in the current artifact inventory. |
-| Create Ticket | Reference loading, validation, submitting, success, API failure with preserved values, and invalid attachments are covered by client tests/E2E; the screenshot inventory has reference-loading, validation, success, API-failure, and invalid-attachment evidence but no separate initial or submitting capture. |
+| Requester Selection | Loading, ready, empty, failure, retry, disabled Continue, and Change Requester are covered by client tests and the E2E assertions; dedicated ready, selected, summary, and Change Requester captures are in `docs/lab-02/report/evidence/`. |
+| Create Ticket | Reference loading, validation, submitting, success, API failure with preserved values, and invalid attachments are covered by client tests/E2E; the screenshot inventory and report evidence include reference-loading, initial, validation, submitting, success, API-failure, and invalid-attachment states. |
 | My Tickets | Loading, normal results, empty list, no results, API failure/retry, filters, pagination, and Open Ticket action are covered by client tests/E2E; the inventory has empty, failure, filtered, and ownership-isolation captures. |
 | Ticket Detail | Loading, owned detail, safe failure, read-only fields, and Back to My Tickets are covered by client tests/E2E; the inventory has active, removed, blocked-download, and invalid-attachment captures. |
 | Attachments | Active, removed, upload, invalid file, download, removal confirmation, and explicit blocked-download explanation are covered by client/API tests and E2E evidence. |
@@ -57,14 +58,19 @@ visual language.
 
 ## Evidence review
 
-- `bun run test:e2e` passed one requester lifecycle test and regenerated 36
+- `bun run test:e2e` passed two tests on the final-main-aligned branch and regenerated 36
   screenshots across 12 states in Create Ticket, My Tickets, and Ticket Detail
   at desktop, tablet, and mobile viewports.
 - The browser flow asserts no horizontal overflow at `1280x900`, `820x900`,
-  and `390x844`; the regenerated screenshots show readable labels, stacked
+  and `390x844`; the final-main-aligned regenerated screenshots show readable labels, stacked
   mobile controls, responsive ticket cards, read-only detail fields, explicit
   validation and failure messages, invalid-attachment feedback, and the
   blocked-download explanation for removed attachments.
+- The current final-main commit is `538b5da`, released by PR #70. The renamed
+  `docs/lab-02/report/evidence/final-main-test-output.png` records 8 client
+  files/32 tests and 13 server files/70 tests. Seven additional `browser-use`
+  captures record the final-main tree, README, `.gitignore`, history, rendered
+  specification, rendered UI specification, and release PR.
 
 ## Evidence inventory
 
@@ -94,19 +100,20 @@ Ticket form, the submitting/busy state, mixed attachment validation, and a
 non-default filter/sort/page state. These captures are stored under
 `docs/lab-02/report/evidence/`.
 
-The `browser-use` CLI additionally captured the remote `lab2-staging` repository
-tree/README, `.gitignore`, rendered `specification.md`, and merged PR #58
-timeline. These are repository and contract-sequence evidence, not final-main
-application or release evidence. The Project board could not be captured because
-GitHub rendered its Sign in page in the CLI session.
+The `browser-use` CLI additionally captured the final `main` repository
+tree/README, `.gitignore`, commit history, rendered `specification.md`, rendered
+`ui-spec.md`, release PR #70, and the authenticated Project board. These are
+repository, contract/release, and workflow evidence; they do not replace
+application E2E screenshots. The board capture shows Issues #51-#57 in
+`Done`.
 
-- Record the human visual review, approval evidence, and final-main rerun in
-  `reviewer.md` after the release PR is merged.
-- Repeat the required capture flow from final `main`; staging or controlled UI
-  fixtures must not be presented as final-main evidence.
+- Record the human visual review and approval evidence in `reviewer.md`.
+- The final-main-aligned Playwright capture flow has now been rerun; the
+  regenerated application screenshots are the current evidence set. Do not
+  present older staging or controlled UI fixtures as final-main evidence.
 
 ## Follow-up
 
 Issue #57 is implemented and its PR #64 is merged into `lab2-staging`. The
-remaining Lab 2 follow-up is final release integration into `main`, final-main
-verification, and human visual-review recording.
+test-isolation follow-up is merged by PR #69, and release PR #70 is merged into
+`main`. The remaining Lab 2 follow-up is human visual-review recording.

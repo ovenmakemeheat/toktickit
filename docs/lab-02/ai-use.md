@@ -2,7 +2,7 @@
 
 Scope: Whole Lab 2 implementation, evidence, review, and report preparation
 
-Record date: 2026-09-03
+Record date: 2026-09-04
 
 ## LLM used
 
@@ -28,8 +28,9 @@ and responding to peer-review comments.
    the required screenshot evidence.
 7. Review the complete Lab 2 PR sequence, address reviewer comments, and update
    the reviewer, test, visual, and AI-use records with verified current state.
-8. Check report readiness against Answer Parts 1-9 and distinguish staging
-   evidence from evidence that must be rerun on final `main`.
+8. Check report readiness against Answer Parts 1-9, capture final-main evidence
+   with the `browser-use` CLI, and distinguish verified evidence from the
+   human-review items that remain open.
 
 ## Review decisions made during implementation
 
@@ -48,6 +49,13 @@ and responding to peer-review comments.
   perform destructive database resets.
 - Review records separate automated Codex suggestions from human reviewer
   decisions and do not treat a bot comment as peer approval.
+- The shared test-fixture isolation fix was kept as a separate Issue/branch
+  (#68, `feature/13-test-isolation`) and released through PR #69 before the
+  staging-to-main release PR #70.
+- The final-main browser-use captures cover the repository tree, README,
+  `.gitignore`, history, rendered specification/UI specification, release PR,
+  and the authenticated Project 2 board; the board shows Issues #51-#57 in
+  `Done`.
 
 ## Reflection
 

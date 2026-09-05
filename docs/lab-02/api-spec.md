@@ -1,6 +1,6 @@
 # Lab 2 REST API specification
 
-Status: implementation contract completed; routes integrated on `lab2-staging`; final-main release pending (2026-09-03)
+Status: implementation contract completed; routes released to final `main` at `538b5da`; final evidence review pending (2026-09-04)
 
 Origin issue: #51 - Lab 2 - Sprint specification and test plan
 Applies to: Issues #51-#57 and the integrated Lab 2 result
@@ -11,7 +11,7 @@ This document defines the wire contract for the Lab 2 requester-facing increment
 
 ## Current Lab 2 state
 
-The API contract was delivered with Issue #51 and is implemented by the merged Lab 2 work in `lab2-staging` (PRs #58-#64). The API and integration tests pass in the recorded staging validation. `main` has not yet received the Lab 2 release, so this document describes the integrated staging contract rather than a final-main release claim.
+The API contract was delivered with Issue #51 and is implemented by the merged Lab 2 work in `lab2-staging` (PRs #58-#64), the test-isolation follow-up PR #69, and the release PR #70. The API and integration tests pass in the recorded final-main-aligned validation. This document describes the released contract on `main` at `538b5da`; formal review and final evidence sign-off remain separate delivery responsibilities.
 
 ## 1. API conventions
 

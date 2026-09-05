@@ -1,6 +1,6 @@
 # Lab 2 implementation plan
 
-Status: Lab 2 implementation integrated on `lab2-staging`; final-main release and submission evidence pending (2026-09-04)
+Status: Lab 2 implementation released to `main`; final evidence update in progress (2026-09-04)
 
 Source: [Lab 2 requirements](../requirements/UTF-8_Lab_02_labsheet-1.pdf)
 
@@ -9,27 +9,31 @@ Source: [Lab 2 requirements](../requirements/UTF-8_Lab_02_labsheet-1.pdf)
 Extend the Lab 1 TokTickIT foundation into a requester-facing ticketing MVP. A selected Development Requester must be able to create a ticket, find only their own tickets, open ticket detail, and manage permitted attachments through a responsive Zen Green UI.
 
 The plan was created from the Lab 1 release on `main` and established the
-contract-first Lab 2 workflow. The current integrated result is on
-`lab2-staging`; no Lab 2 release has been merged into `main` yet.
+contract-first Lab 2 workflow. The integrated result is now released to
+`main`; the current documentation branch records final-main evidence without
+changing the product baseline.
 
 ## Current Lab 2 state
 
 As of 2026-09-04, the whole Lab 2 implementation is integrated on
-`lab2-staging` at `83da75e`. Issues #51-#57 are closed and PRs #58-#64 are
-merged by the human reviewer `MadMax168`. The active report branch is
-`feature/12-report-compliance`; it contains the LaTeX draft, checkpoint PDF,
-and collected report-state and browser-use repository/contract evidence. `main` remains at `b9903e8`,
-and no Lab 2 release PR to `main` exists. Issue #65 remains open. The Project
-board status is not asserted because both the current token and the
-`browser-use` CLI session require GitHub authentication for the board.
+`lab2-staging` at `f6d00cb`. Issues #51-#57 and the test-isolation follow-up
+Issue #68 are implemented; PRs #58-#64 and #69 are merged by the human
+reviewer `MadMax168`. Report Issue #65 was integrated by PR #66, and release
+PR #70 merged the result into `main` at `538b5da`. The current branch is
+`docs/lab2-docs`, based on final `main`, and contains the LaTeX update plus
+final-main repository, contract, release, and test-output evidence. The
+The authenticated `browser-use` CLI capture of Project 2 records the Lab 2
+View 1 board with Issues #51-#57 in `Done`.
 
-The recorded staging validation passes: 8 client test files/32 tests, 13
-server test files/70 tests, both builds, type checks, hooks/Prisma validation,
-and `bun run verify`. Issue #57 records one non-skipped lifecycle E2E flow and
-36 responsive screenshots; the report branch adds one targeted evidence test
-and eight desktop report captures. Five additional repository/contract captures
-were collected with the `browser-use` CLI. The final submission is not complete
-because final-`main` reruns and human visual/approval evidence remain pending.
+The recorded final-main-aligned validation passes: 8 client test files/32
+tests, 13 server test files/70 tests, both builds, type checks, hooks/Prisma
+validation, and `bun run verify`. Issue #57 records one non-skipped lifecycle
+E2E flow and 36 responsive screenshots; the report branch adds one targeted
+evidence test and eight desktop report captures. Seven final-main repository,
+contract, and release captures were collected with the `browser-use` CLI, and
+the final-main client/server test output was captured separately. The remaining
+submission gap is human visual/approval evidence. The final-main-aligned E2E
+flow has also been rerun successfully.
 
 ## Scope boundary
 
@@ -214,7 +218,7 @@ Capture evidence under:
 - `artifacts/lab-02/screenshots/my-tickets/`
 - `artifacts/lab-02/screenshots/ticket-detail/`
 
-Capture desktop at `>= 992 px`, tablet at `768-991 px`, and mobile below `768 px`. Include the states required for the nine submission parts: requester selection, reference-data loading, invalid form, submitting, success with backend Ticket Number, API failure with preserved values, invalid attachment, ownership isolation, search/filter/sort/page, empty/no-results, active download, soft removal, blocked removed download, and responsive visual checks. The current 36-file inventory covers 12 state prefixes. The report branch adds dedicated requester-selection, initial-form, submitting, mixed-attachment, and query-control captures under `docs/lab-02/report/evidence/`. Use `browser-use` CLI captures for repository tree/README, `.gitignore`, rendered specification, and the merged contract PR timeline; do not claim staging captures as final-`main` evidence.
+Capture desktop at `>= 992 px`, tablet at `768-991 px`, and mobile below `768 px`. Include the states required for the nine submission parts: requester selection, reference-data loading, invalid form, submitting, success with backend Ticket Number, API failure with preserved values, invalid attachment, ownership isolation, search/filter/sort/page, empty/no-results, active download, soft removal, blocked removed download, and responsive visual checks. The current 36-file inventory covers 12 state prefixes. The report branch adds dedicated requester-selection, initial-form, submitting, mixed-attachment, and query-control captures under `docs/lab-02/report/evidence/`. Use `browser-use` CLI captures for the final-main repository tree/README, `.gitignore`, history, rendered specification/UI specification, and release PR; do not claim staging captures as final-`main` evidence.
 
 ### 9. Review, integration, and submission
 
@@ -231,8 +235,8 @@ Branch numbering continues from the previous Lab 1 branch `feature/4-category-li
 ### Branch tree
 
 ```text
-main
-└── lab2-staging
+main (538b5da, Lab 2 release; PR #70)
+├── lab2-staging (f6d00cb, integrated Lab 2 baseline)
     ├── feature/5-sprint-specification   (#51)
     ├── feature/6-requester-context     (#52)
     ├── feature/7-create-ticket         (#53)
@@ -240,7 +244,10 @@ main
     ├── feature/9-ticket-detail         (#55)
     ├── feature/10-zen-green            (#56)
     ├── feature/11-e2e-evidence          (#57)
-    └── feature/12-report-compliance     (#65)
+    ├── feature/12-report-compliance     (#65)
+    └── feature/13-test-isolation        (#68)
+
+└── docs/lab2-docs (current evidence branch, based on main)
 
 Each feature branch ── peer-reviewed PR ──> lab2-staging
 lab2-staging ── release PR after integration ──> main
@@ -261,11 +268,11 @@ The dependency order in the table below controls implementation readiness; it do
 
 Branch workflow:
 
-- The seven implementation branches above were created from `lab2-staging`; the active report branch is `feature/12-report-compliance`, also based on the integrated staging branch.
+- The seven implementation branches above were created from `lab2-staging`; the report branch `feature/12-report-compliance` was integrated by PR #66. The test-isolation branch `feature/13-test-isolation` was integrated by PR #69. The current evidence branch is `docs/lab2-docs`, created from final `main` after release PR #70.
 - Each feature branch targets `lab2-staging` through its own peer-reviewed Pull Request linked to the corresponding Issue.
 - The PR author does not merge their own PR. The reviewer merges only after review comments have been answered.
 - Run integration testing on `lab2-staging` after the feature PRs are integrated. The current recorded run passes.
-- Open one release Pull Request from `lab2-staging` to `main` after integration testing. No such Lab 2 PR is open yet.
+- Open one release Pull Request from `lab2-staging` to `main` after integration testing. Release PR #70 is merged.
 - Do not commit directly to `main` or `lab2-staging`.
 - Continue the numbering with `feature/12-<feature-name>` for any newly approved Lab 2 feature.
 
@@ -287,18 +294,13 @@ bun run verify
 
 Before handoff, also review `git status`, `git diff --check`, changed dependencies, migrations, generated files, screenshot readability, and the final contract-to-test traceability. Do not use `docker compose down -v` during normal development.
 
-The 2026-09-04 elevated local run of `bun run verify` passed on the report
-branch above the `lab2-staging` baseline. A normal sandbox invocation stopped
-at Prisma dependency access with `EPERM` before schema validation. The passing
-run is still not final-main evidence until Lab 2 is released to `main` and the
-gate is rerun there.
+The 2026-09-04 elevated local run of `bun run verify` passed on the
+final-main-aligned `docs/lab2-docs` branch at `538b5da`. A normal sandbox
+invocation stopped at Prisma dependency access with `EPERM` before schema
+validation; that failed invocation is not counted as a pass.
 
 ## Immediate next actions
 
-1. Open the Lab 2 release Pull Request from `lab2-staging` to `main` and have
-   the human reviewer review and merge it.
-2. Rerun the required verification and E2E commands from final `main`, capture
-   complete output, and record the human visual review.
-3. Complete the single submission PDF for Issue #65 on
-   `feature/12-report-compliance`, then open its linked PR into `lab2-staging`
-   for peer review.
+1. Record the human visual review and approval evidence in `reviewer.md`.
+2. Complete the single submission PDF update on `docs/lab2-docs` and open its
+   linked PR according to the Lab 2 review rules.

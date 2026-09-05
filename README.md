@@ -37,7 +37,7 @@ If port `5432` is already in use, set `POSTGRES_PORT`, `DATABASE_URL`, and `TEST
 
 The database stack is owned by `server/`: Compose is defined in `server/docker-compose.yml`, PostgreSQL initialization is under `server/docker/`, and Prisma files remain under `server/prisma/`.
 
-The development database migration and seed commands are ready for the Category model delivered in Issue #15:
+The database migration and repeat-safe Lab 2 reference-data seed commands are:
 
 ```sh
 bun run db:migrate
@@ -66,7 +66,7 @@ bun run verify
 ```
 
 `verify` runs Biome checks, Lefthook configuration validation, Prisma schema validation, TypeScript checks, tests, and both workspace builds.
-API tests use the exported Express application and do not start a listener. The isolated test database workflow is completed with the API test setup in Issue #30.
+API tests use the exported Express application and do not start a listener. The isolated test database workflow is completed by the server test setup and the Lab 2 API fixtures.
 
 The Lab 2 requester flow can be run against the seeded development database with
 the client and API started by Playwright:
