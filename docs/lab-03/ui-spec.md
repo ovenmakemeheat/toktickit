@@ -5,7 +5,7 @@ Origin issue: #72 - Lab 3 - Sprint specification and test plan
 Related contract: [specification.md](specification.md)
 API contract: [api-spec.md](api-spec.md)
 
-This document extends the Lab 2 Zen Green language to authentication, Requester regression, the IT Staff workflow, and minimalist Administrator User Management. It defines the user-observable structure, modes, states, responsive behavior, and accessibility expectations. It does not copy the complete handout or invent excluded features.
+This document extends the Lab 2 Zen Green language to authentication, Requester regression, the IT Staff workflow, minimalist Administrator User Management, and the Administrator's narrow read-only Ticket Review. It defines the user-observable structure, modes, states, responsive behavior, and accessibility expectations. It does not copy the complete handout or invent excluded features.
 
 ## 1. Design principles
 
@@ -74,7 +74,7 @@ The shell contains:
 - Role-appropriate navigation:
   - Requester: My Tickets and Create Ticket.
   - IT Staff: Ticket Queue.
-  - Administrator: User Management.
+  - Administrator: User Management and a direct Ticket Review action for a known Ticket ID.
 - A Password action that opens the permitted password flow.
 - A visible Logout action.
 - A clear active-page indication and a responsive mobile navigation that remains keyboard accessible.
@@ -301,6 +301,12 @@ The form displays duplicate-email, invalid-role, required-field, password-policy
 - Conflict: explain duplicate email or account-safety conflict and identify the field or rule.
 - Failure: preserve safe values and provide retry.
 
+### 10.4 Administrator Ticket Review
+
+A direct `/admin/tickets/:ticketId` view is available to an Administrator for a known Ticket ID. It is not a Queue and is not a second operational workflow. The view shows read-only Ticket facts, Requester, Category, Related System, Requested Priority, IT Priority, status, owner, Attachment metadata, Public Comments, Internal Notes, and the Requester resolution indication. Only IT Priority is editable through a clearly labelled `Save IT Priority` action.
+
+The view does not show Claim, Assign, Reassign, status-transition, Public Comment, or Internal Note creation controls. It uses the normal loading, missing-Ticket, forbidden, validation, success, and safe-failure states. Public Comments and Internal Notes are visually distinguished, and all content is rendered as text. The server remains authoritative for both the read-only scope and the IT Priority mutation.
+
 ## 11. Responsive behavior
 
 | Viewport | Required behavior |
@@ -349,6 +355,7 @@ Inspect each major screen at desktop, tablet, and mobile widths. Record pass/fai
 - Requester regression with no Development Requester selector and no Change Requester action.
 - Queue search, filters, sorting, pagination, status, both priorities, owner, open-detail action, empty, no-results, forbidden, and failure states.
 - Ticket Detail read-only versus operational fields, ownership, status confirmation, Public Comments, Internal Notes, Attachments, and resolution indication.
+- Administrator Ticket Review read-only fields, Public Comments, Internal Notes, Attachment metadata, Requester resolution indication, IT Priority edit, and forbidden/not-found behavior.
 - User Management list columns, search, optional role filter, create/edit form, account-safety feedback, and forbidden behavior.
 - Desktop/tablet/mobile clipping, overlap, hidden controls, and horizontal overflow.
 - Keyboard order, visible focus, labels, required indicators, live regions, text alternatives, and readable dialogs.
@@ -367,6 +374,7 @@ The implementation may choose its React composition, but these user-observable l
 | Requester | `My Tickets`, `Create Ticket`, `Public Comments`, `Post public comment`, `Problem Appears Resolved`. |
 | IT Staff Queue | `Search tickets`, filter labels, sort labels, pagination controls, `Open detail`, owner/status/priority text. |
 | IT Staff Detail | Ticket Number heading, `Claim`, `Assign`, `Reassign`, `IT Priority`, `Status`, `Public Comments`, `Internal Notes`, confirmation action. |
+| Administrator Ticket Review | Ticket Number heading, `IT Priority`, `Save IT Priority`, `Public Comments`, `Internal Notes`, read-only Ticket fields. |
 | User Management | `User Management`, `Search users`, `Role`, `Create user`, `Edit`, `Set new initial password`. |
 
-Suggested route intent is `/login`, `/change-password`, `/tickets`, `/tickets/new`, `/tickets/:ticketId`, `/staff/tickets`, `/staff/tickets/:ticketId`, and `/admin/users`. An equivalent route mechanism is acceptable only when direct navigation, server protection, and accessible navigation remain equivalent.
+Suggested route intent is `/login`, `/change-password`, `/tickets`, `/tickets/new`, `/tickets/:ticketId`, `/staff/tickets`, `/staff/tickets/:ticketId`, `/admin/tickets/:ticketId`, and `/admin/users`. An equivalent route mechanism is acceptable only when direct navigation, server protection, and accessible navigation remain equivalent.

@@ -38,7 +38,7 @@ Because authentication uses a cookie, state-changing browser requests require CS
 
 - On successful login, the server sets a readable `toktickit_csrf` cookie containing a random token. It is `Path=/`, `SameSite=Lax`, `Secure` in production, and not `HttpOnly` so the client can copy it into a header.
 - The server stores only a hash of the CSRF token with the session. The raw token is not logged or persisted as application data.
-- Every `POST`, `PATCH`, and `DELETE` after login, except the public login request, must include `X-CSRF-Token` equal to the current CSRF cookie and the stored session token hash.
+- Every `POST`, `PATCH`, and `DELETE` after login, except the public login request, must include `X-CSRF-Token` equal to the current CSRF cookie. The server hashes that raw header/cookie value and compares the digest, using a timing-safe comparison, with the session's stored CSRF-token hash. It is not compared with the session-token hash.
 - The server also validates a supplied `Origin` against the configured application origin when the header is present. A missing Origin is allowed for server-side tests and non-browser clients only when the CSRF token and session are valid.
 - A missing or invalid token returns `403 CSRF_TOKEN_INVALID` without performing the mutation.
 - `GET`, `HEAD`, and `OPTIONS` do not mutate application state and do not require the CSRF header.
@@ -226,6 +226,8 @@ Removed metadata remains visible to the owning Requester and permitted staff rol
 | PATCH | `/api/staff/tickets/:ticketId/owner` | IT Staff | `200` updated Ticket |
 | PATCH | `/api/staff/tickets/:ticketId/priority` | IT Staff | `200` updated Ticket |
 | PATCH | `/api/staff/tickets/:ticketId/status` | IT Staff | `200` updated Ticket |
+| GET | `/api/admin/tickets/:ticketId` | Administrator | `200` read-only Ticket detail |
+| PATCH | `/api/admin/tickets/:ticketId/priority` | Administrator | `200` updated IT Priority |
 | GET | `/api/admin/users` | Administrator | `200` User list |
 | POST | `/api/admin/users` | Administrator | `201` User |
 | PATCH | `/api/admin/users/:userId` | Administrator | `200` User |
@@ -290,9 +292,9 @@ Requires a valid session and `X-CSRF-Token`; a limited session is allowed. Reque
 }
 ```
 
-The server verifies the current password, validates the new password rule, stores a new scrypt hash, clears `mustChangePassword`, and keeps the session authenticated. Success `200` returns the public User with `mustChangePassword: false`, session expiry, and a fresh CSRF token.
+The server verifies the current password, validates the new password rule, stores a new scrypt hash, clears `mustChangePassword`, revokes every existing session for the User, creates a fresh session for the current request, and sets fresh session/CSRF cookies. Success `200` returns the public User with `mustChangePassword: false`, the new session expiry, and the fresh CSRF token. A password change never leaves a sibling session usable.
 
-Errors include `400 PASSWORD_INPUT_INVALID`, `401 CURRENT_PASSWORD_INVALID`, `403 CSRF_TOKEN_INVALID` or `SESSION_REQUIRED`, `409 PASSWORD_REUSE_NOT_ALLOWED` when the new password equals the current password, and `500 PASSWORD_CHANGE_FAILED`.
+Errors include `400 PASSWORD_INPUT_INVALID`, `401 CURRENT_PASSWORD_INVALID` or `SESSION_REQUIRED`, `403 CSRF_TOKEN_INVALID`, `409 PASSWORD_REUSE_NOT_ALLOWED` when the new password equals the current password, and `500 PASSWORD_CHANGE_FAILED`.
 
 ### POST `/api/auth/logout`
 
@@ -500,6 +502,20 @@ The server checks the current status, target status, role, and confirmation agai
 
 All routes require an active Administrator normal session and CSRF for mutations. No route supports User deletion, bulk operations, import/export, roles arrays, email delivery, history, or advanced account recovery.
 
+### GET `/api/admin/tickets/:ticketId`
+
+This is the Administrator's read-only Ticket Review endpoint. It requires an active Administrator session, accepts a positive integer Ticket ID, and returns any existing Ticket's read-only facts, Requester, Category, Related System, Requested Priority, IT Priority, status, owner, Attachment metadata, Public Comments, Internal Notes, and Requester resolution indication. It is a detail lookup, not a Queue and not a Ticket mutation permission. A missing Ticket returns `404 TICKET_NOT_FOUND`; the response never exposes credentials or storage keys.
+
+### PATCH `/api/admin/tickets/:ticketId/priority`
+
+This is the narrow Administrator exception required by the handout. It requires an active Administrator session and CSRF. The request body is the same as the staff priority operation:
+
+```json
+{ "itPriority": "MEDIUM" }
+```
+
+The server changes only IT Priority, preserves Requested Priority, and does not grant Queue, ownership, status, Public Comment, or Internal Note creation permissions. Success is `200` with the read-only Administrator Ticket detail. Invalid values return `400 IT_PRIORITY_INVALID`; a missing Ticket returns `404 TICKET_NOT_FOUND`; a non-Administrator receives `403 ADMIN_TICKET_FORBIDDEN`; unexpected failures return `500 ADMIN_TICKET_PRIORITY_FAILED`.
+
 ### GET `/api/admin/users`
 
 Query parameters:
@@ -541,7 +557,7 @@ Request body is a partial update containing at least one of the following:
 }
 ```
 
-Only name, normalized email, one role, and activation state are editable. Password changes use the dedicated endpoint. The server rejects invalid roles, duplicate emails, unknown Users, self-deactivation, and removal/deactivation of the last active Administrator. Success is `200`; safe errors include `400 USER_INPUT_INVALID`, `404 USER_NOT_FOUND`, `409 EMAIL_ALREADY_EXISTS` or `LAST_ADMINISTRATOR_REQUIRED`, and `500 USER_UPDATE_FAILED`.
+Only name, normalized email, one role, and activation state are editable. Password changes use the dedicated endpoint. The server rejects invalid roles, duplicate emails, unknown Users, self-deactivation, removal/deactivation of the last active Administrator, and any role/activation update that would leave one or more existing Tickets owned by an inactive User or a Requester. The User update and ownership check are one atomic operation; no partial User update is persisted. Success is `200`; safe errors include `400 USER_INPUT_INVALID`, `404 USER_NOT_FOUND`, `409 EMAIL_ALREADY_EXISTS`, `LAST_ADMINISTRATOR_REQUIRED`, or `USER_OWNS_TICKETS`, and `500 USER_UPDATE_FAILED`.
 
 ### POST `/api/admin/users/:userId/initial-password`
 
@@ -554,7 +570,7 @@ Request body:
 }
 ```
 
-The server stores only the new hash, sets `mustChangePassword = true`, and does not send email. Success is `204`. Invalid password input, unknown User, forbidden role, CSRF failure, and unexpected failure return safe stable errors. The next login is limited to the Change Password flow.
+The server stores only the new hash, sets `mustChangePassword = true`, revokes every existing session for the target User, and does not send email. Success is `204`. Invalid password input, unknown User, forbidden role, CSRF failure, and unexpected failure return safe stable errors. The next login is limited to the Change Password flow.
 
 ## 9. Validation, authorization, and safe-error matrix
 
@@ -566,6 +582,8 @@ The server stores only the new hash, sets `mustChangePassword = true`, and does 
 | Public Comment | Requester owner or IT Staff | Content and Ticket access | Author comes from session; Admin is read-only. |
 | Internal Note | IT Staff/Admin read; IT Staff create | Content and Ticket access | Requesters receive `403` with no note content. |
 | Staff Queue/operations | IT Staff normal session | Query, assignment, priority, status matrix | Shared queue; invalid mutation does not partially update. |
+| Administrator Ticket Review | Administrator normal session | Positive Ticket ID; read-only detail | Any existing Ticket may be read; no Queue or general Ticket mutation is granted. |
+| Administrator IT Priority | Administrator normal session | Priority enum and Ticket existence | Only IT Priority changes; Requested Priority and all other fields remain unchanged. |
 | User Management | Administrator normal session | One role, unique email, account-safety rules | Non-Administrators receive safe `403`; no credential data. |
 | State-changing request | Valid session | CSRF token and Origin check | Invalid CSRF is rejected before mutation. |
 
@@ -575,7 +593,7 @@ Status policy:
 - `401`: missing/expired/revoked session or invalid credentials.
 - `403`: valid session but wrong role, limited password-change state, inactive account, or invalid CSRF.
 - `404`: missing resource or non-disclosing cross-owner access.
-- `409`: duplicate/conflicting identity, idempotency key reuse, already assigned/removed state, or Administrator safety conflict.
+- `409`: duplicate/conflicting identity, idempotency key reuse, already assigned/removed state, Administrator safety conflict, or a User update that would leave owned Tickets ineligible.
 - `410`: removed Attachment content.
 - `413`: file too large.
 - `415`: unsupported file type.
@@ -589,6 +607,7 @@ Migration is a database/application operation, not a public REST endpoint. The i
 - create Users from Development Requesters matched by normalized email;
 - preserve Ticket and Attachment ownership and IDs;
 - hash one-time local initial passwords and mark migrated Users for password change;
+- write newly generated migration passwords only through the explicit ignored local handoff workflow in `specification.md`, then verify first-login completion before deleting that handoff;
 - initialize IT Priority from Requested Priority and preserve existing `NEW` status;
 - create the Public Comment, Internal Note, Session, and new ownership structures;
 - verify no orphaned Ticket or Attachment relationships before making new ownership required; and
