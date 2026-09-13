@@ -1,45 +1,25 @@
-import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import {
-  developmentRequesters,
   relatedSystemNames,
   seedReferenceData,
 } from "../../prisma/seed-reference-data.js";
-import { app } from "../../src/app.js";
-import { prisma } from "../../src/db.js";
+import { loginAgent, prepareLab3Data, prisma } from "../lab-03/test-helpers.js";
 
-describe("Issue #52 reference data and Development Requester context", () => {
+describe("Lab 3 authenticated reference data", () => {
+  let authenticated: Awaited<ReturnType<typeof loginAgent>>;
+
   beforeAll(async () => {
-    await seedReferenceData(prisma);
+    await prepareLab3Data();
+    authenticated = await loginAgent("requester-a@toktickit.test");
   });
 
   afterAll(async () => {
     await prisma.$disconnect();
   });
 
-  it("returns active Development Requesters in ascending ID order", async () => {
-    const response = await request(app).get("/api/development-requesters");
-
-    expect(response.status).toBe(200);
-    expect(response.body).toEqual(
-      developmentRequesters
-        .filter((requester) => requester.active)
-        .map(({ name, email }) =>
-          expect.objectContaining({ id: expect.any(Number), name, email }),
-        ),
-    );
-    const requesterIds = response.body.map(
-      (requester: { id: number }) => requester.id,
-    );
-    expect(requesterIds).toEqual([...requesterIds].sort((a, b) => a - b));
-    expect(response.body).not.toContainEqual(
-      expect.objectContaining({ email: "inactive-requester@toktickit.test" }),
-    );
-  });
-
   it("returns active Related Systems in ascending ID order", async () => {
-    const response = await request(app).get("/api/related-systems");
+    const response = await authenticated.agent.get("/api/related-systems");
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual(
@@ -56,7 +36,7 @@ describe("Issue #52 reference data and Development Requester context", () => {
   });
 
   it("keeps the existing four Categories active", async () => {
-    const response = await request(app).get("/api/categories");
+    const response = await authenticated.agent.get("/api/categories");
 
     expect(response.status).toBe(200);
     expect(
@@ -68,23 +48,22 @@ describe("Issue #52 reference data and Development Requester context", () => {
     expect(categoryIds).toEqual([...categoryIds].sort((a, b) => a - b));
   });
 
-  it("is repeat-safe for seeded reference data", async () => {
+  it("removes the Development Requester identity endpoint", async () => {
+    const response = await authenticated.agent.get(
+      "/api/development-requesters",
+    );
+    expect(response.status).toBe(404);
+  });
+
+  it("keeps reference seeding repeat-safe", async () => {
     await seedReferenceData(prisma);
     await seedReferenceData(prisma);
 
     expect(
-      await prisma.developmentRequester.count({
-        where: {
-          email: {
-            in: developmentRequesters.map((requester) => requester.email),
-          },
-        },
-      }),
-    ).toBe(developmentRequesters.length);
-    expect(
       await prisma.relatedSystem.count({
-        where: { name: { in: [...relatedSystemNames] } },
+        where: { name: { in: [...relatedSystemNames] }, active: true },
       }),
     ).toBe(relatedSystemNames.length);
+    expect(await prisma.category.count({ where: { active: true } })).toBe(4);
   });
 });

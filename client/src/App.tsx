@@ -1,20 +1,21 @@
 import { useEffect, useState } from "react";
 
+import ChangePassword from "./auth/ChangePassword";
+import Login from "./auth/Login";
+import { AuthProvider, useAuth } from "./auth-context";
 import CreateTicket from "./lab-02/CreateTicket";
-import RequesterTicketDetail from "./lab-02/RequesterTicketDetail";
 import MyTickets from "./lab-02/MyTickets";
-import RequesterSelection from "./lab-02/RequesterSelection";
+import RequesterTicketDetail from "./lab-02/RequesterTicketDetail";
+import { RequesterProvider, useRequester } from "./lab-02/requester-context";
 import { navigate } from "./lib/navigation";
-import {
-  DevelopmentRequesterProvider,
-  useDevelopmentRequester,
-} from "./lab-02/requester-context";
+import type { PublicUser, Role } from "./lib/api";
 
 type AppRoute =
   | { page: "summary" }
   | { page: "tickets" }
   | { page: "create" }
-  | { page: "detail"; ticketId: string };
+  | { page: "detail"; ticketId: string }
+  | { page: "change-password" };
 
 function readRoute(): AppRoute {
   const detailTicketId = window.location.pathname.match(
@@ -32,111 +33,188 @@ function readRoute(): AppRoute {
     return { page: "tickets" };
   }
 
+  if (window.location.pathname === "/change-password") {
+    return { page: "change-password" };
+  }
+
   return { page: "summary" };
 }
 
-function SelectedRequesterScreen({ route }: { route: AppRoute }) {
-  const { selectedRequester, clearRequester } = useDevelopmentRequester();
-  const activePage =
-    route.page === "create" ||
-    route.page === "tickets" ||
-    route.page === "summary"
-      ? route.page
-      : undefined;
+function roleLabel(role: Role) {
+  switch (role) {
+    case "IT_STAFF":
+      return "IT Staff";
+    case "ADMINISTRATOR":
+      return "Administrator";
+    default:
+      return "Requester";
+  }
+}
 
-  function changeRequester() {
-    navigate("/");
-    clearRequester();
+function AuthenticatedHeader({ user }: { user: PublicUser }) {
+  const activePage = readRoute().page;
+  const { logout } = useAuth();
+
+  async function handleLogout() {
+    await logout();
+    navigate("/login");
   }
 
   return (
-    <div className="lab2-shell">
-      <header className="lab2-shell-header">
-        <div>
-          <p className="lab2-eyebrow">TokTickIT</p>
-          <span className="lab2-shell-context">
-            Testing context: {selectedRequester?.name}
-          </span>
-        </div>
-        <nav className="lab2-shell-nav" aria-label="Requester navigation">
-          <button
-            type="button"
-            className={`btn btn-sm ${
-              activePage === "summary" ? "btn-success" : "btn-outline-success"
-            }`}
-            aria-current={activePage === "summary" ? "page" : undefined}
-            onClick={() => navigate("/")}
-          >
-            Requester Summary
-          </button>
-          <button
-            type="button"
-            className={`btn btn-sm ${
-              activePage === "tickets" ? "btn-success" : "btn-outline-success"
-            }`}
-            aria-current={activePage === "tickets" ? "page" : undefined}
-            onClick={() => navigate("/tickets")}
-          >
-            My Tickets
-          </button>
-          <button
-            type="button"
-            className={`btn btn-sm ${
-              activePage === "create" ? "btn-success" : "btn-outline-success"
-            }`}
-            aria-current={activePage === "create" ? "page" : undefined}
-            onClick={() => navigate("/tickets/new")}
-          >
-            Create Ticket
-          </button>
-          <button
-            type="button"
-            className="btn btn-sm btn-outline-secondary"
-            onClick={changeRequester}
-          >
-            Change Requester
-          </button>
-        </nav>
-      </header>
+    <header className="lab2-shell-header auth-shell-header">
+      <div className="auth-shell-brand">
+        <p className="lab2-eyebrow">TokTickIT</p>
+        <span className="lab2-shell-context">IT service desk</span>
+      </div>
+      <nav className="lab2-shell-nav" aria-label="Application navigation">
+        {user.role === "REQUESTER" ? (
+          <>
+            <button
+              type="button"
+              className={`btn btn-sm ${
+                activePage === "tickets" ? "btn-success" : "btn-outline-success"
+              }`}
+              aria-current={activePage === "tickets" ? "page" : undefined}
+              onClick={() => navigate("/tickets")}
+            >
+              My Tickets
+            </button>
+            <button
+              type="button"
+              className={`btn btn-sm ${
+                activePage === "create" ? "btn-success" : "btn-outline-success"
+              }`}
+              aria-current={activePage === "create" ? "page" : undefined}
+              onClick={() => navigate("/tickets/new")}
+            >
+              Create Ticket
+            </button>
+          </>
+        ) : null}
+        <button
+          type="button"
+          className={`btn btn-sm ${
+            activePage === "change-password"
+              ? "btn-success"
+              : "btn-outline-secondary"
+          }`}
+          aria-current={activePage === "change-password" ? "page" : undefined}
+          onClick={() => navigate("/change-password")}
+        >
+          Password
+        </button>
+        <button
+          type="button"
+          className="btn btn-sm btn-outline-secondary"
+          onClick={() => void handleLogout()}
+        >
+          Log out
+        </button>
+      </nav>
+      <div className="auth-user-summary">
+        <strong>{user.name}</strong>
+        <span className="auth-role-badge">{roleLabel(user.role)}</span>
+        <span>{user.email}</span>
+      </div>
+    </header>
+  );
+}
 
+function RequesterWorkspace({ route }: { route: AppRoute }) {
+  const { requester } = useRequester();
+  if (!requester) {
+    return null;
+  }
+
+  return (
+    <>
       {route.page === "detail" ? (
         <RequesterTicketDetail
           ticketId={route.ticketId}
           onBack={() => navigate("/tickets")}
         />
       ) : route.page === "tickets" ? (
-        <MyTickets
-          key={selectedRequester?.id}
-          onCreateTicket={() => navigate("/tickets/new")}
-        />
+        <MyTickets onCreateTicket={() => navigate("/tickets/new")} />
       ) : route.page === "create" ? (
         <CreateTicket onBack={() => navigate("/tickets")} />
       ) : (
-        <section
-          className="lab2-panel"
-          aria-labelledby="selected-requester-title"
-        >
-          <p className="lab2-eyebrow">Lab 2 testing context</p>
-          <h1 id="selected-requester-title">Requester context selected</h1>
+        <section className="lab2-panel" aria-labelledby="requester-home-title">
+          <p className="lab2-eyebrow">Requester workspace</p>
+          <h1 id="requester-home-title">Welcome, {requester.name}</h1>
           <p className="lab2-introduction">
-            Requester-facing screens will use this selected context. It is not a
-            login or authenticated identity.
+            Use My Tickets to follow your requests or Create Ticket to report a
+            new issue.
           </p>
-          <div className="lab2-requester-summary">
-            <span className="lab2-summary-label">
-              Current Development Requester
-            </span>
-            <strong>{selectedRequester?.name}</strong>
-            <span>{selectedRequester?.email}</span>
+          <div className="auth-home-actions">
+            <button
+              type="button"
+              className="btn btn-success"
+              onClick={() => navigate("/tickets")}
+            >
+              My Tickets
+            </button>
+            <button
+              type="button"
+              className="btn btn-outline-success"
+              onClick={() => navigate("/tickets/new")}
+            >
+              Create Ticket
+            </button>
           </div>
         </section>
+      )}
+    </>
+  );
+}
+
+function RoleWorkspace({ user }: { user: PublicUser }) {
+  return (
+    <section
+      className="lab2-panel auth-role-placeholder"
+      aria-labelledby="role-workspace-title"
+    >
+      <p className="lab2-eyebrow">Authenticated workspace</p>
+      <h1 id="role-workspace-title">{roleLabel(user.role)} access is ready</h1>
+      <p className="lab2-introduction">
+        You are signed in as {user.name}. The {roleLabel(user.role)} workflow is
+        delivered in the next Lab 3 increment.
+      </p>
+    </section>
+  );
+}
+
+function AuthenticatedApplication({ route }: { route: AppRoute }) {
+  const { user } = useAuth();
+  if (!user) {
+    return null;
+  }
+
+  if (route.page === "change-password") {
+    return <ChangePassword />;
+  }
+
+  return (
+    <div className="lab2-shell">
+      <AuthenticatedHeader user={user} />
+      {user.role === "REQUESTER" ? (
+        <RequesterProvider
+          initialRequester={{
+            id: user.id,
+            name: user.name,
+            email: user.email,
+          }}
+        >
+          <RequesterWorkspace route={route} />
+        </RequesterProvider>
+      ) : (
+        <RoleWorkspace user={user} />
       )}
     </div>
   );
 }
 
-function AppContent() {
-  const { selectedRequester } = useDevelopmentRequester();
+function AuthContent() {
+  const { state, retry } = useAuth();
   const [route, setRoute] = useState<AppRoute>(readRoute);
 
   useEffect(() => {
@@ -148,21 +226,69 @@ function AppContent() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
-  return (
-    <main className="lab2-page">
-      {selectedRequester ? (
-        <SelectedRequesterScreen route={route} />
-      ) : (
-        <RequesterSelection />
-      )}
-    </main>
-  );
+  useEffect(() => {
+    if (
+      state.status === "signed-out" &&
+      window.location.pathname !== "/login"
+    ) {
+      navigate("/login");
+    }
+  }, [state.status]);
+
+  if (state.status === "loading") {
+    return (
+      <section
+        className="auth-panel auth-session-state"
+        aria-labelledby="session-loading-title"
+      >
+        <p className="lab2-eyebrow">TokTickIT</p>
+        <h1 id="session-loading-title">Restoring your session</h1>
+        <p className="lab2-state" role="status" aria-live="polite">
+          Checking your authenticated session...
+        </p>
+      </section>
+    );
+  }
+
+  if (state.status === "error") {
+    return (
+      <section
+        className="auth-panel auth-session-state"
+        aria-labelledby="session-error-title"
+      >
+        <p className="lab2-eyebrow">TokTickIT</p>
+        <h1 id="session-error-title">Session unavailable</h1>
+        <div className="auth-state auth-state-error" role="alert">
+          {state.message}
+        </div>
+        <button
+          type="button"
+          className="btn btn-outline-success"
+          onClick={() => void retry()}
+        >
+          Try again
+        </button>
+      </section>
+    );
+  }
+
+  if (state.status === "signed-out") {
+    return <Login />;
+  }
+
+  if (state.response.user.mustChangePassword) {
+    return <ChangePassword />;
+  }
+
+  return <AuthenticatedApplication route={route} />;
 }
 
 export default function App() {
   return (
-    <DevelopmentRequesterProvider>
-      <AppContent />
-    </DevelopmentRequesterProvider>
+    <AuthProvider>
+      <main className="lab2-page">
+        <AuthContent />
+      </main>
+    </AuthProvider>
   );
 }

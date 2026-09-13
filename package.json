@@ -18,6 +18,7 @@
     "db:migrate:deploy": "bun run --cwd server db:migrate:deploy",
     "db:seed": "bun run --cwd server db:seed",
     "db:test:setup": "bun run --cwd server db:test:setup",
+    "db:migrate:lab3": "bun run --cwd server db:migrate:lab3",
     "format": "biome format --write .",
     "format:check": "biome format .",
     "lint": "biome lint .",

@@ -5,20 +5,17 @@ import {
   type RequestedPriority,
 } from "@prisma/client";
 
-import { requireActiveRequester } from "./requester-context-service.js";
 import { generateTicketNumber } from "./ticket-number-service.js";
 import {
   type CreateTicketInput,
   validateCreateTicketInput,
 } from "./ticket-validation-service.js";
 
-type TicketStore = Pick<
-  PrismaClient,
-  "developmentRequester" | "category" | "relatedSystem" | "ticket"
->;
+type TicketStore = Pick<PrismaClient, "category" | "relatedSystem" | "ticket">;
 type TicketNumberGenerator = (ticketDate: Date) => string;
 
 export const ticketDetailInclude = {
+  requesterUser: { select: { id: true, name: true } },
   requester: { select: { id: true, name: true } },
   category: { select: { id: true, name: true } },
   relatedSystem: { select: { id: true, name: true } },
@@ -110,11 +107,16 @@ export type CreateTicketResult = {
 export function toTicketDetail(
   ticket: TicketWithDetails,
 ): TicketDetailResponse {
+  const requester = ticket.requesterUser ?? ticket.requester;
+  if (!requester) {
+    throw new TicketNotFoundError();
+  }
+
   return {
     id: ticket.id,
     ticketNumber: ticket.ticketNumber,
     ticketDate: ticket.ticketDate.toISOString(),
-    requester: ticket.requester,
+    requester,
     category: ticket.category,
     relatedSystem: ticket.relatedSystem,
     requestedPriority: ticket.requestedPriority,
@@ -160,13 +162,12 @@ export function parseTicketId(rawTicketId: unknown) {
 
 export async function getTicketDetail(
   prisma: TicketStore,
-  requesterHeader: string | undefined,
+  requesterUserId: number,
   rawTicketId: unknown,
 ): Promise<TicketDetailResponse> {
-  const requester = await requireActiveRequester(prisma, requesterHeader);
   const ticketId = parseTicketId(rawTicketId);
   const ticket = await prisma.ticket.findFirst({
-    where: { id: ticketId, requesterId: requester.id },
+    where: { id: ticketId, requesterUserId },
     include: ticketDetailInclude,
   });
 
@@ -179,11 +180,11 @@ export async function getTicketDetail(
 
 function hasEquivalentRequest(
   ticket: TicketWithDetails,
-  requesterId: number,
+  requesterUserId: number,
   input: CreateTicketInput,
 ) {
   return (
-    ticket.requesterId === requesterId &&
+    ticket.requesterUserId === requesterUserId &&
     ticket.categoryId === input.categoryId &&
     ticket.relatedSystemId === input.relatedSystemId &&
     ticket.requestedPriority === input.requestedPriority &&
@@ -211,12 +212,11 @@ async function findExistingTicket(
 
 export async function createTicket(
   prisma: TicketStore,
-  requesterHeader: string | undefined,
+  requesterUserId: number,
   rawInput: unknown,
   ticketDate = new Date(),
   ticketNumberGenerator: TicketNumberGenerator = generateTicketNumber,
 ): Promise<CreateTicketResult> {
-  const requester = await requireActiveRequester(prisma, requesterHeader);
   const input = validateCreateTicketInput(rawInput);
   const existingTicket = await findExistingTicket(
     prisma,
@@ -224,7 +224,7 @@ export async function createTicket(
   );
 
   if (existingTicket) {
-    if (!hasEquivalentRequest(existingTicket, requester.id, input)) {
+    if (!hasEquivalentRequest(existingTicket, requesterUserId, input)) {
       throw new IdempotencyKeyReusedError();
     }
 
@@ -257,10 +257,11 @@ export async function createTicket(
           ticketNumber: ticketNumberGenerator(ticketDate),
           clientRequestId: input.clientRequestId,
           ticketDate,
-          requesterId: requester.id,
+          requesterUserId,
           categoryId: input.categoryId,
           relatedSystemId: input.relatedSystemId,
           requestedPriority: input.requestedPriority,
+          itPriority: input.requestedPriority,
           summary: input.summary,
           description: input.description,
           currentStatus: TicketStatus.NEW,
@@ -279,7 +280,7 @@ export async function createTicket(
         input.clientRequestId,
       );
       if (ticketForRequest) {
-        if (!hasEquivalentRequest(ticketForRequest, requester.id, input)) {
+        if (!hasEquivalentRequest(ticketForRequest, requesterUserId, input)) {
           throw new IdempotencyKeyReusedError();
         }
 

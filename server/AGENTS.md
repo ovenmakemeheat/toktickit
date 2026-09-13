@@ -4,8 +4,8 @@ The repository rules in `../AGENTS.md` apply here. These instructions add server
 
 ## Scope
 
-- Keep this workspace limited to the Lab 1 health and category vertical slice.
-- Do not add authentication, ticket workflows, uploads, role management, or later-lab APIs.
+- Preserve the completed Lab 1/Lab 2 API behavior while implementing only the active Lab 3 issue.
+- Follow the approved Lab 3 REST and data contracts in `../docs/lab-03/` and keep excluded features out of the workspace.
 - Keep the server compatible with Node.js even when scripts are run with Bun.
 
 ## Architecture
@@ -42,7 +42,7 @@ For focused work inside this workspace, use `bun run dev`, `bun run test`, `bun 
 
 - Use Vitest in the Node environment with the setup in `tests/setup.ts`.
 - Use Supertest against the exported Express app; tests must not start a real listener.
-- Keep Lab 1 API tests under `tests/lab-01/` and isolate test database setup from development data.
+- Keep existing Lab 1/Lab 2 API tests in their current locations, add Lab 3 API tests under `tests/lab-03/`, and isolate test database setup from development data.
 - Add or update the nearest API, database, or seed test with each server change.
 
 ## Handoff

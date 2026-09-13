@@ -5,8 +5,6 @@ import type {
   TicketStatus,
 } from "@prisma/client";
 
-import { requireActiveRequester } from "./requester-context-service.js";
-
 const supportedQueryKeys = new Set([
   "search",
   "categoryId",
@@ -27,9 +25,21 @@ const sortFields = [
 ] as const;
 
 const pageSizes = [10, 20, 50] as const;
+const statuses = [
+  "NEW",
+  "OPEN",
+  "IN_PROGRESS",
+  "WAITING_FOR_REQUESTER",
+  "RESOLVED",
+  "CLOSED",
+  "REOPENED",
+  "CANCELLED",
+] as const;
 
 type SortField = (typeof sortFields)[number];
 type SortDirection = "asc" | "desc";
+
+type QueryRecord = Record<string, unknown>;
 
 export type TicketQuery = {
   search: string;
@@ -68,16 +78,16 @@ function fieldError(field: string, message: string): TicketQueryFieldError {
   return { field, code: "INVALID_VALUE", message };
 }
 
-function readQueryRecord(rawQuery: unknown) {
+function readQueryRecord(rawQuery: unknown): QueryRecord {
   if (typeof rawQuery !== "object" || rawQuery === null) {
     return {};
   }
 
-  return rawQuery as Record<string, unknown>;
+  return rawQuery as QueryRecord;
 }
 
 function readSingleValue(
-  query: Record<string, unknown>,
+  query: QueryRecord,
   field: string,
 ): string | undefined {
   if (!(field in query)) {
@@ -142,7 +152,7 @@ export function parseTicketQuery(rawQuery: unknown): TicketQuery {
     invalidQuery([fieldError(unknownKey, `${unknownKey} is not supported`)]);
   }
 
-  const rawSearch = readQueryRecord(rawQuery).search;
+  const rawSearch = query.search;
   const search = readSingleValue(query, "search")?.trim() ?? "";
   if (typeof rawSearch === "string" && search.length > 120) {
     invalidQuery([
@@ -166,7 +176,7 @@ export function parseTicketQuery(rawQuery: unknown): TicketQuery {
   const currentStatus = parseEnum(
     "currentStatus",
     readSingleValue(query, "currentStatus"),
-    ["NEW"] as const,
+    statuses,
   );
   const sortBy =
     parseEnum("sortBy", readSingleValue(query, "sortBy"), sortFields) ??
@@ -206,6 +216,7 @@ const ticketSummarySelect = {
   id: true,
   ticketNumber: true,
   ticketDate: true,
+  requesterUser: { select: { id: true, name: true } },
   requester: { select: { id: true, name: true } },
   category: { select: { id: true, name: true } },
   relatedSystem: { select: { id: true, name: true } },
@@ -240,7 +251,7 @@ export type TicketListResponse = {
   totalPages: number;
 };
 
-type TicketListStore = Pick<PrismaClient, "developmentRequester" | "ticket">;
+type TicketListStore = Pick<PrismaClient, "ticket">;
 
 function buildOrderBy(
   query: TicketQuery,
@@ -258,11 +269,16 @@ function buildOrderBy(
 }
 
 function toTicketSummary(ticket: TicketWithSummary): TicketSummaryResponse {
+  const requester = ticket.requesterUser ?? ticket.requester;
+  if (!requester) {
+    throw new Error("Ticket requester is missing");
+  }
+
   return {
     id: ticket.id,
     ticketNumber: ticket.ticketNumber,
     ticketDate: ticket.ticketDate.toISOString(),
-    requester: ticket.requester,
+    requester,
     category: ticket.category,
     relatedSystem: ticket.relatedSystem,
     requestedPriority: ticket.requestedPriority,
@@ -274,13 +290,12 @@ function toTicketSummary(ticket: TicketWithSummary): TicketSummaryResponse {
 
 export async function listTickets(
   prisma: TicketListStore,
-  requesterHeader: string | undefined,
+  requesterUserId: number,
   rawQuery: unknown,
 ): Promise<TicketListResponse> {
-  const requester = await requireActiveRequester(prisma, requesterHeader);
   const query = parseTicketQuery(rawQuery);
   const where: Prisma.TicketWhereInput = {
-    requesterId: requester.id,
+    requesterUserId,
     ...(query.search
       ? {
           OR: [

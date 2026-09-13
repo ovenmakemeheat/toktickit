@@ -3,9 +3,12 @@ import { randomUUID } from "node:crypto";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { seedReferenceData } from "../../prisma/seed-reference-data.js";
-import { app } from "../../src/app.js";
-import { prisma } from "../../src/db.js";
+import {
+  app,
+  loginAgent,
+  prepareLab3Data,
+  prisma,
+} from "../lab-03/test-helpers.js";
 import { localAttachmentStorage } from "../../src/services/attachment-storage-service.js";
 import {
   attachmentMaxSizeBytes,
@@ -14,15 +17,18 @@ import {
 
 const createdTicketIds = new Set<number>();
 
-let requesterAId!: number;
-let requesterBId!: number;
+let requesterA!: Awaited<ReturnType<typeof loginAgent>>;
+let requesterB!: Awaited<ReturnType<typeof loginAgent>>;
 let lifecycleTicketId!: number;
 let limitTicketId!: number;
 let concurrentTicketId!: number;
 let lifecycleAttachmentId!: number;
 let activeAttachmentId!: number;
 
-async function createTicket(requesterId: number, summary: string) {
+async function createTicket(
+  authenticated: Awaited<ReturnType<typeof loginAgent>>,
+  summary: string,
+) {
   const [category, relatedSystem] = await Promise.all([
     prisma.category.findUnique({
       where: { name: "Hardware" },
@@ -35,12 +41,12 @@ async function createTicket(requesterId: number, summary: string) {
   ]);
 
   if (!category || !relatedSystem) {
-    throw new Error("Expected Lab 2 reference data was not seeded");
+    throw new Error("Expected Lab 3 reference data was not seeded");
   }
 
-  const response = await request(app)
+  const response = await authenticated.agent
     .post("/api/tickets")
-    .set("X-Development-Requester-Id", String(requesterId))
+    .set("X-CSRF-Token", authenticated.csrfToken)
     .send({
       clientRequestId: randomUUID(),
       categoryId: category.id,
@@ -56,15 +62,15 @@ async function createTicket(requesterId: number, summary: string) {
 }
 
 async function uploadAttachment(
+  authenticated: Awaited<ReturnType<typeof loginAgent>>,
   ticketId: number,
-  requesterId: number,
   filename = "evidence.pdf",
   contentType = "application/pdf",
   contents: Buffer = Buffer.from("%PDF-1.4 attachment test"),
 ) {
-  return request(app)
+  return authenticated.agent
     .post(`/api/tickets/${ticketId}/attachments`)
-    .set("X-Development-Requester-Id", String(requesterId))
+    .set("X-CSRF-Token", authenticated.csrfToken)
     .attach("file", contents, { filename, contentType });
 }
 
@@ -75,37 +81,21 @@ function expectError(response: request.Response, status: number, code: string) {
   });
 }
 
-describe("Lab 2 attachment lifecycle", () => {
+describe("Lab 3 authenticated attachment lifecycle", () => {
   beforeAll(async () => {
-    await seedReferenceData(prisma);
-
-    const [requesterA, requesterB] = await Promise.all([
-      prisma.developmentRequester.findUnique({
-        where: { email: "requester-a@toktickit.test" },
-        select: { id: true },
-      }),
-      prisma.developmentRequester.findUnique({
-        where: { email: "requester-b@toktickit.test" },
-        select: { id: true },
-      }),
-    ]);
-
-    if (!requesterA || !requesterB) {
-      throw new Error("Expected Lab 2 requesters were not seeded");
-    }
-
-    requesterAId = requesterA.id;
-    requesterBId = requesterB.id;
+    await prepareLab3Data();
+    requesterA = await loginAgent("requester-a@toktickit.test");
+    requesterB = await loginAgent("requester-b@toktickit.test");
     lifecycleTicketId = await createTicket(
-      requesterAId,
+      requesterA,
       `Attachment lifecycle ${randomUUID().slice(0, 8)}`,
     );
     limitTicketId = await createTicket(
-      requesterAId,
+      requesterA,
       `Attachment limit ${randomUUID().slice(0, 8)}`,
     );
     concurrentTicketId = await createTicket(
-      requesterAId,
+      requesterA,
       `Attachment concurrency ${randomUUID().slice(0, 8)}`,
     );
   });
@@ -132,36 +122,36 @@ describe("Lab 2 attachment lifecycle", () => {
     await prisma.$disconnect();
   });
 
-  it("requires requester context and exactly one permitted file", async () => {
-    const missingContext = await request(app).post(
+  it("requires authentication and exactly one permitted file", async () => {
+    const missingSession = await request(app).post(
       `/api/tickets/${lifecycleTicketId}/attachments`,
     );
-    const missingFile = await request(app)
+    const missingFile = await requesterA.agent
       .post(`/api/tickets/${lifecycleTicketId}/attachments`)
-      .set("X-Development-Requester-Id", String(requesterAId));
+      .set("X-CSRF-Token", requesterA.csrfToken);
     const unsupported = await uploadAttachment(
+      requesterA,
       lifecycleTicketId,
-      requesterAId,
       "evidence.txt",
       "text/plain",
       Buffer.from("plain text"),
     );
     const mismatch = await uploadAttachment(
+      requesterA,
       lifecycleTicketId,
-      requesterAId,
       "evidence.png",
       "image/jpeg",
       Buffer.from("not a png"),
     );
     const forgedContent = await uploadAttachment(
+      requesterA,
       lifecycleTicketId,
-      requesterAId,
       "evidence.pdf",
       "application/pdf",
       Buffer.from("this is not a PDF"),
     );
 
-    expectError(missingContext, 400, "REQUESTER_CONTEXT_REQUIRED");
+    expectError(missingSession, 401, "SESSION_REQUIRED");
     expectError(missingFile, 400, "ATTACHMENT_FILE_REQUIRED");
     expectError(unsupported, 415, "ATTACHMENT_TYPE_NOT_ALLOWED");
     expectError(mismatch, 415, "ATTACHMENT_TYPE_NOT_ALLOWED");
@@ -170,8 +160,8 @@ describe("Lab 2 attachment lifecycle", () => {
 
   it("rejects an attachment over the 5 MB server boundary", async () => {
     const oversized = await uploadAttachment(
+      requesterA,
       lifecycleTicketId,
-      requesterAId,
       "large.pdf",
       "application/pdf",
       Buffer.alloc(attachmentMaxSizeBytes + 1, "a"),
@@ -190,8 +180,8 @@ describe("Lab 2 attachment lifecycle", () => {
       select: { updatedAt: true },
     });
     const response = await uploadAttachment(
+      requesterA,
       lifecycleTicketId,
-      requesterAId,
       "incident-evidence.pdf",
     );
 
@@ -220,9 +210,9 @@ describe("Lab 2 attachment lifecycle", () => {
       beforeUpload.updatedAt.getTime(),
     );
 
-    const metadata = await request(app)
-      .get(`/api/tickets/${lifecycleTicketId}/attachments`)
-      .set("X-Development-Requester-Id", String(requesterAId));
+    const metadata = await requesterA.agent.get(
+      `/api/tickets/${lifecycleTicketId}/attachments`,
+    );
     expect(metadata.status).toBe(200);
     expect(metadata.body).toEqual(
       expect.arrayContaining([
@@ -232,11 +222,9 @@ describe("Lab 2 attachment lifecycle", () => {
   });
 
   it("downloads active content with safe response headers", async () => {
-    const download = await request(app)
-      .get(
-        `/api/tickets/${lifecycleTicketId}/attachments/${lifecycleAttachmentId}/download`,
-      )
-      .set("X-Development-Requester-Id", String(requesterAId));
+    const download = await requesterA.agent.get(
+      `/api/tickets/${lifecycleTicketId}/attachments/${lifecycleAttachmentId}/download`,
+    );
 
     expect(download.status).toBe(200);
     expect(download.headers["content-type"]).toContain("application/pdf");
@@ -248,17 +236,15 @@ describe("Lab 2 attachment lifecycle", () => {
 
   it("encodes Unicode display names in download headers", async () => {
     const uploaded = await uploadAttachment(
+      requesterA,
       lifecycleTicketId,
-      requesterAId,
       "evidence-📄.pdf",
     );
     expect(uploaded.status).toBe(201);
 
-    const download = await request(app)
-      .get(
-        `/api/tickets/${lifecycleTicketId}/attachments/${uploaded.body.id}/download`,
-      )
-      .set("X-Development-Requester-Id", String(requesterAId));
+    const download = await requesterA.agent.get(
+      `/api/tickets/${lifecycleTicketId}/attachments/${uploaded.body.id}/download`,
+    );
 
     expect(download.status).toBe(200);
     expect(download.headers["content-disposition"]).toContain(
@@ -278,23 +264,23 @@ describe("Lab 2 attachment lifecycle", () => {
       where: { id: lifecycleTicketId },
       select: { updatedAt: true },
     });
-    const invalid = await request(app)
+    const invalid = await requesterA.agent
       .delete(
         `/api/tickets/${lifecycleTicketId}/attachments/${lifecycleAttachmentId}`,
       )
-      .set("X-Development-Requester-Id", String(requesterAId))
+      .set("X-CSRF-Token", requesterA.csrfToken)
       .send({ removalReason: "no" });
-    const removed = await request(app)
+    const removed = await requesterA.agent
       .delete(
         `/api/tickets/${lifecycleTicketId}/attachments/${lifecycleAttachmentId}`,
       )
-      .set("X-Development-Requester-Id", String(requesterAId))
+      .set("X-CSRF-Token", requesterA.csrfToken)
       .send({ removalReason: "  duplicate evidence  " });
-    const repeated = await request(app)
+    const repeated = await requesterA.agent
       .delete(
         `/api/tickets/${lifecycleTicketId}/attachments/${lifecycleAttachmentId}`,
       )
-      .set("X-Development-Requester-Id", String(requesterAId))
+      .set("X-CSRF-Token", requesterA.csrfToken)
       .send({ removalReason: "another reason" });
 
     expectError(invalid, 400, "REMOVAL_REASON_INVALID");
@@ -309,9 +295,9 @@ describe("Lab 2 attachment lifecycle", () => {
       beforeRemoval.updatedAt.getTime(),
     );
 
-    const metadata = await request(app)
-      .get(`/api/tickets/${lifecycleTicketId}/attachments`)
-      .set("X-Development-Requester-Id", String(requesterAId));
+    const metadata = await requesterA.agent.get(
+      `/api/tickets/${lifecycleTicketId}/attachments`,
+    );
     expect(metadata.body).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -324,11 +310,9 @@ describe("Lab 2 attachment lifecycle", () => {
       ]),
     );
 
-    const blockedDownload = await request(app)
-      .get(
-        `/api/tickets/${lifecycleTicketId}/attachments/${lifecycleAttachmentId}/download`,
-      )
-      .set("X-Development-Requester-Id", String(requesterAId));
+    const blockedDownload = await requesterA.agent.get(
+      `/api/tickets/${lifecycleTicketId}/attachments/${lifecycleAttachmentId}/download`,
+    );
     expectError(blockedDownload, 410, "ATTACHMENT_REMOVED");
   });
 
@@ -337,16 +321,16 @@ describe("Lab 2 attachment lifecycle", () => {
     for (let index = 0; index < maxActiveAttachmentCount; index += 1) {
       responses.push(
         await uploadAttachment(
+          requesterA,
           limitTicketId,
-          requesterAId,
           `active-${index}.pdf`,
         ),
       );
     }
     activeAttachmentId = responses[0].body.id;
     const sixth = await uploadAttachment(
+      requesterA,
       limitTicketId,
-      requesterAId,
       "sixth.pdf",
     );
 
@@ -357,16 +341,16 @@ describe("Lab 2 attachment lifecycle", () => {
   it("serializes concurrent uploads at the five-active-file limit", async () => {
     for (let index = 0; index < maxActiveAttachmentCount - 1; index += 1) {
       const response = await uploadAttachment(
+        requesterA,
         concurrentTicketId,
-        requesterAId,
         `concurrent-${index}.pdf`,
       );
       expect(response.status).toBe(201);
     }
 
     const responses = await Promise.all([
-      uploadAttachment(concurrentTicketId, requesterAId, "concurrent-a.pdf"),
-      uploadAttachment(concurrentTicketId, requesterAId, "concurrent-b.pdf"),
+      uploadAttachment(requesterA, concurrentTicketId, "concurrent-a.pdf"),
+      uploadAttachment(requesterA, concurrentTicketId, "concurrent-b.pdf"),
     ]);
 
     expect(
@@ -389,17 +373,17 @@ describe("Lab 2 attachment lifecycle", () => {
   });
 
   it("does not disclose or mutate another Requester's Ticket attachments", async () => {
-    const metadata = await request(app)
-      .get(`/api/tickets/${limitTicketId}/attachments`)
-      .set("X-Development-Requester-Id", String(requesterBId));
+    const metadata = await requesterB.agent.get(
+      `/api/tickets/${limitTicketId}/attachments`,
+    );
     const upload = await uploadAttachment(
+      requesterB,
       limitTicketId,
-      requesterBId,
       "cross-owner.pdf",
     );
-    const crossOwnerMultipleFiles = await request(app)
+    const crossOwnerMultipleFiles = await requesterB.agent
       .post(`/api/tickets/${limitTicketId}/attachments`)
-      .set("X-Development-Requester-Id", String(requesterBId))
+      .set("X-CSRF-Token", requesterB.csrfToken)
       .attach("file", Buffer.from("%PDF-1.4 first"), {
         filename: "first.pdf",
         contentType: "application/pdf",
@@ -408,14 +392,12 @@ describe("Lab 2 attachment lifecycle", () => {
         filename: "second.pdf",
         contentType: "application/pdf",
       });
-    const download = await request(app)
-      .get(
-        `/api/tickets/${limitTicketId}/attachments/${activeAttachmentId}/download`,
-      )
-      .set("X-Development-Requester-Id", String(requesterBId));
-    const remove = await request(app)
+    const download = await requesterB.agent.get(
+      `/api/tickets/${limitTicketId}/attachments/${activeAttachmentId}/download`,
+    );
+    const remove = await requesterB.agent
       .delete(`/api/tickets/${limitTicketId}/attachments/${activeAttachmentId}`)
-      .set("X-Development-Requester-Id", String(requesterBId))
+      .set("X-CSRF-Token", requesterB.csrfToken)
       .send({ removalReason: "cross owner attempt" });
 
     expectError(metadata, 404, "TICKET_NOT_FOUND");

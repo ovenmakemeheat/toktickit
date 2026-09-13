@@ -3,9 +3,12 @@ import { randomUUID } from "node:crypto";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { seedReferenceData } from "../../prisma/seed-reference-data.js";
-import { app } from "../../src/app.js";
-import { prisma } from "../../src/db.js";
+import {
+  app,
+  loginAgent,
+  prepareLab3Data,
+  prisma,
+} from "../lab-03/test-helpers.js";
 import { ticketNumberPattern } from "../../src/services/ticket-number-service.js";
 
 type TicketInput = {
@@ -19,8 +22,8 @@ type TicketInput = {
 
 const createdTicketIds = new Set<number>();
 
+let authenticated!: Awaited<ReturnType<typeof loginAgent>>;
 let requesterId!: number;
-let inactiveRequesterId!: number;
 let categoryId!: number;
 let relatedSystemId!: number;
 let inactiveCategoryId!: number;
@@ -45,33 +48,32 @@ function expectError(response: request.Response, status: number, code: string) {
   });
 }
 
+function postTicket(input: object) {
+  return authenticated.agent
+    .post("/api/tickets")
+    .set("X-CSRF-Token", authenticated.csrfToken)
+    .send(input);
+}
+
 describe("POST /api/tickets", () => {
   beforeAll(async () => {
-    await seedReferenceData(prisma);
+    await prepareLab3Data();
+    authenticated = await loginAgent("requester-a@toktickit.test");
+    requesterId = authenticated.userId;
 
-    const requester = await prisma.developmentRequester.findUnique({
-      where: { email: "requester-a@toktickit.test" },
-      select: { id: true },
-    });
-    const inactiveRequester = await prisma.developmentRequester.findUnique({
-      where: { email: "inactive-requester@toktickit.test" },
-      select: { id: true },
-    });
-    const category = await prisma.category.findUnique({
-      where: { name: "Hardware" },
-      select: { id: true },
-    });
-    const relatedSystem = await prisma.relatedSystem.findUnique({
-      where: { name: "VPN" },
-      select: { id: true },
-    });
-
-    if (!requester || !inactiveRequester || !category || !relatedSystem) {
-      throw new Error("Expected Lab 2 reference data was not seeded");
+    const [category, relatedSystem] = await Promise.all([
+      prisma.category.findUnique({
+        where: { name: "Hardware" },
+        select: { id: true },
+      }),
+      prisma.relatedSystem.findUnique({
+        where: { name: "VPN" },
+        select: { id: true },
+      }),
+    ]);
+    if (!category || !relatedSystem) {
+      throw new Error("Expected Lab 3 reference data was not seeded");
     }
-
-    requesterId = requester.id;
-    inactiveRequesterId = inactiveRequester.id;
     categoryId = category.id;
     relatedSystemId = relatedSystem.id;
 
@@ -86,7 +88,6 @@ describe("POST /api/tickets", () => {
       },
       select: { id: true },
     });
-
     inactiveCategoryId = inactiveCategory.id;
     inactiveRelatedSystemId = inactiveRelatedSystem.id;
   });
@@ -100,42 +101,38 @@ describe("POST /api/tickets", () => {
       await prisma.ticket.deleteMany({ where: { id: { in: ticketIds } } });
     }
 
-    await prisma.category.deleteMany({
-      where: { id: inactiveCategoryId },
-    });
+    await prisma.category.deleteMany({ where: { id: inactiveCategoryId } });
     await prisma.relatedSystem.deleteMany({
       where: { id: inactiveRelatedSystemId },
     });
     await prisma.$disconnect();
   });
 
-  it("requires an active Development Requester context", async () => {
+  it("requires an authenticated Requester and ignores identity headers", async () => {
     const missing = await request(app).post("/api/tickets").send(buildInput());
-    expectError(missing, 400, "REQUESTER_CONTEXT_REQUIRED");
+    expectError(missing, 401, "SESSION_REQUIRED");
 
     const malformed = await request(app)
       .post("/api/tickets")
       .set("X-Development-Requester-Id", "not-an-id")
       .send(buildInput());
-    expectError(malformed, 400, "REQUESTER_CONTEXT_INVALID");
+    expectError(malformed, 401, "SESSION_REQUIRED");
 
-    const inactive = await request(app)
-      .post("/api/tickets")
-      .set("X-Development-Requester-Id", String(inactiveRequesterId))
-      .send(buildInput());
-    expectError(inactive, 400, "REQUESTER_CONTEXT_INVALID");
+    const spoofed = await postTicket({
+      ...buildInput(),
+      requesterId: 999999,
+    });
+    expectError(spoofed, 400, "TICKET_INPUT_INVALID");
   });
 
-  it("creates one NEW Ticket with a server-generated number and normalized values", async () => {
+  it("creates one NEW Ticket owned by the authenticated User", async () => {
     const input = buildInput({
+      requestedPriority: "HIGH",
       summary: "  VPN connection fails  ",
       description:
         "  The VPN connection fails after entering the credentials.  ",
     });
-    const response = await request(app)
-      .post("/api/tickets")
-      .set("X-Development-Requester-Id", String(requesterId))
-      .send(input);
+    const response = await postTicket(input);
 
     expect(response.status).toBe(201);
     expect(response.body).toEqual(
@@ -146,26 +143,27 @@ describe("POST /api/tickets", () => {
         requester: { id: requesterId, name: "Requester A" },
         category: { id: categoryId, name: "Hardware" },
         relatedSystem: { id: relatedSystemId, name: "VPN" },
-        requestedPriority: "MEDIUM",
+        requestedPriority: "HIGH",
         summary: "VPN connection fails",
         description: "The VPN connection fails after entering the credentials.",
         currentStatus: "NEW",
-        createdAt: expect.any(String),
-        lastUpdated: expect.any(String),
         attachments: [],
       }),
     );
     expect(response.body.requesterId).toBeUndefined();
-
     createdTicketIds.add(response.body.id);
+
     const savedTicket = await prisma.ticket.findUnique({
       where: { id: response.body.id },
     });
     expect(savedTicket).toEqual(
       expect.objectContaining({
-        requesterId,
+        requesterId: null,
+        requesterUserId: requesterId,
         categoryId,
         relatedSystemId,
+        requestedPriority: "HIGH",
+        itPriority: "HIGH",
         currentStatus: "NEW",
         summary: "VPN connection fails",
       }),
@@ -178,10 +176,7 @@ describe("POST /api/tickets", () => {
       summary: "bad",
       description: "too short",
     });
-    const invalidResponse = await request(app)
-      .post("/api/tickets")
-      .set("X-Development-Requester-Id", String(requesterId))
-      .send(invalidInput);
+    const invalidResponse = await postTicket(invalidInput);
     expectError(invalidResponse, 400, "TICKET_INPUT_INVALID");
     expect(invalidResponse.body.error.fields).toEqual(
       expect.arrayContaining([
@@ -198,10 +193,7 @@ describe("POST /api/tickets", () => {
       currentStatus: "NEW",
       requesterId,
     };
-    const ownedFieldResponse = await request(app)
-      .post("/api/tickets")
-      .set("X-Development-Requester-Id", String(requesterId))
-      .send(ownedFieldInput);
+    const ownedFieldResponse = await postTicket(ownedFieldInput);
     expectError(ownedFieldResponse, 400, "TICKET_INPUT_INVALID");
 
     expect(
@@ -216,32 +208,24 @@ describe("POST /api/tickets", () => {
   });
 
   it("rejects inactive referenced records", async () => {
-    const inactiveCategoryResponse = await request(app)
-      .post("/api/tickets")
-      .set("X-Development-Requester-Id", String(requesterId))
-      .send(buildInput({ categoryId: inactiveCategoryId }));
+    const inactiveCategoryResponse = await postTicket(
+      buildInput({ categoryId: inactiveCategoryId }),
+    );
     expectError(inactiveCategoryResponse, 404, "CATEGORY_NOT_FOUND");
 
-    const inactiveSystemInput = buildInput({
-      relatedSystemId: inactiveRelatedSystemId,
-    });
-    const inactiveSystemResponse = await request(app)
-      .post("/api/tickets")
-      .set("X-Development-Requester-Id", String(requesterId))
-      .send(inactiveSystemInput);
+    const inactiveSystemResponse = await postTicket(
+      buildInput({ relatedSystemId: inactiveRelatedSystemId }),
+    );
     expectError(inactiveSystemResponse, 404, "RELATED_SYSTEM_NOT_FOUND");
   });
 
   it("returns the original Ticket on an equivalent idempotent retry", async () => {
     const input = buildInput();
-    const firstResponse = await request(app)
-      .post("/api/tickets")
-      .set("X-Development-Requester-Id", String(requesterId))
-      .send(input);
-    const retryResponse = await request(app)
-      .post("/api/tickets")
-      .set("X-Development-Requester-Id", String(requesterId))
-      .send({ ...input, summary: `  ${input.summary}  ` });
+    const firstResponse = await postTicket(input);
+    const retryResponse = await postTicket({
+      ...input,
+      summary: `  ${input.summary}  `,
+    });
 
     expect(firstResponse.status).toBe(201);
     expect(retryResponse.status).toBe(200);
@@ -259,17 +243,11 @@ describe("POST /api/tickets", () => {
 
   it("rejects reuse of an idempotency key with a different payload", async () => {
     const input = buildInput();
-    const firstResponse = await request(app)
-      .post("/api/tickets")
-      .set("X-Development-Requester-Id", String(requesterId))
-      .send(input);
-    const conflictResponse = await request(app)
-      .post("/api/tickets")
-      .set("X-Development-Requester-Id", String(requesterId))
-      .send({
-        ...input,
-        description: "A different description for this ticket.",
-      });
+    const firstResponse = await postTicket(input);
+    const conflictResponse = await postTicket({
+      ...input,
+      description: "A different description for this ticket.",
+    });
 
     expect(firstResponse.status).toBe(201);
     expectError(conflictResponse, 409, "IDEMPOTENCY_KEY_REUSED");

@@ -5,8 +5,8 @@ import { useEffect, type ReactNode } from "react";
 
 import RequesterTicketDetail from "../../src/lab-02/RequesterTicketDetail";
 import {
-  DevelopmentRequesterProvider,
-  useDevelopmentRequester,
+  RequesterProvider,
+  useRequester,
 } from "../../src/lab-02/requester-context";
 
 type MockResponse = {
@@ -69,11 +69,11 @@ function response(payload: unknown, ok = true): MockResponse {
 }
 
 function SelectRequester({ children }: { children: ReactNode }) {
-  const { selectRequester } = useDevelopmentRequester();
+  const { setRequester } = useRequester();
 
   useEffect(() => {
-    selectRequester(requester);
-  }, [selectRequester]);
+    setRequester(requester);
+  }, [setRequester]);
 
   return children;
 }
@@ -81,11 +81,11 @@ function SelectRequester({ children }: { children: ReactNode }) {
 function renderDetail() {
   const onBack = vi.fn();
   render(
-    <DevelopmentRequesterProvider>
+    <RequesterProvider>
       <SelectRequester>
         <RequesterTicketDetail ticketId={101} onBack={onBack} />
       </SelectRequester>
-    </DevelopmentRequesterProvider>,
+    </RequesterProvider>,
   );
   return onBack;
 }
@@ -129,9 +129,16 @@ describe("Issue #55 Requester Ticket Detail", () => {
     ).toBeInTheDocument();
 
     const detailCall = fetchMock.mock.calls[0];
-    expect(detailCall?.[1]).toEqual({
-      headers: { "X-Development-Requester-Id": "1" },
-    });
+    expect(detailCall?.[1]).toEqual(
+      expect.objectContaining({
+        credentials: "same-origin",
+        headers: expect.any(Headers),
+      }),
+    );
+    const detailOptions = detailCall?.[1] as RequestInit | undefined;
+    expect(
+      new Headers(detailOptions?.headers).get("X-Development-Requester-Id"),
+    ).toBeNull();
 
     await userEvent
       .setup()

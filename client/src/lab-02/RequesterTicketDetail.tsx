@@ -6,7 +6,7 @@ import {
   type TicketDetail,
 } from "../lib/api";
 import AttachmentSection from "./AttachmentSection";
-import { useDevelopmentRequester } from "./requester-context";
+import { useRequester } from "./requester-context";
 
 type RequesterTicketDetailProps = {
   ticketId: number | string;
@@ -60,13 +60,13 @@ export default function RequesterTicketDetail({
   ticketId,
   onBack,
 }: RequesterTicketDetailProps) {
-  const { selectedRequester } = useDevelopmentRequester();
+  const { requester } = useRequester();
   const [ticket, setTicket] = useState<TicketDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
   const loadTicket = useCallback(async () => {
-    if (!selectedRequester) {
+    if (!requester) {
       setTicket(null);
       setIsLoading(false);
       return;
@@ -76,25 +76,25 @@ export default function RequesterTicketDetail({
     setHasError(false);
 
     try {
-      setTicket(await fetchTicketDetail(selectedRequester.id, ticketId));
+      setTicket(await fetchTicketDetail(ticketId));
     } catch {
       setHasError(true);
     } finally {
       setIsLoading(false);
     }
-  }, [selectedRequester, ticketId]);
+  }, [requester, ticketId]);
 
   useEffect(() => {
     setTicket(null);
     void loadTicket();
   }, [loadTicket]);
 
-  if (!selectedRequester) {
+  if (!requester) {
     return (
       <section className="lab2-panel" aria-labelledby="ticket-detail-title">
         <h1 id="ticket-detail-title">Ticket Detail</h1>
         <p className="lab2-state lab2-state-error" role="alert">
-          Select a Development Requester before opening a Ticket.
+          Your authenticated Requester identity is unavailable. Sign in again.
         </p>
         <button
           type="button"
@@ -119,8 +119,7 @@ export default function RequesterTicketDetail({
             {ticket ? ticket.ticketNumber : "Ticket Detail"}
           </h1>
           <p className="lab2-introduction">
-            Read-only details for {selectedRequester.name}. This is a Lab 2
-            requester testing context, not a login.
+            Read-only details for {requester.name}, the authenticated Requester.
           </p>
         </div>
         <button
@@ -219,7 +218,6 @@ export default function RequesterTicketDetail({
           </div>
 
           <AttachmentSection
-            requesterId={selectedRequester.id}
             ticketId={ticket.id}
             attachments={ticket.attachments}
             onChanged={loadTicket}

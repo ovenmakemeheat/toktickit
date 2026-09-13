@@ -6,31 +6,36 @@ import {
   type ReactNode,
 } from "react";
 
-import type { DevelopmentRequester } from "../lib/api";
+import type { PublicUser } from "../lib/api";
+
+export type RequesterIdentity = Pick<PublicUser, "id" | "name" | "email">;
 
 type RequesterContextValue = {
-  selectedRequester: DevelopmentRequester | null;
-  selectRequester: (requester: DevelopmentRequester) => void;
+  requester: RequesterIdentity | null;
+  setRequester: (requester: RequesterIdentity) => void;
   clearRequester: () => void;
 };
 
 const RequesterContext = createContext<RequesterContextValue | null>(null);
 
-export function DevelopmentRequesterProvider({
+export function RequesterProvider({
   children,
+  initialRequester = null,
 }: {
   children: ReactNode;
+  initialRequester?: RequesterIdentity | null;
 }) {
-  const [selectedRequester, setSelectedRequester] =
-    useState<DevelopmentRequester | null>(null);
+  const [requester, setRequester] = useState<RequesterIdentity | null>(
+    initialRequester,
+  );
 
   const value = useMemo(
     () => ({
-      selectedRequester,
-      selectRequester: setSelectedRequester,
-      clearRequester: () => setSelectedRequester(null),
+      requester,
+      setRequester,
+      clearRequester: () => setRequester(null),
     }),
-    [selectedRequester],
+    [requester],
   );
 
   return (
@@ -40,13 +45,11 @@ export function DevelopmentRequesterProvider({
   );
 }
 
-export function useDevelopmentRequester() {
+export function useRequester() {
   const value = useContext(RequesterContext);
 
   if (!value) {
-    throw new Error(
-      "useDevelopmentRequester must be used inside DevelopmentRequesterProvider",
-    );
+    throw new Error("useRequester must be used inside RequesterProvider");
   }
 
   return value;
