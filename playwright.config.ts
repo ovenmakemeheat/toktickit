@@ -1,4 +1,12 @@
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+
 import { defineConfig } from "@playwright/test";
+
+const serverEnvPath = resolve(__dirname, "server/.env");
+if (existsSync(serverEnvPath)) {
+  process.loadEnvFile(serverEnvPath);
+}
 
 export default defineConfig({
   testDir: "./e2e",

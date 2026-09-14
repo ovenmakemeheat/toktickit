@@ -13,6 +13,7 @@ import {
 } from "./test-helpers.js";
 
 const changedPassword = randomUUID();
+const invalidPassword = randomUUID();
 
 function expectError(response: request.Response, status: number, code: string) {
   expect(response.status).toBe(status);
@@ -86,7 +87,7 @@ describe("Lab 3 authentication", () => {
       .send({ email: "unknown@toktickit.test", password: seedPassword });
     const invalid = await request(app).post("/api/auth/login").send({
       email: "requester-a@toktickit.test",
-      password: "wrong-password!1",
+      password: invalidPassword,
     });
     const inactive = await request(app).post("/api/auth/login").send({
       email: "inactive-requester@toktickit.test",
@@ -263,6 +264,44 @@ describe("Lab 3 authentication", () => {
 
     const notFound = await request(app).get("/api/not-a-real-route");
     expectError(notFound, 404, "NOT_FOUND");
+  });
+
+  it("uses route-specific fallbacks for unexpected auth failures", async () => {
+    const loginLookup = vi
+      .spyOn(prisma.user, "findUnique")
+      .mockRejectedValueOnce(new Error("database-secret"));
+    try {
+      const loginFailure = await request(app)
+        .post("/api/auth/login")
+        .send({ email: "requester-a@toktickit.test", password: seedPassword });
+      expectError(loginFailure, 500, "LOGIN_FAILED");
+      expect(JSON.stringify(loginFailure.body)).not.toContain(
+        "database-secret",
+      );
+    } finally {
+      loginLookup.mockRestore();
+    }
+
+    const authenticated = await login("requester-a@toktickit.test");
+    const transaction = vi
+      .spyOn(prisma, "$transaction")
+      .mockRejectedValueOnce(new Error("database-secret"));
+    try {
+      const passwordFailure = await authenticated.agent
+        .patch("/api/auth/password")
+        .set("X-CSRF-Token", authenticated.csrfToken)
+        .send({
+          currentPassword: seedPassword,
+          newPassword: changedPassword,
+          confirmPassword: changedPassword,
+        });
+      expectError(passwordFailure, 500, "PASSWORD_CHANGE_FAILED");
+      expect(JSON.stringify(passwordFailure.body)).not.toContain(
+        "database-secret",
+      );
+    } finally {
+      transaction.mockRestore();
+    }
   });
 
   it("logs out repeat-safely and prevents reuse of the session", async () => {

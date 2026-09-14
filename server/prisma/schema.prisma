@@ -92,7 +92,7 @@ model Ticket {
   updatedAt                       DateTime         @updatedAt
 
   requester     DevelopmentRequester? @relation(fields: [requesterId], references: [id])
-  requesterUser User?                  @relation("TicketRequester", fields: [requesterUserId], references: [id])
+  requesterUser User?                  @relation("TicketRequester", fields: [requesterUserId], references: [id], onDelete: Restrict)
   primaryOwner  User?                  @relation("TicketOwner", fields: [primaryOwnerUserId], references: [id])
   category      Category                @relation(fields: [categoryId], references: [id])
   relatedSystem RelatedSystem           @relation(fields: [relatedSystemId], references: [id])

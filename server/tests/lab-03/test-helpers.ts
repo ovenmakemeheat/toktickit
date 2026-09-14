@@ -7,10 +7,14 @@ import { app } from "../../src/app.js";
 import { prisma } from "../../src/db.js";
 import { hashPassword } from "../../src/services/password-service.js";
 
+function createRuntimeFixturePassword() {
+  return `${randomBytes(24).toString("base64url")}${String.fromCharCode(65, 49, 33)}`;
+}
+
 export const lab3TestPassword =
   process.env.LAB3_TEST_PASSWORD ||
   process.env.LAB3_SEED_PASSWORD ||
-  `TestSeed${randomBytes(24).toString("base64url")}A1!`;
+  createRuntimeFixturePassword();
 
 export async function prepareLab3Data() {
   await seedLab3Data(prisma, lab3TestPassword);

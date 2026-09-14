@@ -86,11 +86,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(async () => {
-    try {
-      await logoutRequest();
-    } finally {
-      setState({ status: "signed-out" });
-    }
+    await logoutRequest();
+    setState({ status: "signed-out" });
   }, []);
 
   const user = state.status === "authenticated" ? state.response.user : null;

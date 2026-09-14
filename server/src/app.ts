@@ -277,7 +277,11 @@ function sendAttachmentRemoveError(response: Response, error: unknown) {
   );
 }
 
-function sendAuthRouteError(response: Response, error: unknown) {
+function sendAuthRouteError(
+  response: Response,
+  error: unknown,
+  fallbackCode: "LOGIN_FAILED" | "PASSWORD_CHANGE_FAILED",
+) {
   if (error instanceof AuthInputValidationError) {
     sendError(response, 400, error.code, error.message, error.fields);
     return;
@@ -303,12 +307,7 @@ function sendAuthRouteError(response: Response, error: unknown) {
     return;
   }
 
-  sendError(
-    response,
-    500,
-    "AUTHENTICATION_FAILED",
-    "Unable to complete authentication",
-  );
+  sendError(response, 500, fallbackCode, "Unable to complete authentication");
 }
 
 function sessionResponse(result: {
@@ -358,7 +357,7 @@ app.post("/api/auth/login", async (request, response) => {
     );
     response.json(sessionResponse(result));
   } catch (error) {
-    sendAuthRouteError(response, error);
+    sendAuthRouteError(response, error, "LOGIN_FAILED");
   }
 });
 
@@ -417,7 +416,7 @@ app.patch(
       );
       response.json(sessionResponse(result));
     } catch (error) {
-      sendAuthRouteError(response, error);
+      sendAuthRouteError(response, error, "PASSWORD_CHANGE_FAILED");
     }
   },
 );

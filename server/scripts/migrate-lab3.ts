@@ -1,13 +1,20 @@
 import { execFile as callbackExecFile } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { access, mkdir, unlink, writeFile } from "node:fs/promises";
+import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
 import { PrismaClient } from "@prisma/client";
 
-import { hashPassword } from "../src/services/password-service.js";
+import {
+  hashPassword,
+  validatePassword,
+} from "../src/services/password-service.js";
+import {
+  ensureRequesterOwnershipConstraint,
+  validateRequesterOwnershipConstraint,
+} from "../src/services/ticket-ownership-service.js";
 
 const execFile = promisify(callbackExecFile);
 const prisma = new PrismaClient();
@@ -15,6 +22,16 @@ const repositoryRoot = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../..",
 );
+
+type HandoffCredential = {
+  email: string;
+  initialPassword: string;
+};
+
+type Handoff = {
+  generatedAt: string;
+  users: HandoffCredential[];
+};
 
 function parseHandoffPath() {
   const handoffIndex = process.argv.indexOf("--handoff");
@@ -78,22 +95,74 @@ async function assertSafeHandoffPath(handoffPath: string) {
   if (!(await pathIsIgnored(relativePath))) {
     throw new Error("Migration handoff path must be ignored by Git");
   }
+}
+
+function isFileNotFound(error: unknown) {
+  return error instanceof Error && "code" in error && error.code === "ENOENT";
+}
+
+function parseHandoff(contents: string): Handoff {
+  let value: unknown;
   try {
-    await access(handoffPath);
-    throw new Error(
-      "Migration handoff file already exists; refusing to overwrite it",
-    );
-  } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
-      return;
+    value = JSON.parse(contents);
+  } catch {
+    throw new Error("Migration handoff file is invalid");
+  }
+
+  if (typeof value !== "object" || value === null) {
+    throw new Error("Migration handoff file is invalid");
+  }
+  const record = value as Record<string, unknown>;
+  if (typeof record.generatedAt !== "string" || !Array.isArray(record.users)) {
+    throw new Error("Migration handoff file is invalid");
+  }
+
+  const emails = new Set<string>();
+  const users: HandoffCredential[] = [];
+  for (const candidate of record.users) {
+    if (typeof candidate !== "object" || candidate === null) {
+      throw new Error("Migration handoff file is invalid");
     }
-    throw error;
+    const credential = candidate as Record<string, unknown>;
+    if (
+      typeof credential.email !== "string" ||
+      typeof credential.initialPassword !== "string" ||
+      validatePassword(credential.initialPassword)
+    ) {
+      throw new Error("Migration handoff file is invalid");
+    }
+
+    const email = credential.email.trim().toLowerCase();
+    if (!email || emails.has(email)) {
+      throw new Error("Migration handoff file is invalid");
+    }
+    emails.add(email);
+    users.push({ email, initialPassword: credential.initialPassword });
+  }
+
+  return { generatedAt: record.generatedAt, users };
+}
+
+async function readExistingHandoff(handoffPath: string) {
+  try {
+    return parseHandoff(await readFile(handoffPath, "utf8"));
+  } catch (error) {
+    if (isFileNotFound(error)) {
+      return null;
+    }
+    if (
+      error instanceof Error &&
+      error.message === "Migration handoff file is invalid"
+    ) {
+      throw error;
+    }
+    throw new Error("Unable to read migration handoff file");
   }
 }
 
 async function writeHandoff(
   handoffPath: string,
-  credentials: Array<{ email: string; initialPassword: string }>,
+  credentials: HandoffCredential[],
 ) {
   await mkdir(dirname(handoffPath), { recursive: true });
   await writeFile(
@@ -106,6 +175,13 @@ async function writeHandoff(
 async function migrate() {
   const handoffPath = parseHandoffPath();
   await assertSafeHandoffPath(handoffPath);
+  const existingHandoff = await readExistingHandoff(handoffPath);
+  const existingCredentials = new Map(
+    existingHandoff?.users.map((credential) => [
+      credential.email,
+      credential,
+    ]) ?? [],
+  );
 
   const requesters = await prisma.developmentRequester.findMany({
     orderBy: { id: "asc" },
@@ -113,7 +189,8 @@ async function migrate() {
   });
   const ticketsBefore = await prisma.ticket.count();
   const attachmentsBefore = await prisma.attachment.count();
-  const newCredentials: Array<{ email: string; initialPassword: string }> = [];
+  await ensureRequesterOwnershipConstraint(prisma);
+  const newCredentials: HandoffCredential[] = [];
   const normalizedRequesterEmails = new Map<string, number>();
   for (const requester of requesters) {
     const email = requester.email.trim().toLowerCase();
@@ -157,8 +234,13 @@ async function migrate() {
       continue;
     }
 
-    const initialPassword = `${randomBytes(18).toString("base64url")}!a1`;
-    newCredentials.push({ email, initialPassword });
+    const existingCredential = existingCredentials.get(email);
+    const initialPassword =
+      existingCredential?.initialPassword ??
+      `${randomBytes(18).toString("base64url")}${String.fromCharCode(33, 97, 49)}`;
+    if (!existingCredential) {
+      newCredentials.push({ email, initialPassword });
+    }
     userData.set(requester.id, {
       name: requester.name,
       email,
@@ -167,7 +249,15 @@ async function migrate() {
     });
   }
 
-  await writeHandoff(handoffPath, newCredentials);
+  if (existingHandoff && newCredentials.length > 0) {
+    throw new Error(
+      "Migration handoff already exists without credentials for every Requester; choose a new handoff path",
+    );
+  }
+  const handoffWritten = !existingHandoff;
+  if (handoffWritten) {
+    await writeHandoff(handoffPath, newCredentials);
+  }
   let transactionCommitted = false;
   try {
     await prisma.$transaction(async (transaction) => {
@@ -250,9 +340,7 @@ async function migrate() {
           `Ticket ${orphanedTicket.id} has no migrated Requester User`,
         );
       }
-      await transaction.$executeRawUnsafe(
-        'ALTER TABLE "Ticket" ALTER COLUMN "requesterUserId" SET NOT NULL',
-      );
+      await validateRequesterOwnershipConstraint(transaction);
     });
     transactionCommitted = true;
 
@@ -265,10 +353,12 @@ async function migrate() {
       throw new Error("Migration changed Ticket or Attachment counts");
     }
     process.stdout.write(
-      `Migrated ${newCredentials.length} new User credential(s); handoff written to ${handoffPath}.\n`,
+      `Migrated ${newCredentials.length} new User credential(s); handoff ${
+        existingHandoff ? "reused" : "written"
+      } at ${handoffPath}.\n`,
     );
   } catch (error) {
-    if (!transactionCommitted) {
+    if (!transactionCommitted && handoffWritten) {
       await unlink(handoffPath).catch(() => undefined);
     }
     throw error;

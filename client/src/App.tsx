@@ -54,10 +54,22 @@ function roleLabel(role: Role) {
 function AuthenticatedHeader({ user }: { user: PublicUser }) {
   const activePage = readRoute().page;
   const { logout } = useAuth();
+  const [logoutError, setLogoutError] = useState<string | null>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   async function handleLogout() {
-    await logout();
-    navigate("/login");
+    setLogoutError(null);
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      navigate("/login");
+    } catch {
+      setLogoutError(
+        "Unable to sign out. Your session is still active. Try again.",
+      );
+    } finally {
+      setIsLoggingOut(false);
+    }
   }
 
   return (
@@ -107,10 +119,17 @@ function AuthenticatedHeader({ user }: { user: PublicUser }) {
           type="button"
           className="btn btn-sm btn-outline-secondary"
           onClick={() => void handleLogout()}
+          disabled={isLoggingOut}
+          aria-busy={isLoggingOut}
         >
-          Log out
+          {isLoggingOut ? "Logging out..." : "Log out"}
         </button>
       </nav>
+      {logoutError ? (
+        <div className="auth-state auth-state-error" role="alert">
+          {logoutError}
+        </div>
+      ) : null}
       <div className="auth-user-summary">
         <strong>{user.name}</strong>
         <span className="auth-role-badge">{roleLabel(user.role)}</span>

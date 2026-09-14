@@ -16,6 +16,10 @@ import {
   hashPassword,
   validatePassword,
 } from "../src/services/password-service.js";
+import {
+  ensureRequesterOwnershipConstraint,
+  validateRequesterOwnershipConstraint,
+} from "../src/services/ticket-ownership-service.js";
 
 export const lab3SeedUsers = [
   {
@@ -375,6 +379,7 @@ async function upsertSeedTickets(
 }
 
 async function enforceRequesterOwnershipConstraint(prisma: PrismaClient) {
+  await ensureRequesterOwnershipConstraint(prisma);
   const orphanedTicket = await prisma.ticket.findFirst({
     where: { requesterUserId: null },
     select: { id: true },
@@ -385,9 +390,7 @@ async function enforceRequesterOwnershipConstraint(prisma: PrismaClient) {
     );
   }
 
-  await prisma.$executeRawUnsafe(
-    'ALTER TABLE "Ticket" ALTER COLUMN "requesterUserId" SET NOT NULL',
-  );
+  await validateRequesterOwnershipConstraint(prisma);
 }
 
 async function upsertSeedCommunication(

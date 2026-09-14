@@ -46,7 +46,9 @@ bun run db:seed
 bun run db:test:setup
 ```
 
-`db:seed` backfills every seeded Ticket to its authenticated Requester User and verifies the database-level ownership constraint before completing. For an existing Lab 2 database with additional Development Requesters, run `bun run db:migrate:lab3 -- --handoff server/.local/lab3-credentials.json` once before seeding; the handoff path must remain ignored and local.
+`db:migrate` and `db:migrate:deploy` run the Prisma migration and the Lab 3 ownership migration before returning. Existing Lab 2 Development Requesters are backfilled to Users, Ticket ownership is enforced, and generated initial credentials are written to the ignored local path `.local/lab3-credentials.json`. Set `LAB3_MIGRATION_HANDOFF_PATH` to choose another ignored local handoff path. `db:migrate:lab3` remains available for a separately managed handoff path.
+
+`db:seed` backfills every seeded Ticket to its authenticated Requester User and verifies the database-level ownership constraint before completing.
 
 `db:test:setup` applies the current migrations and seed to the isolated `toktickit_test` database. The test database is created by `server/docker/postgres/init/01-create-test-database.sql` on a new Compose volume.
 

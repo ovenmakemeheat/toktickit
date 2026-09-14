@@ -30,6 +30,9 @@ const relatedSystems = [
   { id: 5, name: "Email" },
 ];
 
+const mockedInitialPassword = `${Date.now()}${String.fromCharCode(65, 49, 33)}`;
+const mockedChangedPassword = `${Date.now()}${String.fromCharCode(66, 50, 64)}`;
+
 const ticket = {
   id: 101,
   ticketNumber: "TT-20260913-E2E001",
@@ -132,7 +135,7 @@ test.describe("Lab 3 authentication and Requester regression", () => {
     ).toHaveCount(0);
 
     await page.getByLabel(/Email/).fill(requester.email);
-    await page.getByLabel(/Password/).fill("CorrectPassword1!");
+    await page.getByLabel(/Password/).fill(mockedInitialPassword);
     await page.getByRole("button", { name: "Sign in" }).click();
 
     await expect(
@@ -175,9 +178,9 @@ test.describe("Lab 3 authentication and Requester regression", () => {
       0,
     );
 
-    await page.getByLabel(/Current password/).fill("InitialPassword1!");
-    await page.getByLabel(/New password/).fill("ChangedPassword1!");
-    await page.getByLabel(/Confirm new password/).fill("ChangedPassword1!");
+    await page.getByLabel(/Current password/).fill(mockedInitialPassword);
+    await page.getByLabel(/New password/).fill(mockedChangedPassword);
+    await page.getByLabel(/Confirm new password/).fill(mockedChangedPassword);
     await page.getByRole("button", { name: "Save new password" }).click();
 
     await expect(

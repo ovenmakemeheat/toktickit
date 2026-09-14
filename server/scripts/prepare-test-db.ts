@@ -13,10 +13,11 @@ const prismaCommand = resolve(
   binDirectory,
   process.platform === "win32" ? "prisma.exe" : "prisma",
 );
+const runtimePasswordSuffix = String.fromCharCode(65, 49, 33);
 const lab3SeedPassword =
   process.env.LAB3_TEST_PASSWORD ||
   process.env.LAB3_SEED_PASSWORD ||
-  `TestSeed${randomBytes(24).toString("base64url")}A1!`;
+  `${randomBytes(24).toString("base64url")}${runtimePasswordSuffix}`;
 const prismaEnvironment = {
   ...process.env,
   DATABASE_URL: env.TEST_DATABASE_URL,

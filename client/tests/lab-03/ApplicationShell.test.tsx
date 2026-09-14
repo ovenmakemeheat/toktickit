@@ -54,6 +54,46 @@ describe("Lab 3 authenticated application shell", () => {
     },
   );
 
+  it("keeps the authenticated shell visible when logout fails", async () => {
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === "/api/auth/me") {
+        return Promise.resolve(response(sessionResponse()));
+      }
+      if (url === "/api/auth/logout") {
+        return Promise.resolve(
+          response(
+            {
+              error: {
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Unable to complete request",
+              },
+            },
+            false,
+            500,
+          ),
+        );
+      }
+      return Promise.reject(new Error(`Unexpected request: ${url}`));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+
+    render(<App />);
+    await screen.findByRole("heading", { name: "Welcome, Requester A" });
+    await user.click(screen.getByRole("button", { name: "Log out" }));
+
+    expect(
+      await screen.findByText(
+        "Unable to sign out. Your session is still active. Try again.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Welcome, Requester A" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Log out" })).toBeEnabled();
+  });
+
   it("logs out and does not leave the authenticated shell visible", async () => {
     const fetchMock = vi.fn((input: RequestInfo | URL) => {
       const url = String(input);

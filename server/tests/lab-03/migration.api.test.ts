@@ -11,6 +11,10 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { seedLab3Data } from "../../prisma/seed-lab3-data.js";
 import { hashPassword } from "../../src/services/password-service.js";
 import { localAttachmentStorage } from "../../src/services/attachment-storage-service.js";
+import {
+  ensureRequesterOwnershipConstraint,
+  validateRequesterOwnershipConstraint,
+} from "../../src/services/ticket-ownership-service.js";
 import { app, lab3TestPassword, prisma } from "./test-helpers.js";
 
 const execFile = promisify(callbackExecFile);
@@ -30,6 +34,7 @@ const handoffRelativePath = `server/.local/${handoffFileName}`;
 const handoffPath = resolve(repositoryRoot, handoffRelativePath);
 
 type Handoff = {
+  generatedAt: string;
   users: Array<{ email: string; initialPassword: string }>;
 };
 
@@ -87,12 +92,14 @@ afterAll(async () => {
     });
   }
   await unlink(handoffPath).catch(() => undefined);
-  await unlink(
-    resolve(repositoryRoot, "server", ".local", `${handoffFileName}.second`),
-  ).catch(() => undefined);
+  await prisma.$executeRawUnsafe(
+    'ALTER TABLE "Ticket" DROP CONSTRAINT IF EXISTS "Ticket_requesterUserId_not_null"',
+  );
   await prisma.$executeRawUnsafe(
     'ALTER TABLE "Ticket" ALTER COLUMN "requesterUserId" DROP NOT NULL',
   );
+  await ensureRequesterOwnershipConstraint(prisma);
+  await validateRequesterOwnershipConstraint(prisma);
   await prisma.user.updateMany({
     data: {
       passwordHash: await hashPassword(lab3TestPassword),
@@ -123,6 +130,9 @@ describe("Lab 3 migration handoff", () => {
       seedCountsBefore.internalNotes,
     );
 
+    await prisma.$executeRawUnsafe(
+      'ALTER TABLE "Ticket" DROP CONSTRAINT IF EXISTS "Ticket_requesterUserId_not_null"',
+    );
     await prisma.$executeRawUnsafe(
       'ALTER TABLE "Ticket" ALTER COLUMN "requesterUserId" DROP NOT NULL',
     );
@@ -305,16 +315,13 @@ describe("Lab 3 migration handoff", () => {
     expectError(deniedTicket, 404, "TICKET_NOT_FOUND");
     expectError(deniedAttachments, 404, "TICKET_NOT_FOUND");
 
-    const secondHandoffRelativePath = `${handoffRelativePath}.second`;
-    const second = await runMigration(secondHandoffRelativePath);
+    const second = await runMigration(handoffRelativePath);
     const secondHandoff = JSON.parse(
-      await readFile(
-        resolve(repositoryRoot, secondHandoffRelativePath),
-        "utf8",
-      ),
+      await readFile(handoffPath, "utf8"),
     ) as Handoff;
-    expect(secondHandoff.users).toEqual([]);
+    expect(secondHandoff).toEqual(handoff);
     expect(second.stdout).toContain("Migrated 0 new User credential(s)");
+    expect(second.stdout).toContain("handoff reused");
     expect(await prisma.user.count()).toBe(countsBefore.users + 1);
     expect(await prisma.ticket.count()).toBe(countsBefore.tickets);
     expect(await prisma.attachment.count()).toBe(countsBefore.attachments);
