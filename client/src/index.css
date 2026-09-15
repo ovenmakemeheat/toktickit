@@ -701,6 +701,126 @@ textarea.form-control {
   gap: 0.75rem;
 }
 
+.lab3-staff-queue-panel,
+.lab3-staff-detail-panel {
+  width: min(100%, 92rem);
+}
+
+.lab3-staff-queue-filters {
+  background: var(--zen-pale);
+}
+
+.lab3-staff-ticket-table {
+  min-width: 92rem;
+}
+
+.lab3-staff-ticket-cards {
+  display: none;
+  gap: 0.75rem;
+}
+
+.lab3-communication-panel,
+.lab3-resolution-section {
+  display: grid;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding: clamp(1rem, 3vw, 1.5rem);
+  border: 1px solid var(--zen-border);
+  border-top: 0.25rem solid var(--zen-secondary);
+  border-radius: 0.875rem;
+  background: var(--zen-surface);
+}
+
+.lab3-public-comments {
+  background: #f7fbf8;
+}
+
+.lab3-internal-notes {
+  border-color: #e4d8b5;
+  border-top-color: var(--zen-warning, #a16207);
+  background: #fffdf5;
+}
+
+.lab3-staff-attachments {
+  border-top-color: var(--zen-secondary);
+  background: #f7fbf8;
+}
+
+.lab3-communication-panel .lab2-page-heading,
+.lab3-resolution-section .lab2-page-heading {
+  margin-bottom: 0;
+}
+
+.lab3-private-warning {
+  color: #7a4d00;
+  font-weight: 600;
+}
+
+.lab3-communication-list,
+.lab3-attachment-metadata-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lab3-communication-entry,
+.lab3-attachment-metadata-list li {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--zen-border);
+  border-radius: 0.625rem;
+  background: var(--zen-surface);
+}
+
+.lab3-communication-entry p {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.lab3-communication-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  color: var(--zen-muted);
+  font-size: 0.875rem;
+}
+
+.lab3-communication-meta strong {
+  color: var(--zen-text);
+}
+
+.lab3-communication-form {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.lab3-communication-form .btn {
+  justify-self: start;
+}
+
+.lab3-operation-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.lab3-resolution-indication,
+.lab3-resolution-recorded {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border-left: 0.25rem solid var(--zen-secondary);
+  background: var(--zen-pale);
+}
+
+.lab3-attachment-metadata-list li span {
+  color: var(--zen-muted);
+  overflow-wrap: anywhere;
+}
+
 @media (min-width: 768px) and (max-width: 991px) {
   .lab2-form-grid,
   .lab2-ticket-filter-grid {
@@ -786,11 +906,13 @@ textarea.form-control {
     grid-template-columns: 1fr;
   }
 
-  .lab2-ticket-table-wrapper {
+  .lab2-ticket-table-wrapper,
+  .lab3-staff-ticket-table-wrapper {
     display: none;
   }
 
-  .lab2-ticket-cards {
+  .lab2-ticket-cards,
+  .lab3-staff-ticket-cards {
     display: grid;
     gap: 0.75rem;
   }
@@ -837,8 +959,14 @@ textarea.form-control {
   }
 
   .lab2-readonly-grid,
-  .lab2-form-grid {
+  .lab2-form-grid,
+  .lab3-operation-grid {
     grid-template-columns: 1fr;
+  }
+
+  .lab3-communication-form .btn {
+    justify-self: stretch;
+    width: 100%;
   }
 
   .lab2-attachment-pending {
