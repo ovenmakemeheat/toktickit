@@ -15,7 +15,6 @@ import {
 } from "../lib/attachment-policy";
 
 type AttachmentSectionProps = {
-  requesterId: number;
   ticketId: number | string;
   attachments: AttachmentMetadata[];
   onChanged: () => Promise<void>;
@@ -76,7 +75,6 @@ function triggerBrowserDownload(blob: Blob, displayName: string) {
 }
 
 export default function AttachmentSection({
-  requesterId,
   ticketId,
   attachments,
   onChanged,
@@ -129,7 +127,7 @@ export default function AttachmentSection({
     setUploadSuccess(null);
 
     try {
-      await uploadTicketAttachment(requesterId, ticketId, pendingFile);
+      await uploadTicketAttachment(ticketId, pendingFile);
       setPendingFile(null);
       setUploadSuccess("Attachment uploaded successfully.");
       await onChanged();
@@ -145,11 +143,7 @@ export default function AttachmentSection({
     setDownloadError(null);
 
     try {
-      const blob = await downloadTicketAttachment(
-        requesterId,
-        ticketId,
-        attachment.id,
-      );
+      const blob = await downloadTicketAttachment(ticketId, attachment.id);
       triggerBrowserDownload(blob, attachment.displayName);
     } catch (error) {
       setDownloadError(getAttachmentErrorMessage(error));
@@ -182,7 +176,6 @@ export default function AttachmentSection({
 
     try {
       await removeTicketAttachment(
-        requesterId,
         ticketId,
         attachmentId,
         removalReason.trim(),

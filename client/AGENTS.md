@@ -4,8 +4,8 @@ The repository rules in `../AGENTS.md` apply here. These instructions add client
 
 ## Scope
 
-- Keep this workspace limited to the Lab 1 React system-check screen.
-- Do not add authentication, ticket workflows, uploads, role management, or later-lab screens.
+- Preserve the completed Lab 1/Lab 2 React behavior while implementing only the active Lab 3 issue.
+- Follow the approved Lab 3 UI contract in `../docs/lab-03/ui-spec.md` and keep excluded features out of the workspace.
 - Keep API calls relative to `/api` so the Vite proxy is used in development.
 
 ## Architecture
@@ -31,9 +31,9 @@ For focused work inside this workspace, the equivalent package scripts are `bun 
 ## Testing
 
 - Use Vitest and Testing Library in the `jsdom` environment.
-- Test at the user-observable boundary, including heading content and system-check loading, success, and failure behavior.
+- Test at the user-observable boundary, including authentication, role navigation, Requester regression, and the required loading, success, and failure states.
 - Prefer accessible queries and user interactions over implementation details.
-- Keep shared client test setup in `tests/setup.ts` and avoid starting a real API listener in unit tests.
+- Keep Lab 3 client tests under `tests/lab-03/`, shared client test setup in `tests/setup.ts`, and avoid starting a real API listener in unit tests.
 
 ## Handoff
 

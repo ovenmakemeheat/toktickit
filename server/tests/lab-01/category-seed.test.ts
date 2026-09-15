@@ -1,15 +1,11 @@
 import { PrismaClient } from "@prisma/client";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 
 import { categoryNames, seedCategories } from "../../prisma/seed-categories.js";
 
 const prisma = new PrismaClient();
 
 describe("Issue #15 category seed", () => {
-  beforeAll(async () => {
-    await prisma.category.deleteMany();
-  });
-
   afterAll(async () => {
     await prisma.$disconnect();
   });
@@ -18,6 +14,7 @@ describe("Issue #15 category seed", () => {
     await seedCategories(prisma);
 
     const categories = await prisma.category.findMany({
+      where: { name: { in: [...categoryNames] } },
       orderBy: { id: "asc" },
     });
 
@@ -28,6 +25,10 @@ describe("Issue #15 category seed", () => {
   it("does not create duplicates when the seed runs again", async () => {
     await seedCategories(prisma);
 
-    expect(await prisma.category.count()).toBe(categoryNames.length);
+    expect(
+      await prisma.category.count({
+        where: { name: { in: [...categoryNames] } },
+      }),
+    ).toBe(categoryNames.length);
   });
 });

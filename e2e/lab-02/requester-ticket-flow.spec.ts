@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { Buffer } from "node:buffer";
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -16,6 +17,9 @@ const evidenceDirectories = [
   "ticket-detail",
 ] as const;
 const repositoryRoot = resolve(__dirname, "..", "..");
+const e2ePassword =
+  process.env.LAB3_E2E_PASSWORD || process.env.LAB3_SEED_PASSWORD;
+const passwordByEmail = new Map<string, string>();
 
 type CreatedTicket = {
   id: number;
@@ -25,14 +29,6 @@ type CreatedTicket = {
 type UploadedAttachment = {
   id: number;
   displayName: string;
-};
-
-const emptyTicketList = {
-  items: [],
-  page: 1,
-  pageSize: 10,
-  totalItems: 0,
-  totalPages: 0,
 };
 
 const unavailableApiResponse = {
@@ -93,23 +89,44 @@ async function captureResponsiveEvidence(
   }
 }
 
-async function chooseRequester(page: Page, requesterName: string) {
-  const requesterSelect = page.getByRole("combobox", {
-    name: "Development Requester",
-  });
-  const requesterOption = requesterSelect
-    .locator("option")
-    .filter({ hasText: requesterName })
-    .first();
-  await expect(requesterOption).toHaveCount(1);
-
-  const requesterId = await requesterOption.getAttribute("value");
-  if (!requesterId) {
-    throw new Error(`No value found for ${requesterName}`);
+async function signInRequester(page: Page, email: string) {
+  const currentPassword = passwordByEmail.get(email) ?? e2ePassword;
+  if (!currentPassword) {
+    throw new Error(
+      "Set LAB3_E2E_PASSWORD or LAB3_SEED_PASSWORD before running E2E tests.",
+    );
   }
 
-  await requesterSelect.selectOption(requesterId);
-  return requesterId;
+  await expect(
+    page.getByRole("heading", { name: "Sign in to your service desk" }),
+  ).toBeVisible();
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill(currentPassword);
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+
+  const changePasswordHeading = page.getByRole("heading", {
+    name: "Change your initial password",
+    exact: true,
+  });
+  const homeHeading = page.getByRole("heading", {
+    name: /Welcome, Requester [A-D]/,
+  });
+  await expect(changePasswordHeading.or(homeHeading)).toBeVisible();
+
+  if (await changePasswordHeading.isVisible()) {
+    const nextPassword = `${randomUUID()}${String.fromCharCode(65, 49, 33)}`;
+    await page.getByLabel("Current password").fill(currentPassword);
+    await page.getByLabel("New password").fill(nextPassword);
+    await page.getByLabel("Confirm new password").fill(nextPassword);
+    await page
+      .getByRole("button", { name: "Save new password", exact: true })
+      .click();
+    passwordByEmail.set(email, nextPassword);
+  } else {
+    passwordByEmail.set(email, currentPassword);
+  }
+
+  await expect(homeHeading).toBeVisible();
 }
 
 function visibleTicketSummary(page: Page, summary: string) {
@@ -122,8 +139,8 @@ function visibleOpenTicketButton(page: Page) {
   return page.locator("button:visible").filter({ hasText: "Open Ticket" });
 }
 
-test.describe("Issue #57 requester ticket flow", () => {
-  test("E2E-01, E2E-02, RESP-01, VIS-01: completes the requester ticket lifecycle", async ({
+test.describe("Authenticated Requester Lab 2 regression", () => {
+  test("completes the authenticated ticket and attachment lifecycle", async ({
     page,
   }) => {
     test.setTimeout(120_000);
@@ -137,12 +154,10 @@ test.describe("Issue #57 requester ticket flow", () => {
     const removalReason = "Replaced by current Lab 2 evidence";
 
     await page.goto("/");
-    const requesterId = await chooseRequester(page, "Requester A");
+    await signInRequester(page, "requester-a@toktickit.test");
     await expect(
-      page.getByRole("option", { name: /Inactive Requester/ }),
+      page.getByRole("button", { name: "Change Requester" }),
     ).toHaveCount(0);
-    await page.getByRole("button", { name: "Continue", exact: true }).click();
-    await expect(page.getByText("Testing context: Requester A")).toBeVisible();
 
     let releaseReferenceLoading!: () => void;
     const referenceLoadingReleased = new Promise<void>((resolve) => {
@@ -193,9 +208,7 @@ test.describe("Issue #57 requester ticket flow", () => {
         page.getByText("Category is required.", { exact: true }),
         page.getByText(
           "Description must contain 20-4000 characters after trimming.",
-          {
-            exact: true,
-          },
+          { exact: true },
         ),
       ],
     );
@@ -298,61 +311,43 @@ test.describe("Issue #57 requester ticket flow", () => {
       ],
     );
 
-    await page.setViewportSize(viewportSizes.desktop);
-    let requesterDId = "";
-    await page.route("**/api/tickets**", async (route) => {
-      const request = route.request();
-      const requestUrl = new URL(request.url());
-      if (
-        request.method() === "GET" &&
-        requestUrl.pathname === "/api/tickets" &&
-        request.headers()["x-development-requester-id"] === requesterDId
-      ) {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify(emptyTicketList),
-        });
-        return;
-      }
-
-      await route.continue();
-    });
-    await page
-      .getByRole("button", { name: "Change Requester", exact: true })
-      .click();
+    await page.getByRole("button", { name: "Log out", exact: true }).click();
     await expect(
-      page.getByRole("combobox", { name: "Development Requester" }),
+      page.getByRole("heading", { name: "Sign in to your service desk" }),
     ).toBeVisible();
-    requesterDId = await chooseRequester(page, "Requester D");
-    await page.getByRole("button", { name: "Continue", exact: true }).click();
+    await signInRequester(page, "requester-b@toktickit.test");
     await page.getByRole("button", { name: "My Tickets", exact: true }).click();
     await expect(
       page.getByRole("heading", { name: "My Tickets", exact: true }),
     ).toBeVisible();
+    await page.getByRole("textbox", { name: "Search" }).fill(summary);
+    await page.getByRole("button", { name: "Search", exact: true }).click();
     await expect(
-      page.getByText("Requester D has no tickets yet.", { exact: true }),
+      page.getByText("No tickets match the current search and filters.", {
+        exact: true,
+      }),
     ).toBeVisible();
     await captureResponsiveEvidence(
       page,
       "my-tickets",
-      "my-tickets-empty",
+      "my-tickets-ownership-isolation",
       () => [
         page.getByRole("heading", { name: "My Tickets", exact: true }),
-        page.getByText("Requester D has no tickets yet.", { exact: true }),
-        page.getByRole("button", { name: "Create Ticket", exact: true }).last(),
+        page.getByText("No tickets match the current search and filters."),
+        page
+          .getByRole("button", { name: "Create Ticket", exact: true })
+          .first(),
       ],
     );
-    await page.unroute("**/api/tickets**");
 
-    let requesterCId = "";
+    await page.getByRole("button", { name: "Log out", exact: true }).click();
+    await signInRequester(page, "requester-a@toktickit.test");
+
     await page.route("**/api/tickets**", async (route) => {
-      const request = route.request();
-      const requestUrl = new URL(request.url());
+      const url = new URL(route.request().url());
       if (
-        request.method() === "GET" &&
-        requestUrl.pathname === "/api/tickets" &&
-        request.headers()["x-development-requester-id"] === requesterCId
+        route.request().method() === "GET" &&
+        url.pathname === "/api/tickets"
       ) {
         await route.fulfill({
           status: 503,
@@ -364,18 +359,7 @@ test.describe("Issue #57 requester ticket flow", () => {
 
       await route.continue();
     });
-    await page
-      .getByRole("button", { name: "Change Requester", exact: true })
-      .click();
-    await expect(
-      page.getByRole("combobox", { name: "Development Requester" }),
-    ).toBeVisible();
-    requesterCId = await chooseRequester(page, "Requester C");
-    await page.getByRole("button", { name: "Continue", exact: true }).click();
     await page.getByRole("button", { name: "My Tickets", exact: true }).click();
-    await expect(
-      page.getByRole("heading", { name: "My Tickets", exact: true }),
-    ).toBeVisible();
     await expect(
       page.getByRole("alert").filter({
         hasText: "Your current ticket list was not kept as current",
@@ -394,48 +378,8 @@ test.describe("Issue #57 requester ticket flow", () => {
       ],
     );
     await page.unroute("**/api/tickets**");
-
-    await page
-      .getByRole("button", { name: "Change Requester", exact: true })
-      .click();
-    await expect(
-      page.getByRole("combobox", { name: "Development Requester" }),
-    ).toBeVisible();
-    await chooseRequester(page, "Requester B");
-    await page.getByRole("button", { name: "Continue", exact: true }).click();
-    await page.getByRole("button", { name: "My Tickets", exact: true }).click();
-    await expect(
-      page.getByRole("heading", { name: "My Tickets", exact: true }),
-    ).toBeVisible();
-    await page.getByRole("textbox", { name: "Search" }).fill(summary);
-    await page.getByRole("button", { name: "Search", exact: true }).click();
-    await expect(
-      page.getByText("No tickets match the current search and filters."),
-    ).toBeVisible();
-
-    await captureResponsiveEvidence(
-      page,
-      "my-tickets",
-      "my-tickets-ownership-isolation",
-      () => [
-        page.getByRole("heading", { name: "My Tickets", exact: true }),
-        page.getByText("No tickets match the current search and filters."),
-        page
-          .getByRole("button", { name: "Create Ticket", exact: true })
-          .first(),
-      ],
-    );
-
-    await page.setViewportSize(viewportSizes.desktop);
-    await page
-      .getByRole("button", { name: "Change Requester", exact: true })
-      .click();
-    await expect(
-      page.getByRole("combobox", { name: "Development Requester" }),
-    ).toBeVisible();
-    await chooseRequester(page, "Requester A");
-    await page.getByRole("button", { name: "Continue", exact: true }).click();
-    await page.getByRole("button", { name: "My Tickets", exact: true }).click();
+    await page.getByRole("button", { name: "Try again", exact: true }).click();
+    await expect(page.getByText("Tickets owned by Requester A")).toBeVisible();
     await page.getByRole("textbox", { name: "Search" }).fill(summary);
     await page.getByRole("button", { name: "Search", exact: true }).click();
     await expect(visibleTicketSummary(page, summary)).toBeVisible();
@@ -495,8 +439,7 @@ test.describe("Issue #57 requester ticket flow", () => {
     );
     await page
       .getByRole("region", { name: "Attachments" })
-      .locator("button")
-      .filter({ hasText: "Upload attachment" })
+      .getByRole("button", { name: "Upload attachment", exact: true })
       .click();
     const uploadResponse = await uploadResponsePromise;
     expect(uploadResponse.status()).toBe(201);
@@ -513,9 +456,7 @@ test.describe("Issue #57 requester ticket flow", () => {
     await expect(
       page
         .getByRole("list", { name: "Ticket attachments" })
-        .getByText("Active", {
-          exact: true,
-        }),
+        .getByText("Active", { exact: true }),
     ).toBeVisible();
 
     await captureResponsiveEvidence(
@@ -598,7 +539,6 @@ test.describe("Issue #57 requester ticket flow", () => {
         `/api/tickets/${createdTicket.id}/attachments/${uploadedAttachment.id}/download`,
         page.url(),
       ).toString(),
-      { headers: { "X-Development-Requester-Id": requesterId } },
     );
     expect(removedDownloadResponse.status()).toBe(410);
     expect(await removedDownloadResponse.json()).toMatchObject({

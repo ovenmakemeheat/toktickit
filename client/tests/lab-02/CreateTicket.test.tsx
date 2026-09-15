@@ -1,17 +1,13 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent, { type UserEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import App from "../../src/App";
-
-type MockResponse = {
-  ok: boolean;
-  json: () => Promise<unknown>;
-};
-
-const activeRequesters = [
-  { id: 1, name: "Requester A", email: "requester-a@toktickit.test" },
-];
+import {
+  requesterAuthResponse,
+  response,
+  type MockResponse,
+} from "../lab-03/test-helpers";
 
 const categories = [
   { id: 2, name: "Hardware" },
@@ -27,7 +23,7 @@ const createdTicket = {
   id: 101,
   ticketNumber: "TT-20260827-ABC123",
   ticketDate: "2026-08-27T09:00:00.000Z",
-  requester: { id: 1, name: "Requester A" },
+  requester: { id: 11, name: "Requester A" },
   category: { id: 2, name: "Hardware" },
   relatedSystem: { id: 4, name: "VPN" },
   requestedPriority: "HIGH",
@@ -39,10 +35,6 @@ const createdTicket = {
   attachments: [],
 };
 
-function response(body: unknown, ok = true): MockResponse {
-  return { ok, json: async () => body };
-}
-
 function setupFetch(
   createResponse: MockResponse | Promise<MockResponse> = response(
     createdTicket,
@@ -51,8 +43,8 @@ function setupFetch(
   const fetchMock = vi.fn(
     (input: RequestInfo | URL, _options?: RequestInit) => {
       const url = String(input);
-      if (url === "/api/development-requesters") {
-        return Promise.resolve(response(activeRequesters));
+      if (url === "/api/auth/me") {
+        return Promise.resolve(response(requesterAuthResponse));
       }
       if (url === "/api/categories") {
         return Promise.resolve(response(categories));
@@ -73,14 +65,13 @@ function setupFetch(
 
 async function openCreateTicket(user: UserEvent) {
   render(<App />);
-  await user.selectOptions(
-    await screen.findByRole("combobox", { name: "Development Requester" }),
-    "1",
+  const navigation = await screen.findByRole("navigation", {
+    name: "Application navigation",
+  });
+  await user.click(
+    within(navigation).getByRole("button", { name: "Create Ticket" }),
   );
-  await user.click(screen.getByRole("button", { name: "Continue" }));
-  await user.click(screen.getByRole("button", { name: "Create Ticket" }));
   await screen.findByRole("heading", { name: "Create Ticket" });
-  await screen.findByRole("combobox", { name: "Category" });
 }
 
 async function fillValidTicket(user: UserEvent) {
@@ -108,11 +99,12 @@ async function fillValidTicket(user: UserEvent) {
 
 afterEach(() => {
   cleanup();
+  window.history.replaceState({}, "", "/");
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
 
-describe("Issue #53 Create Ticket", () => {
+describe("Lab 3 authenticated Create Ticket regression", () => {
   it("shows a loading state before active reference controls are ready", async () => {
     let resolveCategories!: (value: MockResponse) => void;
     const categoriesPromise = new Promise<MockResponse>((resolve) => {
@@ -121,8 +113,8 @@ describe("Issue #53 Create Ticket", () => {
     const fetchMock = vi.fn(
       (input: RequestInfo | URL, _options?: RequestInit) => {
         const url = String(input);
-        if (url === "/api/development-requesters") {
-          return Promise.resolve(response(activeRequesters));
+        if (url === "/api/auth/me") {
+          return Promise.resolve(response(requesterAuthResponse));
         }
         if (url === "/api/categories") {
           return categoriesPromise;
@@ -136,13 +128,7 @@ describe("Issue #53 Create Ticket", () => {
     vi.stubGlobal("fetch", fetchMock);
     const user = userEvent.setup();
 
-    render(<App />);
-    await user.selectOptions(
-      await screen.findByRole("combobox", { name: "Development Requester" }),
-      "1",
-    );
-    await user.click(screen.getByRole("button", { name: "Continue" }));
-    await user.click(screen.getByRole("button", { name: "Create Ticket" }));
+    await openCreateTicket(user);
 
     expect(await screen.findByRole("status")).toHaveTextContent(
       "Loading Categories and Related Systems...",
@@ -176,7 +162,7 @@ describe("Issue #53 Create Ticket", () => {
     ).toHaveLength(0);
   });
 
-  it("submits one valid ticket with requester context and shows the generated number", async () => {
+  it("submits one valid ticket with authenticated ownership", async () => {
     const fetchMock = setupFetch();
     const user = userEvent.setup();
     await openCreateTicket(user);
@@ -196,12 +182,9 @@ describe("Issue #53 Create Ticket", () => {
     );
     expect(ticketCall).toBeDefined();
     const options = ticketCall?.[1] as RequestInit;
-    expect(options.headers).toEqual(
-      expect.objectContaining({
-        "Content-Type": "application/json",
-        "X-Development-Requester-Id": "1",
-      }),
-    );
+    const headers = new Headers(options.headers);
+    expect(headers.get("Content-Type")).toBe("application/json");
+    expect(headers.get("X-Development-Requester-Id")).toBeNull();
     expect(JSON.parse(String(options.body))).toEqual({
       clientRequestId: expect.stringMatching(
         /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,

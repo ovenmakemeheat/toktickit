@@ -1,19 +1,19 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import App from "../../src/App";
-
-type MockResponse = {
-  ok: boolean;
-  json: () => Promise<unknown>;
-};
-
-const requester = {
-  id: 1,
-  name: "Requester A",
-  email: "requester-a@toktickit.test",
-};
+import {
+  requesterAuthResponse,
+  response,
+  type MockResponse,
+} from "../lab-03/test-helpers";
 
 const categories = [
   { id: 2, name: "Hardware" },
@@ -29,7 +29,7 @@ const ownedTicket = {
   id: 101,
   ticketNumber: "TT-20260829-ABC123",
   ticketDate: "2026-08-29T09:00:00.000Z",
-  requester,
+  requester: { id: 11, name: "Requester A" },
   category: categories[0],
   relatedSystem: relatedSystems[0],
   requestedPriority: "HIGH",
@@ -71,21 +71,6 @@ const emptyList = {
   totalPages: 0,
 };
 
-function response(body: unknown, ok = true): MockResponse {
-  return { ok, json: async () => body };
-}
-
-async function openMyTickets(user: ReturnType<typeof userEvent.setup>) {
-  render(<App />);
-  await user.selectOptions(
-    await screen.findByRole("combobox", { name: "Development Requester" }),
-    "1",
-  );
-  await user.click(screen.getByRole("button", { name: "Continue" }));
-  await user.click(screen.getByRole("button", { name: "My Tickets" }));
-  await screen.findByRole("heading", { name: "My Tickets" });
-}
-
 function setupFetch(
   ticketResponse:
     | MockResponse
@@ -97,8 +82,8 @@ function setupFetch(
 ) {
   const fetchMock = vi.fn((input: RequestInfo | URL, options?: RequestInit) => {
     const url = String(input);
-    if (url === "/api/development-requesters") {
-      return Promise.resolve(response([requester]));
+    if (url === "/api/auth/me") {
+      return Promise.resolve(response(requesterAuthResponse));
     }
     if (url === "/api/categories") {
       return Promise.resolve(response(categories));
@@ -119,6 +104,17 @@ function setupFetch(
   return fetchMock;
 }
 
+async function openMyTickets(user: ReturnType<typeof userEvent.setup>) {
+  render(<App />);
+  const navigation = await screen.findByRole("navigation", {
+    name: "Application navigation",
+  });
+  await user.click(
+    within(navigation).getByRole("button", { name: "My Tickets" }),
+  );
+  await screen.findByRole("heading", { name: "My Tickets" });
+}
+
 afterEach(() => {
   cleanup();
   window.history.replaceState({}, "", "/");
@@ -126,8 +122,8 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("Issue #54 My Tickets", () => {
-  it("shows loading, requester-scoped results, and the documented ticket fields", async () => {
+describe("Lab 3 authenticated My Tickets", () => {
+  it("shows loading, authenticated results, and the documented ticket fields", async () => {
     let resolveTickets!: (value: MockResponse) => void;
     const ticketsPromise = new Promise<MockResponse>((resolve) => {
       resolveTickets = resolve;
@@ -156,14 +152,12 @@ describe("Issue #54 My Tickets", () => {
       String(input).startsWith("/api/tickets"),
     );
     expect(ticketCall).toBeDefined();
-    if (!ticketCall) {
-      throw new Error("Expected a My Tickets API request");
-    }
-    expect((ticketCall[1] as RequestInit).headers).toEqual(
-      expect.objectContaining({ "X-Development-Requester-Id": "1" }),
-    );
-    expect(String(ticketCall[0])).toContain("page=1");
-    expect(String(ticketCall[0])).toContain("pageSize=10");
+    const ticketOptions = ticketCall?.[1] as RequestInit | undefined;
+    expect(
+      new Headers(ticketOptions?.headers).get("X-Development-Requester-Id"),
+    ).toBeNull();
+    expect(String(ticketCall?.[0])).toContain("page=1");
+    expect(String(ticketCall?.[0])).toContain("pageSize=10");
   });
 
   it("distinguishes an empty requester list from a no-results query and clears filters", async () => {
@@ -217,15 +211,11 @@ describe("Issue #54 My Tickets", () => {
     await user.click(screen.getAllByRole("button", { name: "Open Ticket" })[0]);
 
     expect(
-      await screen.findByRole("heading", {
-        name: "TT-20260829-ABC123",
-      }),
+      await screen.findByRole("heading", { name: "TT-20260829-ABC123" }),
     ).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/tickets/101",
-      expect.objectContaining({
-        headers: { "X-Development-Requester-Id": "1" },
-      }),
+      expect.objectContaining({ credentials: "same-origin" }),
     );
   });
 

@@ -14,12 +14,11 @@ import {
   AttachmentStorageUnavailableError,
   type AttachmentStorage,
 } from "./attachment-storage-service.js";
-import { requireActiveRequester } from "./requester-context-service.js";
 import { parseTicketId, TicketNotFoundError } from "./ticket-service.js";
 
 type AttachmentStore = Pick<
   PrismaClient,
-  "developmentRequester" | "ticket" | "attachment" | "$transaction"
+  "ticket" | "attachment" | "$transaction"
 >;
 
 type AttachmentRecord = {
@@ -108,13 +107,12 @@ type OwnedTicket = { id: number };
 
 export async function requireOwnedTicket(
   prisma: AttachmentStore,
-  requesterHeader: string | undefined,
+  requesterUserId: number,
   rawTicketId: unknown,
 ): Promise<OwnedTicket> {
-  const requester = await requireActiveRequester(prisma, requesterHeader);
   const ticketId = parseTicketId(rawTicketId);
   const ticket = await prisma.ticket.findFirst({
-    where: { id: ticketId, requesterId: requester.id },
+    where: { id: ticketId, requesterUserId },
     select: { id: true },
   });
 
@@ -177,10 +175,10 @@ function orderAttachments(attachments: AttachmentRecord[]) {
 
 export async function listTicketAttachments(
   prisma: AttachmentStore,
-  requesterHeader: string | undefined,
+  requesterUserId: number,
   rawTicketId: unknown,
 ): Promise<AttachmentMetadataResponse[]> {
-  const ticket = await requireOwnedTicket(prisma, requesterHeader, rawTicketId);
+  const ticket = await requireOwnedTicket(prisma, requesterUserId, rawTicketId);
   const attachments = await prisma.attachment.findMany({
     where: { ticketId: ticket.id },
   });
@@ -192,12 +190,12 @@ export async function listTicketAttachments(
 
 export async function uploadTicketAttachment(
   prisma: AttachmentStore,
-  requesterHeader: string | undefined,
+  requesterUserId: number,
   rawTicketId: unknown,
   file: AttachmentUploadFileInput | undefined,
   storage: AttachmentStorage = localAttachmentStorage,
 ): Promise<AttachmentMetadataResponse> {
-  const ticket = await requireOwnedTicket(prisma, requesterHeader, rawTicketId);
+  const ticket = await requireOwnedTicket(prisma, requesterUserId, rawTicketId);
   if (!file) {
     throw new AttachmentFileRequiredError();
   }
@@ -251,11 +249,11 @@ export async function uploadTicketAttachment(
 
 async function findOwnedAttachment(
   prisma: AttachmentStore,
-  requesterHeader: string | undefined,
+  requesterUserId: number,
   rawTicketId: unknown,
   rawAttachmentId: unknown,
 ) {
-  const ticket = await requireOwnedTicket(prisma, requesterHeader, rawTicketId);
+  const ticket = await requireOwnedTicket(prisma, requesterUserId, rawTicketId);
   const attachmentId = parseAttachmentId(rawAttachmentId);
   const attachment = await prisma.attachment.findFirst({
     where: { id: attachmentId, ticketId: ticket.id },
@@ -270,14 +268,14 @@ async function findOwnedAttachment(
 
 export async function downloadTicketAttachment(
   prisma: AttachmentStore,
-  requesterHeader: string | undefined,
+  requesterUserId: number,
   rawTicketId: unknown,
   rawAttachmentId: unknown,
   storage: AttachmentStorage = localAttachmentStorage,
 ) {
   const { ticket, attachment } = await findOwnedAttachment(
     prisma,
-    requesterHeader,
+    requesterUserId,
     rawTicketId,
     rawAttachmentId,
   );
@@ -300,14 +298,14 @@ export async function downloadTicketAttachment(
 
 export async function removeTicketAttachment(
   prisma: AttachmentStore,
-  requesterHeader: string | undefined,
+  requesterUserId: number,
   rawTicketId: unknown,
   rawAttachmentId: unknown,
   rawRemovalReason: unknown,
 ) {
   const { ticket, attachment } = await findOwnedAttachment(
     prisma,
-    requesterHeader,
+    requesterUserId,
     rawTicketId,
     rawAttachmentId,
   );

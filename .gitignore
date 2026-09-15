@@ -23,6 +23,7 @@ test-results/
 *.db
 *.db-journal
 .local-storage/
+server/.local/
 
 # Temporary files and OS metadata
 tmp/

@@ -1,13 +1,13 @@
-import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { seedCategories } from "../../prisma/seed-categories.js";
-import { app } from "../../src/app.js";
-import { prisma } from "../../src/db.js";
+import { loginAgent, prepareLab3Data, prisma } from "../lab-03/test-helpers.js";
 
-describe("API-02 category list", () => {
+describe("API category list", () => {
+  let agent: Awaited<ReturnType<typeof loginAgent>>;
+
   beforeAll(async () => {
-    await seedCategories(prisma);
+    await prepareLab3Data();
+    agent = await loginAgent("requester-a@toktickit.test");
   });
 
   afterAll(async () => {
@@ -15,7 +15,7 @@ describe("API-02 category list", () => {
   });
 
   it("returns seeded categories as ID/name pairs in ascending ID order", async () => {
-    const response = await request(app).get("/api/categories");
+    const response = await agent.agent.get("/api/categories");
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual([

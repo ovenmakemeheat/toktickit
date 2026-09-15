@@ -592,6 +592,115 @@ textarea.form-control {
   font-size: 0.875rem;
 }
 
+.auth-panel {
+  width: min(100%, 36rem);
+  padding: clamp(1.5rem, 4vw, 3rem);
+  background: var(--zen-surface);
+  border: 1px solid var(--zen-border);
+  border-top: 0.25rem solid var(--zen-primary);
+  border-radius: 0.875rem;
+  box-shadow: 0 1.25rem 3rem rgb(23 50 41 / 10%);
+}
+
+.auth-brand {
+  margin-bottom: 2rem;
+}
+
+.auth-brand h1 {
+  margin: 0 0 0.75rem;
+  color: var(--zen-text);
+  font-size: clamp(1.75rem, 4vw, 2.4rem);
+  line-height: 1.15;
+}
+
+.auth-form-field {
+  display: grid;
+  gap: 0.4rem;
+  margin-bottom: 1.25rem;
+}
+
+.auth-password-control {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+.auth-password-control .form-control {
+  min-width: 0;
+}
+
+.auth-password-toggle {
+  flex: 0 0 auto;
+}
+
+.auth-field-error {
+  color: var(--zen-error);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.auth-state {
+  margin: 1rem 0;
+  padding: 0.875rem 1rem;
+  border-left: 0.25rem solid var(--zen-secondary);
+  border-radius: 0.5rem;
+  background: var(--zen-pale);
+}
+
+.auth-state-error {
+  color: var(--zen-error);
+  border-left-color: var(--zen-error);
+  background: var(--zen-error-surface);
+}
+
+.auth-submit {
+  width: 100%;
+}
+
+.auth-form-actions,
+.auth-home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.auth-user-summary {
+  display: grid;
+  flex: 0 1 14rem;
+  min-width: 0;
+  gap: 0.1rem;
+  color: var(--zen-muted);
+  font-size: 0.875rem;
+  text-align: right;
+}
+
+.auth-user-summary strong {
+  color: var(--zen-text);
+  overflow-wrap: anywhere;
+}
+
+.auth-role-badge {
+  justify-self: end;
+  width: fit-content;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid #b9d5c3;
+  border-radius: 999px;
+  color: var(--zen-primary);
+  background: var(--zen-pale);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.auth-role-placeholder {
+  width: min(100%, 62rem);
+}
+
+.auth-session-state {
+  display: grid;
+  gap: 0.75rem;
+}
+
 @media (min-width: 768px) and (max-width: 991px) {
   .lab2-form-grid,
   .lab2-ticket-filter-grid {
@@ -627,6 +736,26 @@ textarea.form-control {
 
   .lab2-shell-nav .btn {
     flex: 1 1 100%;
+  }
+
+  .auth-user-summary {
+    flex-basis: auto;
+    text-align: left;
+  }
+
+  .auth-role-badge {
+    justify-self: start;
+  }
+
+  .auth-form-actions,
+  .auth-home-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .auth-form-actions .btn,
+  .auth-home-actions .btn {
+    width: 100%;
   }
 
   .lab2-page-heading {

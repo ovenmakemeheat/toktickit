@@ -13,12 +13,20 @@ const reportEvidenceDirectory = resolve(
   "evidence",
 );
 
-const activeRequesters = [
-  { id: 1, name: "Requester A", email: "requester-a@toktickit.test" },
-  { id: 2, name: "Requester B", email: "requester-b@toktickit.test" },
-  { id: 3, name: "Requester C", email: "requester-c@toktickit.test" },
-  { id: 4, name: "Requester D", email: "requester-d@toktickit.test" },
-];
+const requester = {
+  id: 1,
+  name: "Requester A",
+  email: "requester-a@toktickit.test",
+  role: "REQUESTER" as const,
+  active: true,
+  mustChangePassword: false,
+};
+
+const authResponse = {
+  user: requester,
+  session: { expiresAt: "2026-09-14T17:00:00.000Z" },
+  csrfToken: "csrf-token",
+};
 
 const categories = [
   { id: 1, name: "Hardware" },
@@ -35,8 +43,8 @@ const submittedTicket = {
   ticketNumber: "TT-20260904-ABC123",
   ticketDate: "2026-09-04T10:00:00.000Z",
   requester: { id: 1, name: "Requester A" },
-  category: { id: 1, name: "Hardware" },
-  relatedSystem: { id: 3, name: "VPN" },
+  category: categories[0],
+  relatedSystem: relatedSystems[1],
   requestedPriority: "HIGH" as const,
   summary: "Lab 2 report evidence ticket",
   description: "This fixture represents the server-generated ticket result.",
@@ -52,8 +60,8 @@ function ticketSummary(id: number, summary: string) {
     ticketNumber: `TT-20260904-${String(id).padStart(6, "0")}`,
     ticketDate: `2026-09-${String(20 - (id % 10)).padStart(2, "0")}T10:00:00.000Z`,
     requester: { id: 1, name: "Requester A" },
-    category: { id: 1, name: "Hardware" },
-    relatedSystem: { id: 3, name: "VPN" },
+    category: categories[0],
+    relatedSystem: relatedSystems[1],
     requestedPriority: id % 2 === 0 ? ("HIGH" as const) : ("MEDIUM" as const),
     summary,
     currentStatus: "NEW" as const,
@@ -83,13 +91,13 @@ async function fulfillJson(
 async function capture(page: Page, filename: string) {
   await expect
     .poll(() =>
-      page.evaluate(() => {
-        const documentWidth = Math.max(
-          document.documentElement.scrollWidth,
-          document.body.scrollWidth,
-        );
-        return documentWidth <= window.innerWidth;
-      }),
+      page.evaluate(
+        () =>
+          Math.max(
+            document.documentElement.scrollWidth,
+            document.body.scrollWidth,
+          ) <= window.innerWidth,
+      ),
     )
     .toBe(true);
 
@@ -97,23 +105,6 @@ async function capture(page: Page, filename: string) {
     path: resolve(reportEvidenceDirectory, filename),
     fullPage: true,
   });
-}
-
-async function selectRequester(page: Page, name: string) {
-  const requesterSelect = page.getByRole("combobox", {
-    name: "Development Requester",
-  });
-  const option = requesterSelect
-    .locator("option")
-    .filter({ hasText: name })
-    .first();
-  const requesterId = await option.getAttribute("value");
-
-  if (!requesterId) {
-    throw new Error(`No requester id found for ${name}`);
-  }
-
-  await requesterSelect.selectOption(requesterId);
 }
 
 async function waitForTicketQuery(page: Page, action: () => Promise<unknown>) {
@@ -127,15 +118,15 @@ async function waitForTicketQuery(page: Page, action: () => Promise<unknown>) {
 }
 
 test.describe("Issue #65 report evidence", () => {
-  test("captures missing requester, create, and query-control states", async ({
+  test("captures authenticated requester, create, and query-control states", async ({
     page,
   }) => {
     test.setTimeout(120_000);
     await mkdir(reportEvidenceDirectory, { recursive: true });
     await page.setViewportSize({ width: 1280, height: 900 });
 
-    await page.route("**/api/development-requesters", (route) =>
-      fulfillJson(route, activeRequesters),
+    await page.route("**/api/auth/me", (route) =>
+      fulfillJson(route, authResponse),
     );
     await page.route("**/api/categories", (route) =>
       fulfillJson(route, categories),
@@ -146,45 +137,15 @@ test.describe("Issue #65 report evidence", () => {
 
     await page.goto("/");
     await expect(
-      page.getByRole("heading", {
-        name: "Select a Development Requester",
-        exact: true,
-      }),
+      page.getByRole("heading", { name: "Welcome, Requester A", exact: true }),
     ).toBeVisible();
     await expect(
-      page.getByRole("button", { name: "Continue", exact: true }),
-    ).toBeDisabled();
-    await expect(
-      page.getByRole("option", { name: /Inactive Requester/ }),
+      page.getByRole("combobox", { name: "Development Requester" }),
     ).toHaveCount(0);
-    await capture(page, "requester-selection-ready.png");
-
-    await selectRequester(page, "Requester A");
-    await expect(
-      page.getByRole("button", { name: "Continue", exact: true }),
-    ).toBeEnabled();
-    await capture(page, "requester-selection-selected.png");
-
-    await page.getByRole("button", { name: "Continue", exact: true }).click();
-    await expect(
-      page.getByRole("heading", { name: "Requester context selected" }),
-    ).toBeVisible();
-    await capture(page, "requester-summary.png");
+    await capture(page, "authenticated-requester-home.png");
 
     await page
-      .getByRole("button", { name: "Change Requester", exact: true })
-      .click();
-    await expect(
-      page.getByRole("heading", {
-        name: "Select a Development Requester",
-        exact: true,
-      }),
-    ).toBeVisible();
-    await capture(page, "requester-change.png");
-
-    await selectRequester(page, "Requester A");
-    await page.getByRole("button", { name: "Continue", exact: true }).click();
-    await page
+      .getByRole("navigation", { name: "Application navigation" })
       .getByRole("button", { name: "Create Ticket", exact: true })
       .click();
     await expect(
@@ -280,7 +241,10 @@ test.describe("Issue #65 report evidence", () => {
       });
     });
 
-    await page.getByRole("button", { name: "My Tickets", exact: true }).click();
+    await page
+      .getByRole("navigation", { name: "Application navigation" })
+      .getByRole("button", { name: "My Tickets", exact: true })
+      .click();
     await expect(
       page.getByRole("heading", { name: "My Tickets", exact: true }),
     ).toBeVisible();

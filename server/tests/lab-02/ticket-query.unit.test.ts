@@ -51,7 +51,7 @@ describe("parseTicketQuery", () => {
     ["categoryId", "0"],
     ["relatedSystemId", "not-an-id"],
     ["requestedPriority", "URGENT"],
-    ["currentStatus", "OPEN"],
+    ["currentStatus", "UNKNOWN"],
     ["sortBy", "createdAt"],
     ["sortDirection", "up"],
     ["page", "0"],

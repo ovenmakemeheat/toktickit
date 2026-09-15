@@ -4,15 +4,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import App from "../../src/App";
 import "../../src/index.css";
-
-type MockResponse = {
-  ok: boolean;
-  json: () => Promise<unknown>;
-};
-
-const activeRequesters = [
-  { id: 1, name: "Requester A", email: "requester-a@toktickit.test" },
-];
+import {
+  requesterAuthResponse,
+  response,
+  type MockResponse,
+} from "../lab-03/test-helpers";
 
 const categories = [{ id: 2, name: "Hardware" }];
 const relatedSystems = [{ id: 4, name: "VPN" }];
@@ -20,7 +16,7 @@ const createdTicket = {
   id: 101,
   ticketNumber: "TT-20260827-ABC123",
   ticketDate: "2026-08-27T09:00:00.000Z",
-  requester: { id: 1, name: "Requester A" },
+  requester: { id: 11, name: "Requester A" },
   category: { id: 2, name: "Hardware" },
   relatedSystem: { id: 4, name: "VPN" },
   requestedPriority: "HIGH",
@@ -40,10 +36,6 @@ const emptyTicketList = {
   totalPages: 0,
 };
 
-function response(body: unknown, ok = true): MockResponse {
-  return { ok, json: async () => body };
-}
-
 function setupFetch(
   createResponse: MockResponse | Promise<MockResponse> = response(
     createdTicket,
@@ -55,8 +47,8 @@ function setupFetch(
   const fetchMock = vi.fn(
     (input: RequestInfo | URL, _options?: RequestInit) => {
       const url = String(input);
-      if (url === "/api/development-requesters") {
-        return Promise.resolve(response(activeRequesters));
+      if (url === "/api/auth/me") {
+        return Promise.resolve(response(requesterAuthResponse));
       }
       if (url === "/api/categories") {
         return Promise.resolve(response(categories));
@@ -80,12 +72,12 @@ function setupFetch(
 
 async function openCreateTicket(user: UserEvent) {
   render(<App />);
-  await user.selectOptions(
-    await screen.findByRole("combobox", { name: "Development Requester" }),
-    "1",
+  const navigation = await screen.findByRole("navigation", {
+    name: "Application navigation",
+  });
+  await user.click(
+    within(navigation).getByRole("button", { name: "Create Ticket" }),
   );
-  await user.click(screen.getByRole("button", { name: "Continue" }));
-  await user.click(screen.getByRole("button", { name: "Create Ticket" }));
   await screen.findByRole("heading", { name: "Create Ticket" });
   await screen.findByRole("combobox", { name: "Category" });
 }
@@ -120,7 +112,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("Issue #57 Zen Green responsive contract", () => {
+describe("Lab 3 Zen Green requester regression", () => {
   it("exposes the approved tokens and accessible shared control states", async () => {
     setupFetch();
     const user = userEvent.setup();
@@ -181,7 +173,7 @@ describe("Issue #57 Zen Green responsive contract", () => {
     );
   });
 
-  it("marks the current requester page in the navigation", async () => {
+  it("marks the current requester page in the application navigation", async () => {
     setupFetch(response(createdTicket), response(emptyTicketList));
     const user = userEvent.setup();
 
@@ -190,7 +182,7 @@ describe("Issue #57 Zen Green responsive contract", () => {
     await screen.findByRole("heading", { name: "My Tickets" });
 
     const navigation = within(
-      screen.getByRole("navigation", { name: "Requester navigation" }),
+      screen.getByRole("navigation", { name: "Application navigation" }),
     );
     expect(
       navigation.getByRole("button", { name: "My Tickets" }),
