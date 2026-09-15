@@ -7,6 +7,8 @@ import CreateTicket from "./lab-02/CreateTicket";
 import MyTickets from "./lab-02/MyTickets";
 import RequesterTicketDetail from "./lab-02/RequesterTicketDetail";
 import { RequesterProvider, useRequester } from "./lab-02/requester-context";
+import StaffTicketDetail from "./lab-03/StaffTicketDetail";
+import StaffTicketQueue from "./lab-03/StaffTicketQueue";
 import { navigate } from "./lib/navigation";
 import type { PublicUser, Role } from "./lib/api";
 
@@ -15,9 +17,22 @@ type AppRoute =
   | { page: "tickets" }
   | { page: "create" }
   | { page: "detail"; ticketId: string }
+  | { page: "staff-tickets" }
+  | { page: "staff-detail"; ticketId: string }
   | { page: "change-password" };
 
 function readRoute(): AppRoute {
+  const staffDetailTicketId = window.location.pathname.match(
+    /^\/staff\/tickets\/([1-9]\d*)$/,
+  )?.[1];
+  if (staffDetailTicketId) {
+    return { page: "staff-detail", ticketId: staffDetailTicketId };
+  }
+
+  if (window.location.pathname === "/staff/tickets") {
+    return { page: "staff-tickets" };
+  }
+
   const detailTicketId = window.location.pathname.match(
     /^\/tickets\/([1-9]\d*)$/,
   )?.[1];
@@ -102,6 +117,23 @@ function AuthenticatedHeader({ user }: { user: PublicUser }) {
               Create Ticket
             </button>
           </>
+        ) : user.role === "IT_STAFF" ? (
+          <button
+            type="button"
+            className={`btn btn-sm ${
+              activePage === "staff-tickets" || activePage === "staff-detail"
+                ? "btn-success"
+                : "btn-outline-success"
+            }`}
+            aria-current={
+              activePage === "staff-tickets" || activePage === "staff-detail"
+                ? "page"
+                : undefined
+            }
+            onClick={() => navigate("/staff/tickets")}
+          >
+            Ticket Queue
+          </button>
         ) : null}
         <button
           type="button"
@@ -202,6 +234,29 @@ function RoleWorkspace({ user }: { user: PublicUser }) {
   );
 }
 
+function StaffWorkspace({
+  route,
+  user,
+}: {
+  route: AppRoute;
+  user: PublicUser;
+}) {
+  if (route.page === "staff-detail") {
+    return (
+      <StaffTicketDetail
+        ticketId={route.ticketId}
+        onBack={() => navigate("/staff/tickets")}
+      />
+    );
+  }
+
+  if (route.page === "staff-tickets") {
+    return <StaffTicketQueue />;
+  }
+
+  return <RoleWorkspace user={user} />;
+}
+
 function AuthenticatedApplication({ route }: { route: AppRoute }) {
   const { user } = useAuth();
   if (!user) {
@@ -225,6 +280,8 @@ function AuthenticatedApplication({ route }: { route: AppRoute }) {
         >
           <RequesterWorkspace route={route} />
         </RequesterProvider>
+      ) : user.role === "IT_STAFF" ? (
+        <StaffWorkspace route={route} user={user} />
       ) : (
         <RoleWorkspace user={user} />
       )}

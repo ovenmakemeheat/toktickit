@@ -176,9 +176,11 @@ export function attachAuthContext(prisma: PrismaClient): RequestHandler {
 export function requireAuthentication(options?: {
   allowPasswordChange?: boolean;
   roles?: AuthenticatedUser["role"][];
+  roleForbiddenCode?: string;
 }): RequestHandler {
   const allowPasswordChange = options?.allowPasswordChange ?? false;
   const roles = options?.roles;
+  const roleForbiddenCode = options?.roleForbiddenCode ?? "ROLE_FORBIDDEN";
 
   return (request, response, next) => {
     const auth = request.auth;
@@ -205,7 +207,7 @@ export function requireAuthentication(options?: {
     if (roles && !roles.includes(auth.user.role)) {
       response.status(403).json({
         error: {
-          code: "ROLE_FORBIDDEN",
+          code: roleForbiddenCode,
           message: "Your account is not allowed to perform this action.",
         },
       });
