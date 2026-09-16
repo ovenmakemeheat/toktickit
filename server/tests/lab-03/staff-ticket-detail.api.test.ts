@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { loginAgent, prepareLab3Data, prisma } from "./test-helpers.js";
 
@@ -164,5 +164,29 @@ describe("IT Staff Ticket operations", () => {
     );
     expect(forbidden.status).toBe(403);
     expect(forbidden.body.error.code).toBe("STAFF_TICKET_FORBIDDEN");
+  });
+
+  it("returns a typed conflict when a concurrent status update wins", async () => {
+    const updateMany = vi
+      .spyOn(prisma.ticket, "updateMany")
+      .mockResolvedValueOnce({ count: 0 });
+
+    try {
+      const response = await staff.agent
+        .patch(`/api/staff/tickets/${ticketId}/status`)
+        .set("X-CSRF-Token", staff.csrfToken)
+        .send({ status: "CLOSED", confirmation: true });
+
+      expect(response.status).toBe(409);
+      expect(response.body.error).toEqual(
+        expect.objectContaining({ code: "TICKET_STATUS_CONFLICT" }),
+      );
+      expect(
+        (await prisma.ticket.findUniqueOrThrow({ where: { id: ticketId } }))
+          .currentStatus,
+      ).toBe("RESOLVED");
+    } finally {
+      updateMany.mockRestore();
+    }
   });
 });

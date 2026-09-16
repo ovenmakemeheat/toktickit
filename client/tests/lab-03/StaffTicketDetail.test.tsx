@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -118,6 +118,52 @@ describe("IT Staff Ticket Detail", () => {
     expect(screen.getByText("error.png")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Claim" })).toBeInTheDocument();
     expect(screen.getByLabelText("Status")).toBeInTheDocument();
+  });
+
+  it("shows refresh feedback for a concurrent status conflict", async () => {
+    let detailLoads = 0;
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (
+        url === "/api/staff/tickets/101" &&
+        (!init?.method || init.method === "GET")
+      ) {
+        detailLoads += 1;
+        return Promise.resolve(response(ticket));
+      }
+      if (url === "/api/staff/tickets/101/status") {
+        return Promise.resolve(
+          response(
+            {
+              error: {
+                code: "TICKET_STATUS_CONFLICT",
+                message:
+                  "The Ticket status changed before this operation completed",
+              },
+            },
+            false,
+            409,
+          ),
+        );
+      }
+      return Promise.reject(new Error(`Unexpected request: ${url}`));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+
+    render(<StaffTicketDetail ticketId={101} onBack={vi.fn()} />);
+    await screen.findByRole("heading", { name: "TT-20260910-QUEUE01" });
+
+    await user.selectOptions(screen.getByLabelText("Status"), "IN_PROGRESS");
+    await user.click(screen.getByRole("button", { name: "Update status" }));
+
+    expect(
+      await screen.findByText(
+        "This Ticket status changed elsewhere. Refresh before trying again.",
+      ),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Refresh Ticket" }));
+    await waitFor(() => expect(detailLoads).toBe(2));
   });
 
   it("requires status confirmation and submits permitted mutations", async () => {

@@ -26,10 +26,24 @@ describe("GET /api/staff/tickets", () => {
         pageSize: 10,
         totalItems: expect.any(Number),
         totalPages: expect.any(Number),
+        eligibleOwners: expect.any(Array),
         items: expect.any(Array),
       }),
     );
     expect(response.body.totalItems).toBeGreaterThanOrEqual(8);
+    const activeEligibleOwners = await prisma.user.findMany({
+      where: {
+        active: true,
+        role: { in: ["IT_STAFF", "ADMINISTRATOR"] },
+      },
+      select: { id: true },
+      orderBy: { id: "asc" },
+    });
+    expect(
+      response.body.eligibleOwners
+        .map((owner: { id: number }) => owner.id)
+        .sort((left: number, right: number) => left - right),
+    ).toEqual(activeEligibleOwners.map((owner) => owner.id));
     expect(response.body.items[0]).toEqual(
       expect.objectContaining({
         id: expect.any(Number),

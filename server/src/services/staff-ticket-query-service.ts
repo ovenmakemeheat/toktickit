@@ -5,6 +5,10 @@ import type {
   TicketStatus,
 } from "@prisma/client";
 
+import {
+  listEligibleStaffOwners,
+  type StaffOwnerResponse,
+} from "./staff-owner-service.js";
 import { TicketNotFoundError } from "./ticket-service.js";
 
 const supportedQueryKeys = new Set([
@@ -272,6 +276,7 @@ export type StaffTicketSummaryResponse = {
 
 export type StaffTicketListResponse = {
   items: StaffTicketSummaryResponse[];
+  eligibleOwners: StaffOwnerResponse[];
   page: number;
   pageSize: number;
   totalItems: number;
@@ -334,30 +339,23 @@ function toStaffTicketSummary(
   };
 }
 
-async function validateOwnerFilter(
-  prisma: StaffTicketListStore,
+function validateOwnerFilter(
   owner: StaffOwnerFilter | undefined,
+  eligibleOwners: StaffOwnerResponse[],
 ) {
-  if (typeof owner !== "number") {
+  if (
+    typeof owner !== "number" ||
+    eligibleOwners.some((eligibleOwner) => eligibleOwner.id === owner)
+  ) {
     return;
   }
 
-  const target = await prisma.user.findFirst({
-    where: {
-      id: owner,
-      active: true,
-      role: { in: ["IT_STAFF", "ADMINISTRATOR"] },
-    },
-    select: { id: true },
-  });
-  if (!target) {
-    throw new StaffQueueQueryValidationError([
-      fieldError(
-        "owner",
-        "owner must identify an active IT Staff or Administrator",
-      ),
-    ]);
-  }
+  throw new StaffQueueQueryValidationError([
+    fieldError(
+      "owner",
+      "owner must identify an active IT Staff or Administrator",
+    ),
+  ]);
 }
 
 export async function listStaffTickets(
@@ -366,7 +364,8 @@ export async function listStaffTickets(
   rawQuery: unknown,
 ): Promise<StaffTicketListResponse> {
   const query = parseStaffTicketQuery(rawQuery);
-  await validateOwnerFilter(prisma, query.owner);
+  const eligibleOwners = await listEligibleStaffOwners(prisma);
+  validateOwnerFilter(query.owner, eligibleOwners);
 
   const where: Prisma.TicketWhereInput = {
     ...(query.search
@@ -416,6 +415,7 @@ export async function listStaffTickets(
 
   return {
     items: tickets.map(toStaffTicketSummary),
+    eligibleOwners,
     page: query.page,
     pageSize: query.pageSize,
     totalItems,

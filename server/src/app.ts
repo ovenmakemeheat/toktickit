@@ -70,6 +70,7 @@ import {
   claimStaffTicket,
   getStaffTicketDetail,
   TicketAlreadyAssignedError,
+  TicketStatusConflictError,
   updateStaffTicketPriority,
   updateStaffTicketStatus,
 } from "./services/staff-ticket-service.js";
@@ -208,7 +209,10 @@ function sendStaffTicketError(response: Response, error: unknown) {
     return;
   }
 
-  if (error instanceof TicketAlreadyAssignedError) {
+  if (
+    error instanceof TicketAlreadyAssignedError ||
+    error instanceof TicketStatusConflictError
+  ) {
     sendError(response, 409, error.code, error.message);
     return;
   }

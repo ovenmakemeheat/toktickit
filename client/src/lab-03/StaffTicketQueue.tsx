@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   apiErrorMessage,
@@ -96,21 +96,31 @@ export default function StaffTicketQueue({
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<unknown>(null);
   const [referenceError, setReferenceError] = useState(false);
+  const queueRequestId = useRef(0);
 
   const loadQueue = useCallback(
     async (signal?: AbortSignal) => {
+      const requestId = queueRequestId.current + 1;
+      queueRequestId.current = requestId;
       setIsLoading(true);
       setLoadError(null);
       try {
-        setList(await fetchStaffTickets(query, signal));
+        const nextList = await fetchStaffTickets(query, signal);
+        if (requestId === queueRequestId.current) {
+          setList(nextList);
+        }
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") {
           return;
         }
-        setList(null);
-        setLoadError(error);
+        if (requestId === queueRequestId.current) {
+          setList(null);
+          setLoadError(error);
+        }
       } finally {
-        setIsLoading(false);
+        if (requestId === queueRequestId.current) {
+          setIsLoading(false);
+        }
       }
     },
     [query],
@@ -144,10 +154,12 @@ export default function StaffTicketQueue({
 
   const owners = useMemo(() => {
     const ownerMap = new Map<number, { id: number; name: string }>();
-    for (const ticket of list?.items ?? []) {
-      if (ticket.owner) {
-        ownerMap.set(ticket.owner.id, ticket.owner);
-      }
+    const sourceOwners =
+      list?.eligibleOwners ??
+      list?.items.flatMap((ticket) => (ticket.owner ? [ticket.owner] : [])) ??
+      [];
+    for (const owner of sourceOwners) {
+      ownerMap.set(owner.id, { id: owner.id, name: owner.name });
     }
     return [...ownerMap.values()].sort((left, right) =>
       left.name.localeCompare(right.name),
@@ -156,6 +168,10 @@ export default function StaffTicketQueue({
 
   function updateQuery(changes: Partial<StaffTicketListQuery>) {
     setQuery((current) => ({ ...current, ...changes, page: 1 }));
+  }
+
+  function updatePage(page: number) {
+    setQuery((current) => ({ ...current, page }));
   }
 
   function clearFilters() {
@@ -607,9 +623,7 @@ export default function StaffTicketQueue({
               <button
                 type="button"
                 className="btn btn-outline-secondary"
-                onClick={() =>
-                  updateQuery({ page: Math.max(1, (list?.page ?? 1) - 1) })
-                }
+                onClick={() => updatePage(Math.max(1, (list?.page ?? 1) - 1))}
                 disabled={(list?.page ?? 1) <= 1 || isLoading}
               >
                 Previous
@@ -617,7 +631,7 @@ export default function StaffTicketQueue({
               <button
                 type="button"
                 className="btn btn-outline-success"
-                onClick={() => updateQuery({ page: (list?.page ?? 1) + 1 })}
+                onClick={() => updatePage((list?.page ?? 1) + 1)}
                 disabled={!list || list.page >= list.totalPages || isLoading}
               >
                 Next

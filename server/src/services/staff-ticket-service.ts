@@ -6,6 +6,7 @@ import type {
   TicketStatus,
 } from "@prisma/client";
 
+import { listEligibleStaffOwners } from "./staff-owner-service.js";
 import {
   assertAllowedStatusTransition,
   parseTicketStatus,
@@ -77,11 +78,7 @@ export type StaffTicketDetailResponse = {
     name: string;
     role: "IT_STAFF" | "ADMINISTRATOR";
   } | null;
-  eligibleOwners: Array<{
-    id: number;
-    name: string;
-    role: "IT_STAFF" | "ADMINISTRATOR";
-  }>;
+  eligibleOwners: Awaited<ReturnType<typeof listEligibleStaffOwners>>;
   requesterResolutionIndicatedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -114,6 +111,15 @@ export class ItPriorityValidationError extends Error {
   constructor() {
     super("IT Priority must be LOW, MEDIUM, or HIGH");
     this.name = "ItPriorityValidationError";
+  }
+}
+
+export class TicketStatusConflictError extends Error {
+  readonly code = "TICKET_STATUS_CONFLICT";
+
+  constructor() {
+    super("The Ticket status changed before this operation completed");
+    this.name = "TicketStatusConflictError";
   }
 }
 
@@ -207,30 +213,13 @@ async function findStaffTicket(
   return ticket;
 }
 
-async function listEligibleOwners(prisma: Pick<PrismaClient, "user">) {
-  const owners = await prisma.user.findMany({
-    where: {
-      active: true,
-      role: { in: ["IT_STAFF", "ADMINISTRATOR"] },
-    },
-    select: { id: true, name: true, role: true },
-    orderBy: [{ name: "asc" }, { id: "asc" }],
-  });
-
-  return owners.map((owner) => ({
-    id: owner.id,
-    name: owner.name,
-    role: owner.role as "IT_STAFF" | "ADMINISTRATOR",
-  }));
-}
-
 export async function getStaffTicketDetail(
   prisma: Pick<PrismaClient, "ticket" | "user">,
   rawTicketId: unknown,
 ) {
   const [ticket, eligibleOwners] = await Promise.all([
     findStaffTicket(prisma, rawTicketId),
-    listEligibleOwners(prisma),
+    listEligibleStaffOwners(prisma),
   ]);
   return toStaffTicketDetail(ticket, eligibleOwners);
 }
@@ -346,7 +335,7 @@ export async function updateStaffTicketStatus(
     data: { currentStatus: status },
   });
   if (result.count === 0) {
-    throw new Error("Ticket status changed before this operation completed");
+    throw new TicketStatusConflictError();
   }
 
   return getStaffTicketDetail(prisma, ticket.id);

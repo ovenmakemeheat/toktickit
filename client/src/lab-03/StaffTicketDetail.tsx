@@ -85,6 +85,8 @@ function operationError(error: unknown) {
         return "Confirm this status change before saving it.";
       case "TICKET_STATUS_TRANSITION_INVALID":
         return "That status transition is not permitted from the current status.";
+      case "TICKET_STATUS_CONFLICT":
+        return "This Ticket status changed elsewhere. Refresh before trying again.";
       case "IT_PRIORITY_INVALID":
         return "Choose a valid IT Priority.";
       default:
@@ -176,6 +178,9 @@ export default function StaffTicketDetail({
   const [operationErrorMessage, setOperationErrorMessage] = useState<
     string | null
   >(null);
+  const [operationErrorCode, setOperationErrorCode] = useState<string | null>(
+    null,
+  );
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [selectedPriority, setSelectedPriority] =
@@ -222,6 +227,7 @@ export default function StaffTicketDetail({
   ) {
     setIsSaving(true);
     setOperationErrorMessage(null);
+    setOperationErrorCode(null);
     setSuccessMessage(null);
     try {
       setTicket(await operation());
@@ -230,6 +236,9 @@ export default function StaffTicketDetail({
       setConfirmation(false);
     } catch (error) {
       setOperationErrorMessage(operationError(error));
+      setOperationErrorCode(
+        error instanceof ApiRequestError ? (error.code ?? null) : null,
+      );
     } finally {
       setIsSaving(false);
     }
@@ -248,6 +257,7 @@ export default function StaffTicketDetail({
       setOperationErrorMessage(
         "Enter a positive User ID for an eligible owner.",
       );
+      setOperationErrorCode(null);
       return;
     }
     await runOperation(
@@ -269,10 +279,12 @@ export default function StaffTicketDetail({
   async function handleStatus() {
     if (!selectedStatus) {
       setOperationErrorMessage("Choose a permitted status transition first.");
+      setOperationErrorCode(null);
       return;
     }
     if (statusNeedsConfirmation && !confirmation) {
       setOperationErrorMessage("Confirm this status change before saving it.");
+      setOperationErrorCode(null);
       return;
     }
     await runOperation(
@@ -354,9 +366,23 @@ export default function StaffTicketDetail({
         </p>
       ) : null}
       {operationErrorMessage ? (
-        <p className="lab2-state lab2-state-error" role="alert">
-          {operationErrorMessage}
-        </p>
+        <div className="lab2-state lab2-state-error" role="alert">
+          <p>{operationErrorMessage}</p>
+          {operationErrorCode === "TICKET_STATUS_CONFLICT" ? (
+            <button
+              type="button"
+              className="btn btn-outline-secondary"
+              onClick={() => {
+                setOperationErrorMessage(null);
+                setOperationErrorCode(null);
+                void loadTicket();
+              }}
+              disabled={isLoading || isSaving}
+            >
+              Refresh Ticket
+            </button>
+          ) : null}
+        </div>
       ) : null}
 
       <div className="lab2-readonly-grid lab3-staff-detail-fields">
@@ -513,6 +539,7 @@ export default function StaffTicketDetail({
                 setSelectedStatus(event.target.value as TicketStatus | "");
                 setConfirmation(false);
                 setOperationErrorMessage(null);
+                setOperationErrorCode(null);
               }}
               disabled={isSaving}
             >

@@ -139,6 +139,7 @@ export type StaffTicketSummary = {
 
 export type StaffTicketListResponse = {
   items: StaffTicketSummary[];
+  eligibleOwners: StaffOwner[];
   page: number;
   pageSize: number;
   totalItems: number;
@@ -461,6 +462,8 @@ function isStaffTicketListResponse(
   return (
     Array.isArray(list.items) &&
     list.items.every(isStaffTicketSummary) &&
+    Array.isArray(list.eligibleOwners) &&
+    list.eligibleOwners.every(isStaffOwner) &&
     Number.isInteger(list.page) &&
     Number.isInteger(list.pageSize) &&
     Number.isInteger(list.totalItems) &&
