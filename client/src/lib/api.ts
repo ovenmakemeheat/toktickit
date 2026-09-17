@@ -168,6 +168,8 @@ export type StaffTicketDetail = {
   internalNotes: TicketCommunicationEntry[];
 };
 
+export type AdminTicketDetail = Omit<StaffTicketDetail, "eligibleOwners">;
+
 export type UserStatus = "ACTIVE" | "INACTIVE";
 
 export type UserListItem = {
@@ -877,6 +879,36 @@ export async function fetchStaffTicketDetail(
 ): Promise<StaffTicketDetail> {
   const { response, payload } = await requestJson(
     `/api/staff/tickets/${ticketId}`,
+  );
+  if (!response.ok || !isStaffTicketDetail(payload)) {
+    throwApiRequestError(response, payload);
+  }
+  return payload;
+}
+
+export async function fetchAdminTicketDetail(
+  ticketId: number | string,
+): Promise<AdminTicketDetail> {
+  const { response, payload } = await requestJson(
+    `/api/admin/tickets/${ticketId}`,
+  );
+  if (!response.ok || !isStaffTicketDetail(payload)) {
+    throwApiRequestError(response, payload);
+  }
+  return payload;
+}
+
+export async function updateAdminTicketPriority(
+  ticketId: number | string,
+  itPriority: RequestedPriority,
+): Promise<AdminTicketDetail> {
+  const { response, payload } = await requestJson(
+    `/api/admin/tickets/${ticketId}/priority`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ itPriority }),
+    },
   );
   if (!response.ok || !isStaffTicketDetail(payload)) {
     throwApiRequestError(response, payload);

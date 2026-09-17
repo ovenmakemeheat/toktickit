@@ -96,6 +96,9 @@ describe("Lab 3 authenticated application shell", () => {
       screen.getByRole("button", { name: "User Management" }),
     ).toHaveAttribute("aria-current", "page");
     expect(
+      screen.getByRole("button", { name: "Ticket Review" }),
+    ).toBeInTheDocument();
+    expect(
       screen.queryByRole("button", { name: "Ticket Queue" }),
     ).not.toBeInTheDocument();
   });

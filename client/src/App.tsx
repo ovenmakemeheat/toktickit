@@ -7,6 +7,7 @@ import CreateTicket from "./lab-02/CreateTicket";
 import MyTickets from "./lab-02/MyTickets";
 import RequesterTicketDetail from "./lab-02/RequesterTicketDetail";
 import { RequesterProvider, useRequester } from "./lab-02/requester-context";
+import AdminTicketReview from "./lab-03/AdminTicketReview";
 import StaffTicketDetail from "./lab-03/StaffTicketDetail";
 import StaffTicketQueue from "./lab-03/StaffTicketQueue";
 import UserManagement from "./lab-03/UserManagement";
@@ -21,12 +22,26 @@ type AppRoute =
   | { page: "staff-tickets" }
   | { page: "staff-detail"; ticketId: string }
   | { page: "users" }
+  | { page: "admin-ticket-entry" }
+  | { page: "admin-ticket"; ticketId: string }
   | { page: "change-password" };
 
 function readRoute(): AppRoute {
+  const adminTicketId = window.location.pathname.match(
+    /^\/admin\/tickets\/([1-9]\d*)$/,
+  )?.[1];
+  if (adminTicketId) {
+    return { page: "admin-ticket", ticketId: adminTicketId };
+  }
+
+  if (window.location.pathname === "/admin/tickets") {
+    return { page: "admin-ticket-entry" };
+  }
+
   if (window.location.pathname === "/admin/users") {
     return { page: "users" };
   }
+
   const staffDetailTicketId = window.location.pathname.match(
     /^\/staff\/tickets\/([1-9]\d*)$/,
   )?.[1];
@@ -140,16 +155,36 @@ function AuthenticatedHeader({ user }: { user: PublicUser }) {
             Ticket Queue
           </button>
         ) : user.role === "ADMINISTRATOR" ? (
-          <button
-            type="button"
-            className={`btn btn-sm ${
-              activePage === "users" ? "btn-success" : "btn-outline-success"
-            }`}
-            aria-current={activePage === "users" ? "page" : undefined}
-            onClick={() => navigate("/admin/users")}
-          >
-            User Management
-          </button>
+          <>
+            <button
+              type="button"
+              className={`btn btn-sm ${
+                activePage === "users" ? "btn-success" : "btn-outline-success"
+              }`}
+              aria-current={activePage === "users" ? "page" : undefined}
+              onClick={() => navigate("/admin/users")}
+            >
+              User Management
+            </button>
+            <button
+              type="button"
+              className={`btn btn-sm ${
+                activePage === "admin-ticket" ||
+                activePage === "admin-ticket-entry"
+                  ? "btn-success"
+                  : "btn-outline-success"
+              }`}
+              aria-current={
+                activePage === "admin-ticket" ||
+                activePage === "admin-ticket-entry"
+                  ? "page"
+                  : undefined
+              }
+              onClick={() => navigate("/admin/tickets")}
+            >
+              Ticket Review
+            </button>
+          </>
         ) : null}
         <button
           type="button"
@@ -300,6 +335,13 @@ function AuthenticatedApplication({ route }: { route: AppRoute }) {
         <StaffWorkspace route={route} user={user} />
       ) : route.page === "users" ? (
         <UserManagement currentUserId={user.id} />
+      ) : route.page === "admin-ticket" ? (
+        <AdminTicketReview
+          ticketId={route.ticketId}
+          onBack={() => navigate("/admin/users")}
+        />
+      ) : route.page === "admin-ticket-entry" ? (
+        <AdminTicketReview onBack={() => navigate("/admin/users")} />
       ) : (
         <RoleWorkspace user={user} />
       )}

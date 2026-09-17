@@ -21,6 +21,10 @@ import {
 } from "./services/auth-middleware.js";
 import { AuthInputValidationError } from "./services/auth-validation-service.js";
 import {
+  getAdminTicketDetail,
+  updateAdminTicketPriority,
+} from "./services/admin-ticket-service.js";
+import {
   ActiveAttachmentLimitReachedError,
   AttachmentAlreadyRemovedError,
   AttachmentFileRequiredError,
@@ -396,6 +400,32 @@ function sendAttachmentRemoveError(response: Response, error: unknown) {
     500,
     "ATTACHMENT_REMOVE_FAILED",
     "Unable to remove attachment",
+  );
+}
+
+function sendAdminTicketError(
+  response: Response,
+  error: unknown,
+  fallbackCode: "ADMIN_TICKET_DETAIL_FAILED" | "ADMIN_TICKET_PRIORITY_FAILED",
+) {
+  if (
+    error instanceof TicketIdValidationError ||
+    error instanceof ItPriorityValidationError
+  ) {
+    sendError(response, 400, error.code, error.message);
+    return;
+  }
+
+  if (error instanceof TicketNotFoundError) {
+    sendError(response, 404, error.code, error.message);
+    return;
+  }
+
+  sendError(
+    response,
+    500,
+    fallbackCode,
+    "Unable to complete the Administrator Ticket Review operation",
   );
 }
 
@@ -1035,6 +1065,45 @@ app.patch(
       );
     } catch (error) {
       sendStaffTicketError(response, error);
+    }
+  },
+);
+
+app.get(
+  "/api/admin/tickets/:ticketId",
+  requireAuthentication({
+    roles: ["ADMINISTRATOR"],
+    roleForbiddenCode: "ADMIN_TICKET_FORBIDDEN",
+  }),
+  async (request, response) => {
+    try {
+      response.json(
+        await getAdminTicketDetail(prisma, request.params.ticketId),
+      );
+    } catch (error) {
+      sendAdminTicketError(response, error, "ADMIN_TICKET_DETAIL_FAILED");
+    }
+  },
+);
+
+app.patch(
+  "/api/admin/tickets/:ticketId/priority",
+  requireAuthentication({
+    roles: ["ADMINISTRATOR"],
+    roleForbiddenCode: "ADMIN_TICKET_FORBIDDEN",
+  }),
+  requireCsrf,
+  async (request, response) => {
+    try {
+      response.json(
+        await updateAdminTicketPriority(
+          prisma,
+          request.params.ticketId,
+          request.body,
+        ),
+      );
+    } catch (error) {
+      sendAdminTicketError(response, error, "ADMIN_TICKET_PRIORITY_FAILED");
     }
   },
 );

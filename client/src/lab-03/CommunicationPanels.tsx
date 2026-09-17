@@ -168,7 +168,7 @@ export function PublicCommentsPanel({
 
 type InternalNotesPanelProps = {
   notes: TicketCommunicationEntry[];
-  onPost: (content: string) => Promise<void>;
+  onPost?: (content: string) => Promise<void>;
 };
 
 export function InternalNotesPanel({ notes, onPost }: InternalNotesPanelProps) {
@@ -180,7 +180,7 @@ export function InternalNotesPanel({ notes, onPost }: InternalNotesPanelProps) {
   const [isPosting, setIsPosting] = useState(false);
 
   async function handleSubmit() {
-    if (isPosting) {
+    if (!onPost || isPosting) {
       return;
     }
 
@@ -237,47 +237,49 @@ export function InternalNotesPanel({ notes, onPost }: InternalNotesPanelProps) {
           ))}
         </ol>
       )}
-      <div className="lab3-communication-form">
-        <label className="form-label" htmlFor="internal-note-content">
-          Add Internal Note
-        </label>
-        <textarea
-          id="internal-note-content"
-          className="form-control"
-          rows={4}
-          maxLength={2_000}
-          value={content}
-          onChange={(event) => {
-            setContent(event.target.value);
-            setValidationError(null);
-            setRequestErrorMessage(null);
-          }}
-          aria-describedby="internal-note-guidance"
-          aria-invalid={validationError ? true : undefined}
-          disabled={isPosting}
-        />
-        <div id="internal-note-guidance" className="form-text">
-          Required. Use 1-2,000 characters. Notes are append-only.
+      {onPost ? (
+        <div className="lab3-communication-form">
+          <label className="form-label" htmlFor="internal-note-content">
+            Add Internal Note
+          </label>
+          <textarea
+            id="internal-note-content"
+            className="form-control"
+            rows={4}
+            maxLength={2_000}
+            value={content}
+            onChange={(event) => {
+              setContent(event.target.value);
+              setValidationError(null);
+              setRequestErrorMessage(null);
+            }}
+            aria-describedby="internal-note-guidance"
+            aria-invalid={validationError ? true : undefined}
+            disabled={isPosting}
+          />
+          <div id="internal-note-guidance" className="form-text">
+            Required. Use 1-2,000 characters. Notes are append-only.
+          </div>
+          {validationError ? (
+            <div className="lab2-field-error" role="alert">
+              {validationError}
+            </div>
+          ) : null}
+          {requestErrorMessage ? (
+            <div className="lab2-state lab2-state-error" role="alert">
+              {requestErrorMessage}
+            </div>
+          ) : null}
+          <button
+            type="button"
+            className="btn btn-outline-success"
+            onClick={() => void handleSubmit()}
+            disabled={isPosting}
+          >
+            {isPosting ? "Saving..." : "Add internal note"}
+          </button>
         </div>
-        {validationError ? (
-          <div className="lab2-field-error" role="alert">
-            {validationError}
-          </div>
-        ) : null}
-        {requestErrorMessage ? (
-          <div className="lab2-state lab2-state-error" role="alert">
-            {requestErrorMessage}
-          </div>
-        ) : null}
-        <button
-          type="button"
-          className="btn btn-outline-success"
-          onClick={() => void handleSubmit()}
-          disabled={isPosting}
-        >
-          {isPosting ? "Saving..." : "Add internal note"}
-        </button>
-      </div>
+      ) : null}
     </section>
   );
 }

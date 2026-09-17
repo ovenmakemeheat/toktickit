@@ -152,10 +152,9 @@ function toAttachment(
   };
 }
 
-function toStaffTicketDetail(
+export function toStaffTicketDetailCore(
   ticket: StaffTicketWithDetail,
-  eligibleOwners: StaffTicketDetailResponse["eligibleOwners"],
-): StaffTicketDetailResponse {
+): Omit<StaffTicketDetailResponse, "eligibleOwners"> {
   const requester = ticket.requesterUser ?? ticket.requester;
   if (!requester) {
     throw new TicketNotFoundError();
@@ -185,7 +184,6 @@ function toStaffTicketDetail(
     description: ticket.description,
     currentStatus: ticket.currentStatus,
     owner,
-    eligibleOwners,
     requesterResolutionIndicatedAt:
       ticket.requesterResolutionIndicatedAt?.toISOString() ?? null,
     createdAt: ticket.createdAt.toISOString(),
@@ -196,6 +194,13 @@ function toStaffTicketDetail(
     publicComments: ticket.publicComments.map(toStaffCommunication),
     internalNotes: ticket.internalNotes.map(toStaffCommunication),
   };
+}
+
+function toStaffTicketDetail(
+  ticket: StaffTicketWithDetail,
+  eligibleOwners: StaffTicketDetailResponse["eligibleOwners"],
+): StaffTicketDetailResponse {
+  return { ...toStaffTicketDetailCore(ticket), eligibleOwners };
 }
 
 async function findStaffTicket(
@@ -294,7 +299,7 @@ export async function assignStaffTicket(
   return getStaffTicketDetail(prisma, ticket.id);
 }
 
-function parsePriority(rawBody: unknown): RequestedPriority {
+export function parseItPriority(rawBody: unknown): RequestedPriority {
   const value = readBody(rawBody).itPriority;
   if (value !== "LOW" && value !== "MEDIUM" && value !== "HIGH") {
     throw new ItPriorityValidationError();
@@ -308,7 +313,7 @@ export async function updateStaffTicketPriority(
   rawBody: unknown,
 ) {
   const ticket = await findStaffTicket(prisma, rawTicketId);
-  const itPriority = parsePriority(rawBody);
+  const itPriority = parseItPriority(rawBody);
   await prisma.ticket.update({
     where: { id: ticket.id },
     data: { itPriority },
@@ -341,4 +346,4 @@ export async function updateStaffTicketStatus(
   return getStaffTicketDetail(prisma, ticket.id);
 }
 
-export { staffTicketDetailInclude, toStaffTicketDetail };
+export { staffTicketDetailInclude, toStaffTicketDetail, findStaffTicket };
