@@ -9,6 +9,7 @@ import RequesterTicketDetail from "./lab-02/RequesterTicketDetail";
 import { RequesterProvider, useRequester } from "./lab-02/requester-context";
 import StaffTicketDetail from "./lab-03/StaffTicketDetail";
 import StaffTicketQueue from "./lab-03/StaffTicketQueue";
+import UserManagement from "./lab-03/UserManagement";
 import { navigate } from "./lib/navigation";
 import type { PublicUser, Role } from "./lib/api";
 
@@ -19,9 +20,13 @@ type AppRoute =
   | { page: "detail"; ticketId: string }
   | { page: "staff-tickets" }
   | { page: "staff-detail"; ticketId: string }
+  | { page: "users" }
   | { page: "change-password" };
 
 function readRoute(): AppRoute {
+  if (window.location.pathname === "/admin/users") {
+    return { page: "users" };
+  }
   const staffDetailTicketId = window.location.pathname.match(
     /^\/staff\/tickets\/([1-9]\d*)$/,
   )?.[1];
@@ -133,6 +138,17 @@ function AuthenticatedHeader({ user }: { user: PublicUser }) {
             onClick={() => navigate("/staff/tickets")}
           >
             Ticket Queue
+          </button>
+        ) : user.role === "ADMINISTRATOR" ? (
+          <button
+            type="button"
+            className={`btn btn-sm ${
+              activePage === "users" ? "btn-success" : "btn-outline-success"
+            }`}
+            aria-current={activePage === "users" ? "page" : undefined}
+            onClick={() => navigate("/admin/users")}
+          >
+            User Management
           </button>
         ) : null}
         <button
@@ -282,6 +298,8 @@ function AuthenticatedApplication({ route }: { route: AppRoute }) {
         </RequesterProvider>
       ) : user.role === "IT_STAFF" ? (
         <StaffWorkspace route={route} user={user} />
+      ) : route.page === "users" ? (
+        <UserManagement currentUserId={user.id} />
       ) : (
         <RoleWorkspace user={user} />
       )}

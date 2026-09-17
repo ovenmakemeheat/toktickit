@@ -79,6 +79,22 @@ import {
   StaffQueueQueryValidationError,
 } from "./services/staff-ticket-query-service.js";
 import {
+  createUser,
+  EmailAlreadyExistsError,
+  LastAdministratorRequiredError,
+  listUsers,
+  PasswordInputValidationError,
+  SelfDeactivationNotAllowedError,
+  setInitialPassword,
+  TransactionFailedError,
+  updateUser,
+  UserIdValidationError,
+  UserInputValidationError,
+  UserNotFoundError,
+  UserOwnsTicketsError,
+  UserQueryValidationError,
+} from "./services/user-management-service.js";
+import {
   StatusConfirmationRequiredError,
   TicketStatusTransitionInvalidError,
 } from "./services/ticket-status-service.js";
@@ -381,6 +397,51 @@ function sendAttachmentRemoveError(response: Response, error: unknown) {
     "ATTACHMENT_REMOVE_FAILED",
     "Unable to remove attachment",
   );
+}
+
+function sendUserManagementError(
+  response: Response,
+  error: unknown,
+  fallbackCode:
+    | "USER_MANAGEMENT_FAILED"
+    | "USER_CREATE_FAILED"
+    | "USER_UPDATE_FAILED",
+) {
+  if (
+    error instanceof UserIdValidationError ||
+    error instanceof UserInputValidationError
+  ) {
+    sendError(response, 400, error.code, error.message, error.fields);
+    return;
+  }
+
+  if (error instanceof PasswordInputValidationError) {
+    sendError(response, 400, error.code, error.message, error.fields);
+    return;
+  }
+
+  if (error instanceof UserQueryValidationError) {
+    sendError(response, 400, error.code, error.message, error.fields);
+    return;
+  }
+
+  if (error instanceof UserNotFoundError) {
+    sendError(response, 404, error.code, error.message);
+    return;
+  }
+
+  if (
+    error instanceof EmailAlreadyExistsError ||
+    error instanceof SelfDeactivationNotAllowedError ||
+    error instanceof LastAdministratorRequiredError ||
+    error instanceof UserOwnsTicketsError ||
+    error instanceof TransactionFailedError
+  ) {
+    sendError(response, 409, error.code, error.message);
+    return;
+  }
+
+  sendError(response, 500, fallbackCode, "Unable to complete the request");
 }
 
 function sendAuthRouteError(
@@ -974,6 +1035,78 @@ app.patch(
       );
     } catch (error) {
       sendStaffTicketError(response, error);
+    }
+  },
+);
+
+app.get(
+  "/api/admin/users",
+  requireAuthentication({
+    roles: ["ADMINISTRATOR"],
+    roleForbiddenCode: "USER_MANAGEMENT_FORBIDDEN",
+  }),
+  async (request, response) => {
+    try {
+      response.json(await listUsers(prisma, request.query));
+    } catch (error) {
+      sendUserManagementError(response, error, "USER_MANAGEMENT_FAILED");
+    }
+  },
+);
+
+app.post(
+  "/api/admin/users",
+  requireAuthentication({
+    roles: ["ADMINISTRATOR"],
+    roleForbiddenCode: "USER_MANAGEMENT_FORBIDDEN",
+  }),
+  requireCsrf,
+  async (request, response) => {
+    try {
+      response.status(201).json(await createUser(prisma, request.body));
+    } catch (error) {
+      sendUserManagementError(response, error, "USER_CREATE_FAILED");
+    }
+  },
+);
+
+app.patch(
+  "/api/admin/users/:userId",
+  requireAuthentication({
+    roles: ["ADMINISTRATOR"],
+    roleForbiddenCode: "USER_MANAGEMENT_FORBIDDEN",
+  }),
+  requireCsrf,
+  async (request, response) => {
+    try {
+      const auth = getAuthContext(request);
+      response.json(
+        await updateUser(
+          prisma,
+          auth.user.id,
+          request.params.userId,
+          request.body,
+        ),
+      );
+    } catch (error) {
+      sendUserManagementError(response, error, "USER_UPDATE_FAILED");
+    }
+  },
+);
+
+app.post(
+  "/api/admin/users/:userId/initial-password",
+  requireAuthentication({
+    roles: ["ADMINISTRATOR"],
+    roleForbiddenCode: "USER_MANAGEMENT_FORBIDDEN",
+  }),
+  requireCsrf,
+  async (request, response) => {
+    try {
+      await setInitialPassword(prisma, request.params.userId, request.body);
+      response.status(204).send();
+    } catch (error) {
+      sendUserManagementError(response, error, "USER_UPDATE_FAILED");
     }
   },
 );
