@@ -443,11 +443,12 @@ Requires a normal authenticated IT Staff session. The Queue always returns a sha
 | `page` | positive integer | `1` | One-based page. |
 | `pageSize` | `10`, `20`, `50` | `10` | Page size. |
 
-Search, filters, sorting, and pagination are applied server-side. Sorting uses `id desc` as the final tie-breaker. Response `200`:
+Search, filters, sorting, and pagination are applied server-side. Sorting uses `id desc` as the final tie-breaker. The response also includes the complete active IT Staff and Administrator owner list so the ownership filter is not limited to the current page. Response `200`:
 
 ```json
 {
   "items": [/* Staff Ticket summaries */],
+  "eligibleOwners": [/* active IT Staff and Administrator targets */],
   "page": 1,
   "pageSize": 10,
   "totalItems": 1,
@@ -496,7 +497,7 @@ Requires IT Staff and CSRF. Request body:
 }
 ```
 
-The server checks the current status, target status, role, and confirmation against the matrix in `specification.md`. `confirmation: true` is required for transitions into `RESOLVED`, `CLOSED`, `REOPENED`, or `CANCELLED`; it is ignored only when no confirmation is required. Unlisted transitions return `400 TICKET_STATUS_TRANSITION_INVALID`; missing confirmation returns `400 STATUS_CONFIRMATION_REQUIRED`; success is `200` with the updated Ticket. No update is partially applied on failure.
+The server checks the current status, target status, role, and confirmation against the matrix in `specification.md`. `confirmation: true` is required for transitions into `RESOLVED`, `CLOSED`, `REOPENED`, or `CANCELLED`; it is ignored only when no confirmation is required. Unlisted transitions return `400 TICKET_STATUS_TRANSITION_INVALID`; missing confirmation returns `400 STATUS_CONFIRMATION_REQUIRED`; a concurrent status change returns `409 TICKET_STATUS_CONFLICT` so the client can refresh before retrying; success is `200` with the updated Ticket. No update is partially applied on failure.
 
 ## 8. Administrator User Management
 

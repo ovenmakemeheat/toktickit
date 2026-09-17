@@ -3,6 +3,7 @@ import {
   TicketStatus,
   type PrismaClient,
   type RequestedPriority,
+  type Role,
 } from "@prisma/client";
 
 import { generateTicketNumber } from "./ticket-number-service.js";
@@ -22,11 +23,24 @@ export const ticketDetailInclude = {
   attachments: {
     orderBy: [{ uploadedAt: "asc" }, { id: "asc" }],
   },
+  publicComments: {
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+    include: {
+      author: { select: { id: true, name: true, role: true } },
+    },
+  },
 } satisfies Prisma.TicketInclude;
 
 type TicketWithDetails = Prisma.TicketGetPayload<{
   include: typeof ticketDetailInclude;
 }>;
+
+export type TicketPublicCommentResponse = {
+  id: number;
+  author: { id: number; name: string; role: Role };
+  content: string;
+  createdAt: string;
+};
 
 export type TicketDetailResponse = {
   id: number;
@@ -39,8 +53,10 @@ export type TicketDetailResponse = {
   summary: string;
   description: string;
   currentStatus: TicketStatus;
+  requesterResolutionIndicatedAt: string | null;
   createdAt: string;
   lastUpdated: string;
+  publicComments: TicketPublicCommentResponse[];
   attachments: Array<{
     id: number;
     displayName: string;
@@ -123,8 +139,16 @@ export function toTicketDetail(
     summary: ticket.summary,
     description: ticket.description,
     currentStatus: ticket.currentStatus,
+    requesterResolutionIndicatedAt:
+      ticket.requesterResolutionIndicatedAt?.toISOString() ?? null,
     createdAt: ticket.createdAt.toISOString(),
     lastUpdated: ticket.updatedAt.toISOString(),
+    publicComments: (ticket.publicComments ?? []).map((comment) => ({
+      id: comment.id,
+      author: comment.author,
+      content: comment.content,
+      createdAt: comment.createdAt.toISOString(),
+    })),
     attachments: ticket.attachments.map((attachment) => {
       const isActive = attachment.removedAt === null;
       return {
@@ -145,14 +169,16 @@ export function toTicketDetail(
 }
 
 export function parseTicketId(rawTicketId: unknown) {
+  const normalizedTicketId =
+    typeof rawTicketId === "number" ? String(rawTicketId) : rawTicketId;
   if (
-    typeof rawTicketId !== "string" ||
-    !/^[1-9]\d*$/.test(rawTicketId.trim())
+    typeof normalizedTicketId !== "string" ||
+    !/^[1-9]\d*$/.test(normalizedTicketId.trim())
   ) {
     throw new TicketIdValidationError();
   }
 
-  const ticketId = Number(rawTicketId);
+  const ticketId = Number(normalizedTicketId);
   if (!Number.isSafeInteger(ticketId) || ticketId < 1) {
     throw new TicketIdValidationError();
   }

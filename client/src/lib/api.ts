@@ -48,6 +48,41 @@ export type TicketListQuery = {
   pageSize?: 10 | 20 | 50;
 };
 
+export type TicketCommunicationEntry = {
+  id: number;
+  author: { id: number; name: string; role: Role };
+  content: string;
+  createdAt: string;
+};
+
+export type StaffOwner = {
+  id: number;
+  name: string;
+  role: "IT_STAFF" | "ADMINISTRATOR";
+};
+
+export type StaffTicketSortBy =
+  | "ticketDate"
+  | "updatedAt"
+  | "ticketNumber"
+  | "itPriority"
+  | "currentStatus"
+  | "owner";
+
+export type StaffTicketListQuery = {
+  search?: string;
+  categoryId?: number;
+  relatedSystemId?: number;
+  requestedPriority?: RequestedPriority;
+  itPriority?: RequestedPriority;
+  currentStatus?: TicketStatus;
+  owner?: "unassigned" | "me" | number;
+  sortBy?: StaffTicketSortBy;
+  sortDirection?: TicketSortDirection;
+  page?: number;
+  pageSize?: 10 | 20 | 50;
+};
+
 export type CreateTicketInput = {
   clientRequestId: string;
   categoryId: number;
@@ -80,9 +115,57 @@ export type TicketDetail = {
   summary: string;
   description: string;
   currentStatus: TicketStatus;
+  requesterResolutionIndicatedAt?: string | null;
   createdAt: string;
   lastUpdated: string;
+  publicComments?: TicketCommunicationEntry[];
   attachments: AttachmentMetadata[];
+};
+
+export type StaffTicketSummary = {
+  id: number;
+  ticketNumber: string;
+  ticketDate: string;
+  requester: { id: number; name: string };
+  category: Category;
+  relatedSystem: RelatedSystem;
+  requestedPriority: RequestedPriority;
+  itPriority: RequestedPriority;
+  summary: string;
+  currentStatus: TicketStatus;
+  owner: StaffOwner | null;
+  lastUpdated: string;
+};
+
+export type StaffTicketListResponse = {
+  items: StaffTicketSummary[];
+  eligibleOwners: StaffOwner[];
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+};
+
+export type StaffTicketDetail = {
+  id: number;
+  ticketNumber: string;
+  ticketDate: string;
+  requester: { id: number; name: string };
+  category: Category;
+  relatedSystem: RelatedSystem;
+  requestedPriority: RequestedPriority;
+  itPriority: RequestedPriority;
+  summary: string;
+  description: string;
+  currentStatus: TicketStatus;
+  owner: StaffOwner | null;
+  eligibleOwners?: StaffOwner[];
+  requesterResolutionIndicatedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  attachments: AttachmentMetadata[];
+  publicComments: TicketCommunicationEntry[];
+  internalNotes: TicketCommunicationEntry[];
 };
 
 export type TicketSummary = Pick<
@@ -280,11 +363,17 @@ function isTicketDetail(payload: unknown): payload is TicketDetail {
     typeof ticket.description === "string" &&
     isPriority(ticket.requestedPriority) &&
     isTicketStatus(ticket.currentStatus) &&
+    (ticket.requesterResolutionIndicatedAt === undefined ||
+      typeof ticket.requesterResolutionIndicatedAt === "string" ||
+      ticket.requesterResolutionIndicatedAt === null) &&
     typeof ticket.createdAt === "string" &&
     typeof ticket.lastUpdated === "string" &&
     isReference(ticket.requester) &&
     isReference(ticket.category) &&
     isReference(ticket.relatedSystem) &&
+    (ticket.publicComments === undefined ||
+      (Array.isArray(ticket.publicComments) &&
+        ticket.publicComments.every(isCommunicationEntry))) &&
     Array.isArray(ticket.attachments) &&
     ticket.attachments.every(isAttachmentMetadata)
   );
@@ -307,6 +396,112 @@ function isTicketSummary(payload: unknown): payload is TicketSummary {
     isReference(ticket.requester) &&
     isReference(ticket.category) &&
     isReference(ticket.relatedSystem)
+  );
+}
+
+function isCommunicationEntry(
+  payload: unknown,
+): payload is TicketCommunicationEntry {
+  if (typeof payload !== "object" || payload === null) {
+    return false;
+  }
+
+  const entry = payload as Record<string, unknown>;
+  const author = entry.author as Record<string, unknown> | undefined;
+  return (
+    Number.isInteger(entry.id) &&
+    typeof entry.content === "string" &&
+    typeof entry.createdAt === "string" &&
+    author !== undefined &&
+    Number.isInteger(author.id) &&
+    typeof author.name === "string" &&
+    isRole(author.role)
+  );
+}
+
+function isStaffOwner(payload: unknown): payload is StaffOwner {
+  if (typeof payload !== "object" || payload === null) {
+    return false;
+  }
+  const owner = payload as Record<string, unknown>;
+  return (
+    Number.isInteger(owner.id) &&
+    typeof owner.name === "string" &&
+    (owner.role === "IT_STAFF" || owner.role === "ADMINISTRATOR")
+  );
+}
+
+function isStaffTicketSummary(payload: unknown): payload is StaffTicketSummary {
+  if (typeof payload !== "object" || payload === null) {
+    return false;
+  }
+  const ticket = payload as Record<string, unknown>;
+  return (
+    Number.isInteger(ticket.id) &&
+    typeof ticket.ticketNumber === "string" &&
+    typeof ticket.ticketDate === "string" &&
+    typeof ticket.summary === "string" &&
+    isPriority(ticket.requestedPriority) &&
+    isPriority(ticket.itPriority) &&
+    isTicketStatus(ticket.currentStatus) &&
+    typeof ticket.lastUpdated === "string" &&
+    isReference(ticket.requester) &&
+    isReference(ticket.category) &&
+    isReference(ticket.relatedSystem) &&
+    (ticket.owner === null || isStaffOwner(ticket.owner))
+  );
+}
+
+function isStaffTicketListResponse(
+  payload: unknown,
+): payload is StaffTicketListResponse {
+  if (typeof payload !== "object" || payload === null) {
+    return false;
+  }
+  const list = payload as Record<string, unknown>;
+  return (
+    Array.isArray(list.items) &&
+    list.items.every(isStaffTicketSummary) &&
+    Array.isArray(list.eligibleOwners) &&
+    list.eligibleOwners.every(isStaffOwner) &&
+    Number.isInteger(list.page) &&
+    Number.isInteger(list.pageSize) &&
+    Number.isInteger(list.totalItems) &&
+    Number.isInteger(list.totalPages)
+  );
+}
+
+function isStaffTicketDetail(payload: unknown): payload is StaffTicketDetail {
+  if (typeof payload !== "object" || payload === null) {
+    return false;
+  }
+  const ticket = payload as Record<string, unknown>;
+  return (
+    Number.isInteger(ticket.id) &&
+    typeof ticket.ticketNumber === "string" &&
+    typeof ticket.ticketDate === "string" &&
+    typeof ticket.summary === "string" &&
+    typeof ticket.description === "string" &&
+    isPriority(ticket.requestedPriority) &&
+    isPriority(ticket.itPriority) &&
+    isTicketStatus(ticket.currentStatus) &&
+    isReference(ticket.requester) &&
+    isReference(ticket.category) &&
+    isReference(ticket.relatedSystem) &&
+    (ticket.owner === null || isStaffOwner(ticket.owner)) &&
+    (ticket.eligibleOwners === undefined ||
+      (Array.isArray(ticket.eligibleOwners) &&
+        ticket.eligibleOwners.every(isStaffOwner))) &&
+    (typeof ticket.requesterResolutionIndicatedAt === "string" ||
+      ticket.requesterResolutionIndicatedAt === null) &&
+    typeof ticket.createdAt === "string" &&
+    typeof ticket.updatedAt === "string" &&
+    Array.isArray(ticket.attachments) &&
+    ticket.attachments.every(isAttachmentMetadata) &&
+    Array.isArray(ticket.publicComments) &&
+    ticket.publicComments.every(isCommunicationEntry) &&
+    Array.isArray(ticket.internalNotes) &&
+    ticket.internalNotes.every(isCommunicationEntry)
   );
 }
 
@@ -583,4 +778,218 @@ export async function fetchTickets(
     throwApiRequestError(response, payload);
   }
   return payload;
+}
+
+function buildStaffTicketQuery(query: StaffTicketListQuery) {
+  const searchParams = new URLSearchParams();
+  const entries: Array<[string, string | number | undefined]> = [
+    ["search", query.search?.trim() || undefined],
+    ["categoryId", query.categoryId],
+    ["relatedSystemId", query.relatedSystemId],
+    ["requestedPriority", query.requestedPriority],
+    ["itPriority", query.itPriority],
+    ["currentStatus", query.currentStatus],
+    ["owner", query.owner],
+    ["sortBy", query.sortBy],
+    ["sortDirection", query.sortDirection],
+    ["page", query.page],
+    ["pageSize", query.pageSize],
+  ];
+
+  for (const [key, value] of entries) {
+    if (value !== undefined && value !== "") {
+      searchParams.set(key, String(value));
+    }
+  }
+  return searchParams.toString();
+}
+
+export async function fetchStaffTickets(
+  query: StaffTicketListQuery = {},
+  signal?: AbortSignal,
+): Promise<StaffTicketListResponse> {
+  const queryString = buildStaffTicketQuery(query);
+  const { response, payload } = await requestJson(
+    queryString ? `/api/staff/tickets?${queryString}` : "/api/staff/tickets",
+    { signal },
+  );
+  if (!response.ok || !isStaffTicketListResponse(payload)) {
+    throwApiRequestError(response, payload);
+  }
+  return payload;
+}
+
+export async function fetchStaffTicketDetail(
+  ticketId: number | string,
+): Promise<StaffTicketDetail> {
+  const { response, payload } = await requestJson(
+    `/api/staff/tickets/${ticketId}`,
+  );
+  if (!response.ok || !isStaffTicketDetail(payload)) {
+    throwApiRequestError(response, payload);
+  }
+  return payload;
+}
+
+export async function claimStaffTicket(
+  ticketId: number | string,
+): Promise<StaffTicketDetail> {
+  const { response, payload } = await requestJson(
+    `/api/staff/tickets/${ticketId}/claim`,
+    { method: "POST" },
+  );
+  if (!response.ok || !isStaffTicketDetail(payload)) {
+    throwApiRequestError(response, payload);
+  }
+  return payload;
+}
+
+export async function assignStaffTicket(
+  ticketId: number | string,
+  ownerId: number,
+): Promise<StaffTicketDetail> {
+  const { response, payload } = await requestJson(
+    `/api/staff/tickets/${ticketId}/owner`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ownerId }),
+    },
+  );
+  if (!response.ok || !isStaffTicketDetail(payload)) {
+    throwApiRequestError(response, payload);
+  }
+  return payload;
+}
+
+export async function updateStaffTicketPriority(
+  ticketId: number | string,
+  itPriority: RequestedPriority,
+): Promise<StaffTicketDetail> {
+  const { response, payload } = await requestJson(
+    `/api/staff/tickets/${ticketId}/priority`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ itPriority }),
+    },
+  );
+  if (!response.ok || !isStaffTicketDetail(payload)) {
+    throwApiRequestError(response, payload);
+  }
+  return payload;
+}
+
+export async function updateStaffTicketStatus(
+  ticketId: number | string,
+  status: TicketStatus,
+  confirmation = false,
+): Promise<StaffTicketDetail> {
+  const { response, payload } = await requestJson(
+    `/api/staff/tickets/${ticketId}/status`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status, confirmation }),
+    },
+  );
+  if (!response.ok || !isStaffTicketDetail(payload)) {
+    throwApiRequestError(response, payload);
+  }
+  return payload;
+}
+
+export async function fetchPublicComments(
+  ticketId: number | string,
+): Promise<TicketCommunicationEntry[]> {
+  const { response, payload } = await requestJson(
+    `/api/tickets/${ticketId}/comments`,
+  );
+  if (
+    !response.ok ||
+    !Array.isArray(payload) ||
+    !payload.every(isCommunicationEntry)
+  ) {
+    throwApiRequestError(response, payload);
+  }
+  return payload;
+}
+
+export async function postPublicComment(
+  ticketId: number | string,
+  content: string,
+): Promise<TicketCommunicationEntry> {
+  const { response, payload } = await requestJson(
+    `/api/tickets/${ticketId}/comments`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
+    },
+  );
+  if (!response.ok || !isCommunicationEntry(payload)) {
+    throwApiRequestError(response, payload);
+  }
+  return payload;
+}
+
+export async function fetchInternalNotes(
+  ticketId: number | string,
+): Promise<TicketCommunicationEntry[]> {
+  const { response, payload } = await requestJson(
+    `/api/tickets/${ticketId}/internal-notes`,
+  );
+  if (
+    !response.ok ||
+    !Array.isArray(payload) ||
+    !payload.every(isCommunicationEntry)
+  ) {
+    throwApiRequestError(response, payload);
+  }
+  return payload;
+}
+
+export async function postInternalNote(
+  ticketId: number | string,
+  content: string,
+): Promise<TicketCommunicationEntry> {
+  const { response, payload } = await requestJson(
+    `/api/tickets/${ticketId}/internal-notes`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
+    },
+  );
+  if (!response.ok || !isCommunicationEntry(payload)) {
+    throwApiRequestError(response, payload);
+  }
+  return payload;
+}
+
+export async function indicateTicketResolution(
+  ticketId: number | string,
+): Promise<{ ticketId: number; requesterResolutionIndicatedAt: string }> {
+  const { response, payload } = await requestJson(
+    `/api/tickets/${ticketId}/resolution-indication`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ appearsResolved: true }),
+    },
+  );
+  if (
+    !response.ok ||
+    typeof payload !== "object" ||
+    payload === null ||
+    !Number.isInteger((payload as Record<string, unknown>).ticketId) ||
+    typeof (payload as Record<string, unknown>)
+      .requesterResolutionIndicatedAt !== "string"
+  ) {
+    throwApiRequestError(response, payload);
+  }
+  return payload as {
+    ticketId: number;
+    requesterResolutionIndicatedAt: string;
+  };
 }

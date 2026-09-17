@@ -2,9 +2,12 @@ import { useCallback, useEffect, useState } from "react";
 
 import {
   apiErrorMessage,
+  indicateTicketResolution,
   fetchTicketDetail,
+  postPublicComment,
   type TicketDetail,
 } from "../lib/api";
+import { PublicCommentsPanel } from "../lab-03/CommunicationPanels";
 import AttachmentSection from "./AttachmentSection";
 import { useRequester } from "./requester-context";
 
@@ -64,6 +67,10 @@ export default function RequesterTicketDetail({
   const [ticket, setTicket] = useState<TicketDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [resolutionError, setResolutionError] = useState<string | null>(null);
+  const [resolutionSuccess, setResolutionSuccess] = useState<string | null>(
+    null,
+  );
 
   const loadTicket = useCallback(async () => {
     if (!requester) {
@@ -88,6 +95,26 @@ export default function RequesterTicketDetail({
     setTicket(null);
     void loadTicket();
   }, [loadTicket]);
+
+  async function handleResolutionIndication() {
+    if (!ticket || ticket.requesterResolutionIndicatedAt) {
+      return;
+    }
+
+    setResolutionError(null);
+    setResolutionSuccess(null);
+    try {
+      await indicateTicketResolution(ticket.id);
+      setResolutionSuccess(
+        "Your indication was recorded. IT Staff remain responsible for formal resolution or closure.",
+      );
+      await loadTicket();
+    } catch {
+      setResolutionError(
+        "The resolution indication could not be recorded. Try again.",
+      );
+    }
+  }
 
   if (!requester) {
     return (
@@ -216,6 +243,50 @@ export default function RequesterTicketDetail({
               aria-readonly="true"
             />
           </div>
+
+          <PublicCommentsPanel
+            comments={ticket.publicComments ?? []}
+            onPost={async (content) => {
+              await postPublicComment(ticket.id, content);
+              await loadTicket();
+            }}
+          />
+
+          <section
+            className="lab3-resolution-section"
+            aria-labelledby="resolution-indication-title"
+          >
+            <p className="lab2-eyebrow">Requester signal</p>
+            <h2 id="resolution-indication-title">Problem Appears Resolved</h2>
+            <p>
+              Tell IT Staff if the problem appears resolved. This does not
+              formally resolve or close the Ticket.
+            </p>
+            {resolutionSuccess ? (
+              <p className="lab2-state lab2-state-success" role="status">
+                {resolutionSuccess}
+              </p>
+            ) : null}
+            {resolutionError ? (
+              <p className="lab2-state lab2-state-error" role="alert">
+                {resolutionError}
+              </p>
+            ) : null}
+            {ticket.requesterResolutionIndicatedAt ? (
+              <p className="lab3-resolution-recorded" role="status">
+                Indicated on {formatDate(ticket.requesterResolutionIndicatedAt)}
+                .
+              </p>
+            ) : (
+              <button
+                type="button"
+                className="btn btn-outline-success"
+                onClick={() => void handleResolutionIndication()}
+              >
+                Problem Appears Resolved
+              </button>
+            )}
+          </section>
 
           <AttachmentSection
             ticketId={ticket.id}

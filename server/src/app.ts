@@ -54,6 +54,34 @@ import {
   listTickets,
   TicketQueryValidationError,
 } from "./services/ticket-query-service.js";
+import {
+  CommunicationContentValidationError,
+  createInternalNote,
+  createPublicComment,
+  indicateRequesterResolution,
+  listInternalNotes,
+  listPublicComments,
+  ResolutionIndicationValidationError,
+} from "./services/ticket-communication-service.js";
+import {
+  ItPriorityValidationError,
+  OwnerInvalidError,
+  assignStaffTicket,
+  claimStaffTicket,
+  getStaffTicketDetail,
+  TicketAlreadyAssignedError,
+  TicketStatusConflictError,
+  updateStaffTicketPriority,
+  updateStaffTicketStatus,
+} from "./services/staff-ticket-service.js";
+import {
+  listStaffTickets,
+  StaffQueueQueryValidationError,
+} from "./services/staff-ticket-query-service.js";
+import {
+  StatusConfirmationRequiredError,
+  TicketStatusTransitionInvalidError,
+} from "./services/ticket-status-service.js";
 import { TicketInputValidationError } from "./services/ticket-validation-service.js";
 import {
   listCategories,
@@ -154,6 +182,84 @@ function sendTicketListError(response: Response, error: unknown) {
   }
 
   sendError(response, 500, "TICKET_LIST_FAILED", "Unable to load tickets");
+}
+
+function sendStaffQueueError(response: Response, error: unknown) {
+  if (error instanceof StaffQueueQueryValidationError) {
+    sendError(response, 400, error.code, error.message, error.fields);
+    return;
+  }
+
+  sendError(
+    response,
+    500,
+    "STAFF_QUEUE_FAILED",
+    "Unable to load the Staff Ticket Queue",
+  );
+}
+
+function sendStaffTicketError(response: Response, error: unknown) {
+  if (error instanceof TicketIdValidationError) {
+    sendError(response, 400, error.code, error.message);
+    return;
+  }
+
+  if (error instanceof TicketNotFoundError) {
+    sendError(response, 404, error.code, error.message);
+    return;
+  }
+
+  if (
+    error instanceof TicketAlreadyAssignedError ||
+    error instanceof TicketStatusConflictError
+  ) {
+    sendError(response, 409, error.code, error.message);
+    return;
+  }
+
+  if (
+    error instanceof OwnerInvalidError ||
+    error instanceof ItPriorityValidationError ||
+    error instanceof TicketStatusTransitionInvalidError ||
+    error instanceof StatusConfirmationRequiredError
+  ) {
+    sendError(response, 400, error.code, error.message);
+    return;
+  }
+
+  sendError(
+    response,
+    500,
+    "STAFF_TICKET_FAILED",
+    "Unable to complete the Staff Ticket operation",
+  );
+}
+
+function sendCommunicationError(
+  response: Response,
+  error: unknown,
+  fallbackCode: string,
+  fallbackMessage: string,
+) {
+  if (error instanceof TicketIdValidationError) {
+    sendError(response, 400, error.code, error.message);
+    return;
+  }
+
+  if (
+    error instanceof CommunicationContentValidationError ||
+    error instanceof ResolutionIndicationValidationError
+  ) {
+    sendError(response, 400, error.code, error.message, error.fields);
+    return;
+  }
+
+  if (error instanceof TicketNotFoundError) {
+    sendError(response, 404, error.code, error.message);
+    return;
+  }
+
+  sendError(response, 500, fallbackCode, fallbackMessage);
 }
 
 function sendAttachmentUploadError(response: Response, error: unknown) {
@@ -616,6 +722,258 @@ app.delete(
       response.status(204).send();
     } catch (error) {
       sendAttachmentRemoveError(response, error);
+    }
+  },
+);
+
+app.get(
+  "/api/tickets/:ticketId/comments",
+  requireAuthentication({
+    roles: ["REQUESTER", "IT_STAFF", "ADMINISTRATOR"],
+  }),
+  async (request, response) => {
+    try {
+      const auth = getAuthContext(request);
+      response.json(
+        await listPublicComments(prisma, auth.user, request.params.ticketId),
+      );
+    } catch (error) {
+      sendCommunicationError(
+        response,
+        error,
+        "COMMENT_LIST_FAILED",
+        "Unable to load Public Comments",
+      );
+    }
+  },
+);
+
+app.post(
+  "/api/tickets/:ticketId/comments",
+  requireAuthentication({
+    roles: ["REQUESTER", "IT_STAFF"],
+    roleForbiddenCode: "COMMENT_FORBIDDEN",
+  }),
+  requireCsrf,
+  async (request, response) => {
+    try {
+      const auth = getAuthContext(request);
+      response
+        .status(201)
+        .json(
+          await createPublicComment(
+            prisma,
+            auth.user,
+            request.params.ticketId,
+            request.body,
+          ),
+        );
+    } catch (error) {
+      sendCommunicationError(
+        response,
+        error,
+        "COMMENT_CREATE_FAILED",
+        "Unable to create Public Comment",
+      );
+    }
+  },
+);
+
+app.post(
+  "/api/tickets/:ticketId/resolution-indication",
+  requireAuthentication({
+    roles: ["REQUESTER"],
+    roleForbiddenCode: "ROLE_FORBIDDEN",
+  }),
+  requireCsrf,
+  async (request, response) => {
+    try {
+      const auth = getAuthContext(request);
+      response.json(
+        await indicateRequesterResolution(
+          prisma,
+          auth.user,
+          request.params.ticketId,
+          request.body,
+        ),
+      );
+    } catch (error) {
+      sendCommunicationError(
+        response,
+        error,
+        "RESOLUTION_INDICATION_FAILED",
+        "Unable to record the resolution indication",
+      );
+    }
+  },
+);
+
+app.get(
+  "/api/tickets/:ticketId/internal-notes",
+  requireAuthentication({
+    roles: ["IT_STAFF", "ADMINISTRATOR"],
+    roleForbiddenCode: "INTERNAL_NOTES_FORBIDDEN",
+  }),
+  async (request, response) => {
+    try {
+      const auth = getAuthContext(request);
+      response.json(
+        await listInternalNotes(prisma, auth.user, request.params.ticketId),
+      );
+    } catch (error) {
+      sendCommunicationError(
+        response,
+        error,
+        "INTERNAL_NOTES_FAILED",
+        "Unable to load Internal Notes",
+      );
+    }
+  },
+);
+
+app.post(
+  "/api/tickets/:ticketId/internal-notes",
+  requireAuthentication({
+    roles: ["IT_STAFF"],
+    roleForbiddenCode: "INTERNAL_NOTES_FORBIDDEN",
+  }),
+  requireCsrf,
+  async (request, response) => {
+    try {
+      const auth = getAuthContext(request);
+      response
+        .status(201)
+        .json(
+          await createInternalNote(
+            prisma,
+            auth.user,
+            request.params.ticketId,
+            request.body,
+          ),
+        );
+    } catch (error) {
+      sendCommunicationError(
+        response,
+        error,
+        "INTERNAL_NOTE_CREATE_FAILED",
+        "Unable to create Internal Note",
+      );
+    }
+  },
+);
+
+app.get(
+  "/api/staff/tickets",
+  requireAuthentication({
+    roles: ["IT_STAFF"],
+    roleForbiddenCode: "STAFF_QUEUE_FORBIDDEN",
+  }),
+  async (request, response) => {
+    try {
+      const auth = getAuthContext(request);
+      response.json(
+        await listStaffTickets(prisma, auth.user.id, request.query),
+      );
+    } catch (error) {
+      sendStaffQueueError(response, error);
+    }
+  },
+);
+
+app.get(
+  "/api/staff/tickets/:ticketId",
+  requireAuthentication({
+    roles: ["IT_STAFF"],
+    roleForbiddenCode: "STAFF_TICKET_FORBIDDEN",
+  }),
+  async (request, response) => {
+    try {
+      response.json(
+        await getStaffTicketDetail(prisma, request.params.ticketId),
+      );
+    } catch (error) {
+      sendStaffTicketError(response, error);
+    }
+  },
+);
+
+app.post(
+  "/api/staff/tickets/:ticketId/claim",
+  requireAuthentication({
+    roles: ["IT_STAFF"],
+    roleForbiddenCode: "STAFF_TICKET_FORBIDDEN",
+  }),
+  requireCsrf,
+  async (request, response) => {
+    try {
+      const auth = getAuthContext(request);
+      response.json(
+        await claimStaffTicket(prisma, auth.user.id, request.params.ticketId),
+      );
+    } catch (error) {
+      sendStaffTicketError(response, error);
+    }
+  },
+);
+
+app.patch(
+  "/api/staff/tickets/:ticketId/owner",
+  requireAuthentication({
+    roles: ["IT_STAFF"],
+    roleForbiddenCode: "STAFF_TICKET_FORBIDDEN",
+  }),
+  requireCsrf,
+  async (request, response) => {
+    try {
+      response.json(
+        await assignStaffTicket(prisma, request.params.ticketId, request.body),
+      );
+    } catch (error) {
+      sendStaffTicketError(response, error);
+    }
+  },
+);
+
+app.patch(
+  "/api/staff/tickets/:ticketId/priority",
+  requireAuthentication({
+    roles: ["IT_STAFF"],
+    roleForbiddenCode: "STAFF_TICKET_FORBIDDEN",
+  }),
+  requireCsrf,
+  async (request, response) => {
+    try {
+      response.json(
+        await updateStaffTicketPriority(
+          prisma,
+          request.params.ticketId,
+          request.body,
+        ),
+      );
+    } catch (error) {
+      sendStaffTicketError(response, error);
+    }
+  },
+);
+
+app.patch(
+  "/api/staff/tickets/:ticketId/status",
+  requireAuthentication({
+    roles: ["IT_STAFF"],
+    roleForbiddenCode: "STAFF_TICKET_FORBIDDEN",
+  }),
+  requireCsrf,
+  async (request, response) => {
+    try {
+      response.json(
+        await updateStaffTicketStatus(
+          prisma,
+          request.params.ticketId,
+          request.body,
+        ),
+      );
+    } catch (error) {
+      sendStaffTicketError(response, error);
     }
   },
 );
