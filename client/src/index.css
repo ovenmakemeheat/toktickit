@@ -706,12 +706,99 @@ textarea.form-control {
   width: min(100%, 92rem);
 }
 
+.lab3-user-management-panel {
+  width: min(100%, 78rem);
+}
+
+.lab3-admin-ticket-review-panel {
+  width: min(100%, 70rem);
+}
+
+.lab3-admin-ticket-entry {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 36rem;
+}
+
 .lab3-staff-queue-filters {
   background: var(--zen-pale);
 }
 
-.lab3-staff-ticket-table {
-  min-width: 92rem;
+@media (min-width: 992px) {
+  .lab3-staff-ticket-table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+  }
+
+  .lab3-staff-ticket-table th {
+    white-space: normal;
+    vertical-align: bottom;
+  }
+
+  .lab3-staff-ticket-table td {
+    overflow-wrap: anywhere;
+  }
+
+  .lab3-staff-ticket-table th:nth-child(1),
+  .lab3-staff-ticket-table td:nth-child(1) {
+    width: 11%;
+  }
+
+  .lab3-staff-ticket-table th:nth-child(2),
+  .lab3-staff-ticket-table td:nth-child(2) {
+    width: 8%;
+  }
+
+  .lab3-staff-ticket-table th:nth-child(3),
+  .lab3-staff-ticket-table td:nth-child(3) {
+    width: 13%;
+  }
+
+  .lab3-staff-ticket-table th:nth-child(4),
+  .lab3-staff-ticket-table td:nth-child(4) {
+    width: 12%;
+  }
+
+  .lab3-staff-ticket-table th:nth-child(5),
+  .lab3-staff-ticket-table td:nth-child(5) {
+    width: 9%;
+  }
+
+  .lab3-staff-ticket-table th:nth-child(6),
+  .lab3-staff-ticket-table td:nth-child(6) {
+    width: 7%;
+  }
+
+  .lab3-staff-ticket-table th:nth-child(7),
+  .lab3-staff-ticket-table td:nth-child(7) {
+    width: 10%;
+  }
+
+  .lab3-staff-ticket-table th:nth-child(8),
+  .lab3-staff-ticket-table td:nth-child(8) {
+    width: 9%;
+  }
+
+  .lab3-staff-ticket-table th:nth-child(9),
+  .lab3-staff-ticket-table td:nth-child(9) {
+    width: 12%;
+  }
+
+  .lab3-staff-ticket-table th:nth-child(10),
+  .lab3-staff-ticket-table td:nth-child(10) {
+    width: 9%;
+  }
+
+  .lab3-staff-ticket-table .lab2-ticket-summary-cell {
+    min-width: 0;
+    max-width: none;
+  }
+
+  .lab3-staff-ticket-table .lab2-ticket-badge {
+    white-space: normal;
+    text-align: center;
+  }
 }
 
 .lab3-staff-ticket-cards {
@@ -842,6 +929,31 @@ textarea.form-control {
 
   .lab2-ticket-table {
     min-width: 68rem;
+  }
+}
+
+@media (max-width: 1399px) {
+  .lab3-staff-ticket-table-wrapper {
+    display: none;
+  }
+
+  .lab3-staff-ticket-cards {
+    display: grid;
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 991px) {
+  .lab2-ticket-table-wrapper,
+  .lab3-staff-ticket-table-wrapper {
+    display: none;
+  }
+
+  .lab2-ticket-cards,
+  .lab3-staff-ticket-cards,
+  .lab3-user-cards {
+    display: grid;
+    gap: 0.75rem;
   }
 }
 

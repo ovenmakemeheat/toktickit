@@ -75,6 +75,7 @@ describe("IT Staff Ticket Queue", () => {
     expect(
       screen.getAllByText("Cannot access course email").length,
     ).toBeGreaterThan(0);
+    expect(screen.getAllByText("Software / Email").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Medium").length).toBeGreaterThan(0);
     expect(screen.getAllByText("IT Staff A").length).toBeGreaterThan(0);
     expect(
