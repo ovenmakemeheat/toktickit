@@ -584,6 +584,16 @@ export default function StaffTicketQueue({
                 <p>{ticket.summary}</p>
                 <dl>
                   <div>
+                    <dt>Created</dt>
+                    <dd>{formatDate(ticket.ticketDate)}</dd>
+                  </div>
+                  <div>
+                    <dt>Category / Related System</dt>
+                    <dd>
+                      {ticket.category.name} / {ticket.relatedSystem.name}
+                    </dd>
+                  </div>
+                  <div>
                     <dt>Requester</dt>
                     <dd>{ticket.requester.name}</dd>
                   </div>
