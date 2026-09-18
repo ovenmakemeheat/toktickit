@@ -59,6 +59,14 @@
   }{\pendingnote{#2}}%
 }
 
+% Long browser pages remain complete in the evidence directory but use a
+% cropped top workflow view in the compact submission PDF.
+\newcommand{\evidenceimagecrop}[3]{%
+  \IfFileExists{#1}{%
+    \includegraphics[width=\linewidth,height=0.26\textheight,keepaspectratio,trim=#2,clip]{#1}%
+  }{\pendingnote{#3}}%
+}
+
 \newcommand{\twocaptures}[6]{%
 \begin{figure}[H]
   \centering
@@ -71,6 +79,22 @@
     \centering
     \evidenceimage{#4}{#5}
     \captionof{figure}{#6}
+  \end{minipage}
+\end{figure}
+}
+
+\newcommand{\twocapturescrop}[8]{%
+\begin{figure}[H]
+  \centering
+  \begin{minipage}[t]{0.48\linewidth}
+    \centering
+    \evidenceimagecrop{#1}{#2}{#3}
+    \captionof{figure}{#4}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\linewidth}
+    \centering
+    \evidenceimagecrop{#5}{#6}{#7}
+    \captionof{figure}{#8}
   \end{minipage}
 \end{figure}
 }
@@ -245,13 +269,15 @@ and by the committed captures under
 \path{artifacts/lab-03/screenshots/staff-queue/} and
 \path{artifacts/lab-03/screenshots/staff-ticket-detail/}.
 
-\twocaptures
+\twocapturescrop
   {artifacts/lab-03/screenshots/staff-queue/staff-queue-desktop.png}
+  {0pt 3000pt 0pt 0pt}
   {Staff Queue capture is pending.}
-  {IT Staff Queue evidence.}
+  {IT Staff Queue evidence (cropped top workflow view; full capture retained in the evidence directory).}
   {artifacts/lab-03/screenshots/staff-ticket-detail/staff-ticket-detail-desktop.png}
+  {0pt 4700pt 0pt 0pt}
   {Staff Ticket Detail capture is pending.}
-  {IT Staff Ticket Detail evidence.}
+  {IT Staff Ticket Detail evidence (cropped top workflow view; full capture retained in the evidence directory).}
 
 \section{Answer Part 7: Administrator Management and Ticket Review}
 
@@ -267,13 +293,15 @@ Administrator route. The route remains inside the authenticated role shell and
 does not render User Management. The real API tests remain the authority for
 `403` responses and Administrator account-safety races.
 
-\twocaptures
+\twocapturescrop
   {artifacts/lab-03/screenshots/user-management/user-management-desktop.png}
+  {0pt 0pt 0pt 0pt}
   {User Management capture is pending.}
   {Administrator User Management evidence.}
   {artifacts/lab-03/screenshots/user-management/admin-ticket-review-desktop.png}
+  {0pt 4300pt 0pt 0pt}
   {Ticket Review capture is pending.}
-  {Administrator Ticket Review evidence.}
+  {Administrator Ticket Review evidence (cropped top workflow view; full capture retained in the evidence directory).}
 
 \section{Answer Part 8: Evidence, Review, and Release Integration}
 
