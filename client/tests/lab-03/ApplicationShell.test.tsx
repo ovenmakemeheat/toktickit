@@ -54,6 +54,55 @@ describe("Lab 3 authenticated application shell", () => {
     },
   );
 
+  it("offers User Management only to an Administrator", async () => {
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === "/api/auth/me") {
+        return Promise.resolve(
+          response(
+            sessionResponse({ role: "ADMINISTRATOR", name: "Administrator" }),
+          ),
+        );
+      }
+      if (url.startsWith("/api/admin/users")) {
+        return Promise.resolve(
+          response([
+            {
+              id: 1,
+              name: "Administrator",
+              email: "administrator@toktickit.test",
+              role: "ADMINISTRATOR",
+              status: "ACTIVE",
+            },
+          ]),
+        );
+      }
+      return Promise.reject(new Error(`Unexpected request: ${url}`));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+
+    render(<App />);
+    await screen.findByRole("heading", {
+      name: "Administrator access is ready",
+    });
+    await user.click(screen.getByRole("button", { name: "User Management" }));
+
+    expect(
+      await screen.findByRole("heading", { name: "User Management" }),
+    ).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/admin/users");
+    expect(
+      screen.getByRole("button", { name: "User Management" }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(
+      screen.getByRole("button", { name: "Ticket Review" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Ticket Queue" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("keeps the authenticated shell visible when logout fails", async () => {
     const fetchMock = vi.fn((input: RequestInfo | URL) => {
       const url = String(input);

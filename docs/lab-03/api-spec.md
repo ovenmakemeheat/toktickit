@@ -464,7 +464,7 @@ Requires IT Staff and a positive integer Ticket ID. It returns staff Ticket deta
 
 ### POST `/api/staff/tickets/:ticketId/claim`
 
-Requires IT Staff and CSRF. The Ticket must be unassigned. The server sets the owner to the authenticated IT Staff User. A Ticket already assigned returns `409 TICKET_ALREADY_ASSIGNED`; unknown/cross-scope resources return a safe `404`; success is `200` with the updated staff Ticket detail.
+Requires IT Staff and CSRF. The Ticket must be unassigned. The server sets the owner to the authenticated IT Staff User. A Ticket already assigned returns `409 TICKET_ALREADY_ASSIGNED`; a concurrent User or Ticket ownership change returns `409 TICKET_ASSIGNMENT_CONFLICT`; unknown/cross-scope resources return a safe `404`; success is `200` with the updated staff Ticket detail.
 
 ### PATCH `/api/staff/tickets/:ticketId/owner`
 
@@ -474,7 +474,7 @@ Requires IT Staff and CSRF. Request body:
 { "ownerId": 21 }
 ```
 
-The target must be an active IT Staff or Administrator. This is assignment/reassignment, not a role change. Unknown, inactive, Requester, or invalid targets return `400`/`404 OWNER_INVALID` and the current owner remains unchanged. Success is `200` with the updated Ticket.
+The target must be an active IT Staff or Administrator. This is assignment/reassignment, not a role change. Unknown, inactive, Requester, or invalid targets return `400`/`404 OWNER_INVALID` and the current owner remains unchanged. A concurrent User or Ticket ownership change returns `409 TICKET_ASSIGNMENT_CONFLICT`; success is `200` with the updated Ticket.
 
 ### PATCH `/api/staff/tickets/:ticketId/priority`
 
@@ -558,7 +558,7 @@ Request body is a partial update containing at least one of the following:
 }
 ```
 
-Only name, normalized email, one role, and activation state are editable. Password changes use the dedicated endpoint. The server rejects invalid roles, duplicate emails, unknown Users, self-deactivation, removal/deactivation of the last active Administrator, and any role/activation update that would leave one or more existing Tickets owned by an inactive User or a Requester. The User update and ownership check are one atomic operation; no partial User update is persisted. Success is `200`; safe errors include `400 USER_INPUT_INVALID`, `404 USER_NOT_FOUND`, `409 EMAIL_ALREADY_EXISTS`, `LAST_ADMINISTRATOR_REQUIRED`, or `USER_OWNS_TICKETS`, and `500 USER_UPDATE_FAILED`.
+Only name, normalized email, one role, and activation state are editable. Password changes use the dedicated endpoint. The server rejects invalid roles, duplicate emails, unknown Users, self-deactivation (`409 SELF_DEACTIVATION_NOT_ALLOWED`), removal/deactivation of the last active Administrator, and any role/activation update that would leave one or more existing Tickets owned by an inactive User or a Requester. The User update and ownership check are one atomic operation; no partial User update is persisted. Success is `200`; safe errors include `400 USER_INPUT_INVALID`, `404 USER_NOT_FOUND`, `409 EMAIL_ALREADY_EXISTS`, `SELF_DEACTIVATION_NOT_ALLOWED`, `LAST_ADMINISTRATOR_REQUIRED`, `USER_OWNS_TICKETS`, or `USER_MANAGEMENT_TRANSACTION_FAILED` for a concurrent transaction conflict, and `500 USER_UPDATE_FAILED`.
 
 ### POST `/api/admin/users/:userId/initial-password`
 

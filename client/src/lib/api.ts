@@ -168,6 +168,39 @@ export type StaffTicketDetail = {
   internalNotes: TicketCommunicationEntry[];
 };
 
+export type AdminTicketDetail = Omit<StaffTicketDetail, "eligibleOwners">;
+
+export type UserStatus = "ACTIVE" | "INACTIVE";
+
+export type UserListItem = {
+  id: number;
+  name: string;
+  email: string;
+  role: Role;
+  status: UserStatus;
+};
+
+export type UserListQuery = {
+  search?: string;
+  role?: Role;
+};
+
+export type CreateUserInput = {
+  name: string;
+  email: string;
+  role: Role;
+  active: boolean;
+  initialPassword: string;
+  confirmInitialPassword: string;
+};
+
+export type UpdateUserInput = {
+  name?: string;
+  email?: string;
+  role?: Role;
+  active?: boolean;
+};
+
 export type TicketSummary = Pick<
   TicketDetail,
   | "id"
@@ -505,6 +538,28 @@ function isStaffTicketDetail(payload: unknown): payload is StaffTicketDetail {
   );
 }
 
+function isUserStatus(value: unknown): value is UserStatus {
+  return value === "ACTIVE" || value === "INACTIVE";
+}
+
+function isUserListItem(payload: unknown): payload is UserListItem {
+  if (typeof payload !== "object" || payload === null) {
+    return false;
+  }
+  const user = payload as Record<string, unknown>;
+  return (
+    Number.isInteger(user.id) &&
+    typeof user.name === "string" &&
+    typeof user.email === "string" &&
+    isRole(user.role) &&
+    isUserStatus(user.status)
+  );
+}
+
+function isUserList(payload: unknown): payload is UserListItem[] {
+  return Array.isArray(payload) && payload.every(isUserListItem);
+}
+
 function isTicketListResponse(payload: unknown): payload is TicketListResponse {
   if (typeof payload !== "object" || payload === null) {
     return false;
@@ -831,6 +886,36 @@ export async function fetchStaffTicketDetail(
   return payload;
 }
 
+export async function fetchAdminTicketDetail(
+  ticketId: number | string,
+): Promise<AdminTicketDetail> {
+  const { response, payload } = await requestJson(
+    `/api/admin/tickets/${ticketId}`,
+  );
+  if (!response.ok || !isStaffTicketDetail(payload)) {
+    throwApiRequestError(response, payload);
+  }
+  return payload;
+}
+
+export async function updateAdminTicketPriority(
+  ticketId: number | string,
+  itPriority: RequestedPriority,
+): Promise<AdminTicketDetail> {
+  const { response, payload } = await requestJson(
+    `/api/admin/tickets/${ticketId}/priority`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ itPriority }),
+    },
+  );
+  if (!response.ok || !isStaffTicketDetail(payload)) {
+    throwApiRequestError(response, payload);
+  }
+  return payload;
+}
+
 export async function claimStaffTicket(
   ticketId: number | string,
 ): Promise<StaffTicketDetail> {
@@ -897,6 +982,80 @@ export async function updateStaffTicketStatus(
     throwApiRequestError(response, payload);
   }
   return payload;
+}
+
+export async function fetchUsers(
+  query: UserListQuery = {},
+  signal?: AbortSignal,
+): Promise<UserListItem[]> {
+  const searchParams = new URLSearchParams();
+  const search = query.search?.trim();
+  if (search) {
+    searchParams.set("search", search);
+  }
+  if (query.role) {
+    searchParams.set("role", query.role);
+  }
+  const queryString = searchParams.toString();
+
+  const { response, payload } = await requestJson(
+    queryString ? `/api/admin/users?${queryString}` : "/api/admin/users",
+    { signal },
+  );
+  if (!response.ok || !isUserList(payload)) {
+    throwApiRequestError(response, payload);
+  }
+  return payload;
+}
+
+export async function createUser(
+  input: CreateUserInput,
+): Promise<UserListItem> {
+  const { response, payload } = await requestJson("/api/admin/users", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  if (!response.ok || !isUserListItem(payload)) {
+    throwApiRequestError(response, payload);
+  }
+  return payload;
+}
+
+export async function updateUser(
+  userId: number | string,
+  input: UpdateUserInput,
+): Promise<UserListItem> {
+  const { response, payload } = await requestJson(
+    `/api/admin/users/${userId}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    },
+  );
+  if (!response.ok || !isUserListItem(payload)) {
+    throwApiRequestError(response, payload);
+  }
+  return payload;
+}
+
+export async function setUserInitialPassword(
+  userId: number | string,
+  initialPassword: string,
+  confirmInitialPassword: string,
+): Promise<void> {
+  const { response, payload } = await requestJson(
+    `/api/admin/users/${userId}/initial-password`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ initialPassword, confirmInitialPassword }),
+    },
+  );
+  if (!response.ok) {
+    throwApiRequestError(response, payload);
+  }
 }
 
 export async function fetchPublicComments(

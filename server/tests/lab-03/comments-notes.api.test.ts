@@ -175,4 +175,117 @@ describe("Ticket Public Comments, Internal Notes, and resolution indication", ()
     expect(invalid.status).toBe(400);
     expect(invalid.body.error.code).toBe("RESOLUTION_INDICATION_INVALID");
   });
+
+  it("gives an Administrator read-only Ticket Review with an IT Priority-only mutation", async () => {
+    const before = await prisma.ticket.findUniqueOrThrow({
+      where: { id: requesterATicketId },
+      select: { requestedPriority: true, currentStatus: true },
+    });
+
+    const review = await administrator.agent.get(
+      `/api/admin/tickets/${requesterATicketId}`,
+    );
+    expect(review.status, JSON.stringify(review.body)).toBe(200);
+    expect(review.body).toEqual(
+      expect.objectContaining({
+        id: requesterATicketId,
+        ticketNumber: expect.stringMatching(/^TT-/),
+        requester: expect.objectContaining({ id: expect.any(Number) }),
+        category: expect.objectContaining({ id: expect.any(Number) }),
+        relatedSystem: expect.objectContaining({ id: expect.any(Number) }),
+        requestedPriority: expect.any(String),
+        itPriority: expect.any(String),
+        currentStatus: expect.any(String),
+        description: expect.any(String),
+        attachments: expect.any(Array),
+        publicComments: expect.any(Array),
+        internalNotes: expect.any(Array),
+      }),
+    );
+    expect(
+      review.body.owner === null ||
+        (typeof review.body.owner === "object" &&
+          typeof review.body.owner.name === "string"),
+    ).toBe(true);
+    expect(review.body.requesterResolutionIndicatedAt).toEqual(
+      expect.any(String),
+    );
+    expect(review.body).not.toHaveProperty("eligibleOwners");
+    expect(
+      review.body.internalNotes.some(
+        (note: { content: string }) =>
+          note.content === "Private triage detail" ||
+          note.content.includes("Seed note"),
+      ),
+    ).toBe(true);
+
+    const updated = await administrator.agent
+      .patch(`/api/admin/tickets/${requesterATicketId}/priority`)
+      .set("X-CSRF-Token", administrator.csrfToken)
+      .send({ itPriority: "LOW" });
+    expect(updated.status, JSON.stringify(updated.body)).toBe(200);
+    expect(updated.body.itPriority).toBe("LOW");
+    expect(updated.body.requestedPriority).toBe(before.requestedPriority);
+    expect(updated.body.currentStatus).toBe(before.currentStatus);
+
+    const persisted = await prisma.ticket.findUniqueOrThrow({
+      where: { id: requesterATicketId },
+      select: {
+        itPriority: true,
+        requestedPriority: true,
+        currentStatus: true,
+        primaryOwnerUserId: true,
+      },
+    });
+    expect(persisted.itPriority).toBe("LOW");
+    expect(persisted.requestedPriority).toBe(before.requestedPriority);
+    expect(persisted.currentStatus).toBe(before.currentStatus);
+
+    await administrator.agent
+      .patch(`/api/admin/tickets/${requesterATicketId}/priority`)
+      .set("X-CSRF-Token", administrator.csrfToken)
+      .send({ itPriority: "MEDIUM" });
+
+    const invalidPriority = await administrator.agent
+      .patch(`/api/admin/tickets/${requesterATicketId}/priority`)
+      .set("X-CSRF-Token", administrator.csrfToken)
+      .send({ itPriority: "URGENT" });
+    expect(invalidPriority.status).toBe(400);
+    expect(invalidPriority.body.error.code).toBe("IT_PRIORITY_INVALID");
+
+    const missingTicket = await administrator.agent.get(
+      "/api/admin/tickets/99999999",
+    );
+    expect(missingTicket.status).toBe(404);
+    expect(missingTicket.body.error.code).toBe("TICKET_NOT_FOUND");
+
+    const invalidId = await administrator.agent.get(
+      "/api/admin/tickets/not-a-number",
+    );
+    expect(invalidId.status).toBe(400);
+
+    const missingCsrf = await administrator.agent
+      .patch(`/api/admin/tickets/${requesterATicketId}/priority`)
+      .send({ itPriority: "HIGH" });
+    expect(missingCsrf.status).toBe(403);
+    expect(missingCsrf.body.error.code).toBe("CSRF_TOKEN_INVALID");
+
+    const staffForbidden = await staff.agent.get(
+      `/api/admin/tickets/${requesterATicketId}`,
+    );
+    expect(staffForbidden.status).toBe(403);
+    expect(staffForbidden.body.error.code).toBe("ADMIN_TICKET_FORBIDDEN");
+
+    const requesterForbidden = await requesterA.agent
+      .patch(`/api/admin/tickets/${requesterATicketId}/priority`)
+      .set("X-CSRF-Token", requesterA.csrfToken)
+      .send({ itPriority: "HIGH" });
+    expect(requesterForbidden.status).toBe(403);
+    expect(requesterForbidden.body.error.code).toBe("ADMIN_TICKET_FORBIDDEN");
+
+    const noMutationControls = await administrator.agent
+      .post(`/api/admin/tickets/${requesterATicketId}/claim`)
+      .set("X-CSRF-Token", administrator.csrfToken);
+    expect(noMutationControls.status).toBe(404);
+  });
 });
