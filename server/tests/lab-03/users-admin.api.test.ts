@@ -1,13 +1,22 @@
+import { randomUUID } from "node:crypto";
+
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { app, loginAgent, prepareLab3Data, prisma } from "./test-helpers.js";
+import {
+  app,
+  deleteTickets,
+  loginAgent,
+  prepareLab3Data,
+  prisma,
+} from "./test-helpers.js";
 
 let administrator!: Awaited<ReturnType<typeof loginAgent>>;
 let requester!: Awaited<ReturnType<typeof loginAgent>>;
 let staff!: Awaited<ReturnType<typeof loginAgent>>;
 
 const createdUserIds: number[] = [];
+const createdTicketIds: number[] = [];
 
 function uniqueEmail(label: string) {
   return `${label}-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}@toktickit.test`;
@@ -38,6 +47,33 @@ async function createManagedUser(options: {
   return { id: response.body.id as number, email, initialPassword };
 }
 
+async function createManagedTicket() {
+  const [category, relatedSystem, requesterUser] = await Promise.all([
+    prisma.category.findFirstOrThrow({ select: { id: true } }),
+    prisma.relatedSystem.findFirstOrThrow({ select: { id: true } }),
+    prisma.user.findUniqueOrThrow({
+      where: { email: "requester-a@toktickit.test" },
+      select: { id: true },
+    }),
+  ]);
+  const ticket = await prisma.ticket.create({
+    data: {
+      ticketNumber: `TT-RACE-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`,
+      clientRequestId: randomUUID(),
+      ticketDate: new Date(),
+      requesterUserId: requesterUser.id,
+      categoryId: category.id,
+      relatedSystemId: relatedSystem.id,
+      requestedPriority: "MEDIUM",
+      summary: "Concurrent ownership safety test",
+      description: "Test Ticket for concurrent User and ownership updates.",
+    },
+    select: { id: true },
+  });
+  createdTicketIds.push(ticket.id);
+  return ticket.id;
+}
+
 beforeAll(async () => {
   await prepareLab3Data();
   administrator = await loginAgent("administrator@toktickit.test");
@@ -46,6 +82,9 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  if (createdTicketIds.length > 0) {
+    await deleteTickets(createdTicketIds);
+  }
   if (createdUserIds.length > 0) {
     await prisma.session.deleteMany({
       where: { userId: { in: createdUserIds } },
@@ -393,6 +432,87 @@ describe("Administrator User Management", () => {
         })
       ).role,
     ).toBe("IT_STAFF");
+  });
+
+  it("serializes concurrent Administrator demotions without removing every Administrator", async () => {
+    const otherAdministrator = await createManagedUser({
+      name: "Concurrent Administrator",
+      role: "ADMINISTRATOR",
+    });
+
+    try {
+      const responses = await Promise.all([
+        administrator.agent
+          .patch(`/api/admin/users/${administrator.userId}`)
+          .set("X-CSRF-Token", administrator.csrfToken)
+          .send({ role: "REQUESTER" }),
+        administrator.agent
+          .patch(`/api/admin/users/${otherAdministrator.id}`)
+          .set("X-CSRF-Token", administrator.csrfToken)
+          .send({ role: "REQUESTER" }),
+      ]);
+
+      expect(
+        responses.filter((response) => response.status === 200),
+      ).toHaveLength(1);
+      expect(
+        responses.filter((response) => response.status === 409),
+      ).toHaveLength(1);
+      expect(
+        await prisma.user.count({
+          where: { role: "ADMINISTRATOR", active: true },
+        }),
+      ).toBeGreaterThanOrEqual(1);
+    } finally {
+      await prisma.user.update({
+        where: { id: administrator.userId },
+        data: { role: "ADMINISTRATOR", active: true },
+      });
+    }
+  });
+
+  it("prevents deactivation from racing a Ticket assignment to the same User", async () => {
+    const target = await createManagedUser({
+      name: "Concurrent Ownership Target",
+      role: "IT_STAFF",
+    });
+    const ticketId = await createManagedTicket();
+
+    const [deactivation, assignment] = await Promise.all([
+      administrator.agent
+        .patch(`/api/admin/users/${target.id}`)
+        .set("X-CSRF-Token", administrator.csrfToken)
+        .send({ active: false }),
+      staff.agent
+        .patch(`/api/staff/tickets/${ticketId}/owner`)
+        .set("X-CSRF-Token", staff.csrfToken)
+        .send({ ownerId: target.id }),
+    ]);
+
+    expect(deactivation.status === 200 && assignment.status === 200).toBe(
+      false,
+    );
+    expect([200, 409]).toContain(deactivation.status);
+    expect([200, 400, 409]).toContain(assignment.status);
+
+    const [storedTarget, storedTicket] = await Promise.all([
+      prisma.user.findUniqueOrThrow({
+        where: { id: target.id },
+        select: { active: true, role: true },
+      }),
+      prisma.ticket.findUniqueOrThrow({
+        where: { id: ticketId },
+        select: { primaryOwnerUserId: true },
+      }),
+    ]);
+
+    if (storedTicket.primaryOwnerUserId === target.id) {
+      expect(storedTarget.active).toBe(true);
+      expect(["IT_STAFF", "ADMINISTRATOR"]).toContain(storedTarget.role);
+    }
+    if (!storedTarget.active) {
+      expect(storedTicket.primaryOwnerUserId).not.toBe(target.id);
+    }
   });
 
   it("sets a new initial password, revokes sessions, and forces the next login to change it", async () => {

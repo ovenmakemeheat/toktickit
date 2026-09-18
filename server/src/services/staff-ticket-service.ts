@@ -1,9 +1,9 @@
-import type {
+import {
   Prisma,
-  PrismaClient,
-  RequestedPriority,
-  Role,
-  TicketStatus,
+  type PrismaClient,
+  type RequestedPriority,
+  type Role,
+  type TicketStatus,
 } from "@prisma/client";
 
 import { listEligibleStaffOwners } from "./staff-owner-service.js";
@@ -12,6 +12,10 @@ import {
   parseTicketStatus,
 } from "./ticket-status-service.js";
 import { parseTicketId, TicketNotFoundError } from "./ticket-service.js";
+import {
+  acquireUserOwnershipLock,
+  serializableTransactionOptions,
+} from "./transaction-service.js";
 
 const staffTicketDetailInclude = {
   requesterUser: { select: { id: true, name: true } },
@@ -40,7 +44,7 @@ type StaffTicketWithDetail = Prisma.TicketGetPayload<{
   include: typeof staffTicketDetailInclude;
 }>;
 
-type StaffTicketStore = Pick<PrismaClient, "ticket" | "user">;
+type StaffTicketStore = Pick<PrismaClient, "ticket" | "user" | "$transaction">;
 
 export type StaffTicketAttachmentResponse = {
   id: number;
@@ -120,6 +124,15 @@ export class TicketStatusConflictError extends Error {
   constructor() {
     super("The Ticket status changed before this operation completed");
     this.name = "TicketStatusConflictError";
+  }
+}
+
+export class TicketAssignmentConflictError extends Error {
+  readonly code = "TICKET_ASSIGNMENT_CONFLICT";
+
+  constructor() {
+    super("The User or Ticket changed before assignment completed");
+    this.name = "TicketAssignmentConflictError";
   }
 }
 
@@ -260,25 +273,44 @@ async function validateOwner(
   }
 }
 
+function isSerializationConflict(error: unknown) {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2034"
+  );
+}
+
 export async function claimStaffTicket(
   prisma: StaffTicketStore,
   staffUserId: number,
   rawTicketId: unknown,
 ) {
   const ticketId = parseTicketId(rawTicketId);
-  const result = await prisma.ticket.updateMany({
-    where: { id: ticketId, primaryOwnerUserId: null },
-    data: { primaryOwnerUserId: staffUserId },
-  });
-  if (result.count === 0) {
-    const ticket = await prisma.ticket.findUnique({
-      where: { id: ticketId },
-      select: { primaryOwnerUserId: true },
-    });
-    if (!ticket) {
-      throw new TicketNotFoundError();
+
+  try {
+    await prisma.$transaction(async (transaction) => {
+      await acquireUserOwnershipLock(transaction);
+      await validateOwner(transaction, staffUserId);
+      const result = await transaction.ticket.updateMany({
+        where: { id: ticketId, primaryOwnerUserId: null },
+        data: { primaryOwnerUserId: staffUserId },
+      });
+      if (result.count === 0) {
+        const ticket = await transaction.ticket.findUnique({
+          where: { id: ticketId },
+          select: { primaryOwnerUserId: true },
+        });
+        if (!ticket) {
+          throw new TicketNotFoundError();
+        }
+        throw new TicketAlreadyAssignedError();
+      }
+    }, serializableTransactionOptions);
+  } catch (error) {
+    if (isSerializationConflict(error)) {
+      throw new TicketAssignmentConflictError();
     }
-    throw new TicketAlreadyAssignedError();
+    throw error;
   }
 
   return getStaffTicketDetail(prisma, ticketId);
@@ -290,13 +322,26 @@ export async function assignStaffTicket(
   rawBody: unknown,
 ) {
   const ownerId = parseOwnerId(rawBody);
-  const ticket = await findStaffTicket(prisma, rawTicketId);
-  await validateOwner(prisma, ownerId);
-  await prisma.ticket.update({
-    where: { id: ticket.id },
-    data: { primaryOwnerUserId: ownerId },
-  });
-  return getStaffTicketDetail(prisma, ticket.id);
+  const ticketId = parseTicketId(rawTicketId);
+
+  try {
+    await prisma.$transaction(async (transaction) => {
+      await acquireUserOwnershipLock(transaction);
+      const ticket = await findStaffTicket(transaction, ticketId);
+      await validateOwner(transaction, ownerId);
+      await transaction.ticket.update({
+        where: { id: ticket.id },
+        data: { primaryOwnerUserId: ownerId },
+      });
+    }, serializableTransactionOptions);
+  } catch (error) {
+    if (isSerializationConflict(error)) {
+      throw new TicketAssignmentConflictError();
+    }
+    throw error;
+  }
+
+  return getStaffTicketDetail(prisma, ticketId);
 }
 
 export function parseItPriority(rawBody: unknown): RequestedPriority {

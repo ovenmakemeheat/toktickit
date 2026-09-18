@@ -514,43 +514,88 @@ export default function UserManagement({ currentUserId }: UserManagementProps) {
           ) : null}
 
           {!isLoading && !loadError && listed.length > 0 ? (
-            <div className="lab2-ticket-table-wrapper lab3-user-table-wrapper">
-              <table className="table align-middle lab2-ticket-table lab3-user-table">
-                <caption className="visually-hidden">
-                  Administrator User list
-                </caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Name</th>
-                    <th scope="col">Email</th>
-                    <th scope="col">Role</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Edit action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {listed.map((user) => (
-                    <tr key={user.id}>
-                      <td>{user.name}</td>
-                      <td>{user.email}</td>
-                      <td>{roleLabel(user.role)}</td>
-                      <td>
-                        {user.status === "ACTIVE" ? "Active" : "Inactive"}
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-outline-success"
-                          onClick={() => openEdit(user)}
-                        >
-                          Edit
-                        </button>
-                      </td>
+            <>
+              <div className="lab2-ticket-table-wrapper lab3-user-table-wrapper">
+                <table className="table align-middle lab2-ticket-table lab3-user-table">
+                  <caption className="visually-hidden">
+                    Administrator User list
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Name</th>
+                      <th scope="col">Email</th>
+                      <th scope="col">Role</th>
+                      <th scope="col">Status</th>
+                      <th scope="col">Edit action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {listed.map((user) => (
+                      <tr key={user.id}>
+                        <td>{user.name}</td>
+                        <td>{user.email}</td>
+                        <td>{roleLabel(user.role)}</td>
+                        <td>
+                          {user.status === "ACTIVE" ? "Active" : "Inactive"}
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-outline-success"
+                            onClick={() => openEdit(user)}
+                          >
+                            Edit
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <section
+                className="lab3-user-cards"
+                aria-label="Administrator User cards"
+              >
+                {listed.map((user) => (
+                  <article
+                    className="lab2-ticket-card lab3-user-card"
+                    key={`mobile-${user.id}`}
+                  >
+                    <div className="lab2-ticket-card-heading">
+                      <h2>{user.name}</h2>
+                      <span className="lab2-ticket-badge">
+                        {user.status === "ACTIVE" ? "Active" : "Inactive"}
+                      </span>
+                    </div>
+                    <dl>
+                      <div>
+                        <dt>Email</dt>
+                        <dd>{user.email}</dd>
+                      </div>
+                      <div>
+                        <dt>Role</dt>
+                        <dd>{roleLabel(user.role)}</dd>
+                      </div>
+                      <div>
+                        <dt>Status</dt>
+                        <dd>
+                          {user.status === "ACTIVE" ? "Active" : "Inactive"}
+                        </dd>
+                      </div>
+                    </dl>
+                    <div className="lab2-form-actions">
+                      <button
+                        type="button"
+                        className="btn btn-outline-success"
+                        onClick={() => openEdit(user)}
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </section>
+            </>
           ) : null}
         </>
       ) : (

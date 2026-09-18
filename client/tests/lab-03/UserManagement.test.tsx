@@ -138,6 +138,42 @@ describe("Administrator User Management", () => {
     });
   });
 
+  it("keeps each User editable at the 390px mobile breakpoint", async () => {
+    const previousWidth = window.innerWidth;
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      value: 390,
+    });
+    window.dispatchEvent(new Event("resize"));
+
+    try {
+      installUserFetch();
+      const user = userEvent.setup();
+
+      render(<UserManagement currentUserId={1} />);
+
+      const mobileCards = await screen.findByRole("region", {
+        name: "Administrator User cards",
+      });
+      const editButtons = within(mobileCards).getAllByRole("button", {
+        name: "Edit",
+      });
+      expect(editButtons).toHaveLength(2);
+
+      await user.click(editButtons[1]);
+
+      expect(
+        screen.getByRole("form", { name: "Edit Requester A" }),
+      ).toBeInTheDocument();
+    } finally {
+      Object.defineProperty(window, "innerWidth", {
+        configurable: true,
+        value: previousWidth,
+      });
+      window.dispatchEvent(new Event("resize"));
+    }
+  });
+
   it("distinguishes empty results and reports forbidden access", async () => {
     installUserFetch([]);
     const { unmount } = render(<UserManagement currentUserId={1} />);

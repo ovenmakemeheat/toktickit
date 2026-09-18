@@ -719,6 +719,19 @@ textarea.form-control {
   gap: 0.75rem;
 }
 
+.lab3-user-cards {
+  display: none;
+  gap: 0.75rem;
+}
+
+.lab3-user-card {
+  min-width: 0;
+}
+
+.lab3-user-card dl {
+  margin-bottom: 0;
+}
+
 .lab3-communication-panel,
 .lab3-resolution-section {
   display: grid;
@@ -912,7 +925,8 @@ textarea.form-control {
   }
 
   .lab2-ticket-cards,
-  .lab3-staff-ticket-cards {
+  .lab3-staff-ticket-cards,
+  .lab3-user-cards {
     display: grid;
     gap: 0.75rem;
   }

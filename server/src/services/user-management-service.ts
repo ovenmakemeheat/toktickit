@@ -7,6 +7,10 @@ import {
   passwordMaxLength,
   validatePassword,
 } from "./password-service.js";
+import {
+  acquireUserOwnershipLock,
+  serializableTransactionOptions,
+} from "./transaction-service.js";
 
 const roleValues = ["REQUESTER", "IT_STAFF", "ADMINISTRATOR"] as const;
 const supportedUserQueryKeys = new Set(["search", "role"]);
@@ -497,6 +501,7 @@ export async function updateUser(
 
   try {
     return await prisma.$transaction(async (transaction) => {
+      await acquireUserOwnershipLock(transaction);
       const target = await transaction.user.findUnique({
         where: { id: userId },
         select: { id: true, role: true, active: true },
@@ -555,7 +560,7 @@ export async function updateUser(
         }
         throw error;
       }
-    });
+    }, serializableTransactionOptions);
   } catch (error) {
     if (
       error instanceof UserNotFoundError ||

@@ -74,6 +74,7 @@ import {
   claimStaffTicket,
   getStaffTicketDetail,
   TicketAlreadyAssignedError,
+  TicketAssignmentConflictError,
   TicketStatusConflictError,
   updateStaffTicketPriority,
   updateStaffTicketStatus,
@@ -231,6 +232,7 @@ function sendStaffTicketError(response: Response, error: unknown) {
 
   if (
     error instanceof TicketAlreadyAssignedError ||
+    error instanceof TicketAssignmentConflictError ||
     error instanceof TicketStatusConflictError
   ) {
     sendError(response, 409, error.code, error.message);
