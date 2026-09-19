@@ -157,6 +157,62 @@ test.describe("Lab 3 authentication and Requester regression", () => {
     ).toBeVisible();
   });
 
+  test("explains invalid credentials and inactive accounts safely", async ({
+    page,
+  }) => {
+    await page.route("**/api/auth/me", (route) =>
+      fulfillJson(
+        route,
+        {
+          error: { code: "SESSION_REQUIRED", message: "Sign in is required." },
+        },
+        401,
+      ),
+    );
+    await page.route("**/api/auth/login", (route) => {
+      const body = JSON.parse(route.request().postData() ?? "{}");
+      if (body.email === "inactive@toktickit.test") {
+        return fulfillJson(
+          route,
+          {
+            error: {
+              code: "ACCOUNT_INACTIVE",
+              message: "This account is inactive.",
+            },
+          },
+          403,
+        );
+      }
+      return fulfillJson(
+        route,
+        {
+          error: {
+            code: "INVALID_CREDENTIALS",
+            message: "Invalid credentials.",
+          },
+        },
+        401,
+      );
+    });
+
+    const invalidValue = `invalid-${Date.now()}`;
+    const inactiveValue = `inactive-${Date.now()}`;
+    await page.goto("/login");
+    await page.getByLabel(/Email/).fill("unknown@toktickit.test");
+    await page.getByLabel(/Password/).fill(invalidValue);
+    await page.getByRole("button", { name: "Sign in" }).click();
+    await expect(
+      page.getByText("Email or password is incorrect."),
+    ).toBeVisible();
+
+    await page.getByLabel(/Email/).fill("inactive@toktickit.test");
+    await page.getByLabel(/Password/).fill(inactiveValue);
+    await page.getByRole("button", { name: "Sign in" }).click();
+    await expect(
+      page.getByText("This account is inactive. Contact an administrator."),
+    ).toBeVisible();
+  });
+
   test("requires an initial password change before showing normal navigation", async ({
     page,
   }) => {
