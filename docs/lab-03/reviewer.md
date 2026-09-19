@@ -35,7 +35,7 @@ review decision.
 | #74 | `feature/16-it-staff-ticket-workflow` | [PR #80](https://github.com/ovenmakemeheat/toktickit/pull/80) | Merged into `lab3-staging` by `MadMax168` on 2026-09-17. |
 | #75 | `feature/17-administrator-user-management` | [PR #81](https://github.com/ovenmakemeheat/toktickit/pull/81) | Merged into `lab3-staging` by `MadMax168` on 2026-09-18. |
 | #76 | `feature/18-zen-green-visual-inspection` | [PR #82](https://github.com/ovenmakemeheat/toktickit/pull/82) | Merged into `lab3-staging` by `MadMax168` on 2026-09-18. |
-| #77 | `feature/19-e2e-evidence-release` | This integration PR | Pending creation, review, and human merge into `lab3-staging`. |
+| #77 | `feature/19-e2e-evidence-release` | [PR #83](https://github.com/ovenmakemeheat/toktickit/pull/83) | Open; review fixes are pushed, human re-review and merge into `lab3-staging` are pending. |
 
 At the start of Issue #77 work, `lab3-staging` and this feature branch were at
 `4cb1049` (`Merge pull request #82`). The release PR from the completed
@@ -51,7 +51,7 @@ this feature PR must not claim that release has already happened.
 | [#80](https://github.com/ovenmakemeheat/toktickit/pull/80) | `MadMax168` requested pagination preservation, complete owner options, stale-request loading protection, and typed concurrent status conflicts. | The author replied with `4e16ee0`; queue pagination and request guards were corrected, eligible owners are returned separately, and concurrent status updates return `409 TICKET_STATUS_CONFLICT` with refresh feedback. | Addressed and merged. |
 | [#81](https://github.com/ovenmakemeheat/toktickit/pull/81) | `MadMax168` requested a mobile User Management representation, serialized last-Administrator protection, and coordination between deactivation and Ticket assignment. | The author replied with `7fe6fe3`; mobile cards and edit actions were added, PostgreSQL transaction safeguards serialize the account/assignment checks, and concurrent regressions were added. | Addressed and merged. |
 | [#82](https://github.com/ovenmakemeheat/toktickit/pull/82) | `MadMax168` requested browser-level responsive/accessibility assertions and missing Requester screenshots at all required viewports. | The author replied with `d3db36c`; `e2e/lab-03/responsive-and-accessibility.spec.ts` and the nine Requester captures were added, the checklist was updated, and the verification gate was rerun. | Addressed and merged. |
-| Issue #77 integration PR | Human review is pending. Every comment on the integration PR will receive an author response before merge. | This branch adds the missing Staff/Admin/release E2E flows, final evidence records, AI-use reflection, and the nine-part report source/PDF package. | Pending human review. |
+| [#83](https://github.com/ovenmakemeheat/toktickit/pull/83) | `MadMax168` requested real seeded API coverage instead of mocked business routes, an immutable tested revision, stable report links, and exact labsheet alignment for Answer Parts 6–8. | The author added an unmocked seeded release regression, recorded verification at `32fc2b7`, split the report into Working IT Staff Ticket Queue, Working IT Staff Ticket Detail, and Working Administrator User Management sections, and prepared immutable evidence links. | Addressed; human re-review pending. |
 
 ## Review and merge boundaries
 
@@ -65,8 +65,8 @@ this feature PR must not claim that release has already happened.
   `COMMENTED` or empty; this document does not infer `APPROVED` from a
   “ready to merge” or “look good” comment.
 - Issue #77 remains open until a human confirms the acceptance criteria,
-  reviews this integration PR, merges it, verifies the integrated
-  `lab3-staging` branch, and separately reviews the release PR to `main`.
+  reviews PR #83, merges it, verifies the integrated `lab3-staging` branch, and
+  separately reviews the release PR to `main`.
 - The project-board status requires the configured GitHub Project permission;
   if the API does not expose that permission, the human project owner must
   apply the required Kanban transition manually.

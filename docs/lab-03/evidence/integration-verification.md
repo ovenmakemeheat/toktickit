@@ -8,12 +8,14 @@ Integration target: `lab3-staging`
 
 Baseline inherited before Issue #77 changes: `4cb1049` (merged PR #82)
 
-Verification record: 2026-09-18
+Verification record: 2026-09-19
 
-The clean verification run was completed on the Issue #77 working tree with
-base `HEAD 4cb1049` plus the uncommitted Issue #77 changes shown by `git
-status`. The implementation commit and PR identity will be added when the
-branch is committed and handed to the reviewer.
+Tested revision: `32fc2b7` (`fix(#77): address release review feedback`)
+
+The review-fix verification run was completed on the committed Issue #77 tree
+whose parent is `4cb1049` (merged PR #82). The release regression and report
+were rerun against that committed tree; no uncommitted application, test, or
+report source changes are included in these results.
 
 ## Executed checks
 
@@ -26,8 +28,9 @@ scope; the evidence commit is recorded in the final handoff.
 | `bun run check` | Pass | Biome checked 117 files with no errors after formatting the new E2E specs. |
 | `bun run typecheck` | Pass | Client and server TypeScript projects completed without diagnostics. |
 | `bun run test` | Pass | 15 client test files / 58 tests and 22 server test files / 143 tests passed. |
-| `bun run test:e2e -- e2e/lab-03/staff-ticket-flow.spec.ts` | Pass | The new IT Staff queue/detail workflow passed 1/1 test after the accessible-label selector correction. |
-| `bun run test:e2e -- e2e/lab-03` | Pass | 12/12 Lab 3 tests passed across authentication/Requester, Staff, Administrator, responsive/accessibility, and release regression flows. |
+| `bun run test:e2e -- e2e/lab-03/staff-ticket-flow.spec.ts` | Pass | The focused IT Staff queue/detail workflow passed 1/1 test. |
+| `bun run test:e2e -- e2e/lab-03/release-regression.spec.ts` | Pass | 2/2 release regression tests passed against the real seeded API, including seeded role routes, Ticket/User data, and forbidden API boundaries; no business API routes were intercepted. |
+| `bun run test:e2e -- e2e/lab-03` | Pass | 12/12 Lab 3 tests passed across authentication/Requester, Staff, Administrator, responsive/accessibility, and the unmocked seeded release regression. |
 | `bun run build` | Pass | Client Vite build and server TypeScript build completed successfully. |
 | `bun run verify` | Pass | Biome, Lefthook, Prisma validation, type checks, 58 client tests, 143 server tests, and both builds completed successfully. |
 | `bun run report:build:lab3` | Pass | XeLaTeX produced `output/pdf/toktickit-lab3-report.pdf` with six A4 pages. |
@@ -46,13 +49,17 @@ scope; the evidence commit is recorded in the final handoff.
 - `e2e/lab-03/responsive-and-accessibility.spec.ts`: browser-level queue
   representation, named controls/focus/no-overflow assertions, and Requester
   captures at desktop/tablet/mobile sizes.
-- `e2e/lab-03/release-regression.spec.ts`: API health check, role route smoke
-  matrix, and direct role-forbidden destination regression.
+- `e2e/lab-03/release-regression.spec.ts`: unmocked API health check, seeded
+  authentication, role route smoke matrix, seeded Ticket/User assertions, and
+  direct role-forbidden API/destination regression.
 
-All 12 Lab 3 Playwright tests passed in the clean rerun. Playwright route
-fixtures intentionally verify browser behavior and control
-boundaries. They do not replace the real PostgreSQL/Supertest evidence for
-authorization, migration, session invalidation, or account-safety invariants.
+All 12 Lab 3 Playwright tests passed in the committed rerun. The release
+regression does not intercept business API requests; it uses the local seeded
+application and `LAB3_SEED_PASSWORD` from ignored `server/.env`. The other
+focused Playwright specs intentionally use deterministic browser fixtures for
+isolated UI assertions. Neither fixture-based UI evidence nor browser
+navigation replaces the real PostgreSQL/Supertest evidence for authorization,
+migration, session invalidation, or account-safety invariants.
 
 ## Evidence inventory
 
