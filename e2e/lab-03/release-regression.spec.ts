@@ -1,140 +1,95 @@
 import { expect, test, type Page } from "@playwright/test";
 
-type Route = Parameters<Parameters<Page["route"]>[1]>[0];
+type Role = "REQUESTER" | "IT_STAFF" | "ADMINISTRATOR";
 
-const requester = {
-  id: 11,
-  name: "Requester A",
-  email: "requester-a@toktickit.test",
-  role: "REQUESTER" as const,
-  active: true,
-  mustChangePassword: false,
-};
-const staff = {
-  id: 21,
-  name: "IT Staff A",
-  email: "it-staff-a@toktickit.test",
-  role: "IT_STAFF" as const,
-  active: true,
-  mustChangePassword: false,
-};
-const administrator = {
-  id: 1,
-  name: "Administrator",
-  email: "administrator@toktickit.test",
-  role: "ADMINISTRATOR" as const,
-  active: true,
-  mustChangePassword: false,
-};
-
-const categories = [{ id: 1, name: "Software" }];
-const relatedSystems = [{ id: 2, name: "Email" }];
-const requesterTicket = {
-  id: 101,
-  ticketNumber: "TT-20260919-RELEASE01",
-  ticketDate: "2026-09-19T10:30:00.000Z",
-  requester: { id: requester.id, name: requester.name },
-  category: categories[0],
-  relatedSystem: relatedSystems[0],
-  requestedPriority: "HIGH" as const,
-  summary: "Release smoke ticket",
-  description: "A stable fixture for the integrated Lab 3 route check.",
-  currentStatus: "OPEN" as const,
-  createdAt: "2026-09-19T10:30:00.000Z",
-  lastUpdated: "2026-09-19T10:35:00.000Z",
-  attachments: [],
-};
-
-async function fulfillJson(route: Route, payload: unknown, status = 200) {
-  await route.fulfill({
-    status,
-    contentType: "application/json",
-    body: JSON.stringify(payload),
-  });
-}
-
-function authResponse(
-  user: typeof requester | typeof staff | typeof administrator,
-) {
-  return {
-    user,
-    session: { expiresAt: "2026-09-20T17:00:00.000Z" },
-    csrfToken: "csrf-token",
+type AuthResponse = {
+  user: {
+    id: number;
+    name: string;
+    email: string;
+    role: Role;
+    active: boolean;
+    mustChangePassword: boolean;
   };
+  csrfToken: string;
+};
+
+const seededPassword = process.env.LAB3_SEED_PASSWORD;
+
+function requireSeededPassword() {
+  if (!seededPassword) {
+    throw new Error(
+      "LAB3_SEED_PASSWORD must be loaded from server/.env for the seeded release regression.",
+    );
+  }
+  return seededPassword;
 }
 
-async function mockRequester(page: Page) {
-  await page.route("**/api/auth/me", (route) =>
-    fulfillJson(route, authResponse(requester)),
-  );
-  await page.route("**/api/categories", (route) =>
-    fulfillJson(route, categories),
-  );
-  await page.route("**/api/related-systems", (route) =>
-    fulfillJson(route, relatedSystems),
-  );
-  await page.route("**/api/tickets**", (route) =>
-    fulfillJson(route, {
-      items: [requesterTicket],
-      page: 1,
-      pageSize: 10,
-      totalItems: 1,
-      totalPages: 1,
-    }),
+function e2ePassword(seedPassword: string) {
+  return `${seedPassword.slice(0, 100)}Lab3E2E!9`;
+}
+
+async function loginSeededUser(page: Page, email: string, role: Role) {
+  const initialPassword = requireSeededPassword();
+  const replacementPassword = e2ePassword(initialPassword);
+
+  for (const password of [initialPassword, replacementPassword]) {
+    const login = await page.request.post("/api/auth/login", {
+      data: { email, password },
+    });
+    if (!login.ok()) {
+      continue;
+    }
+
+    const session = (await login.json()) as AuthResponse;
+    if (session.user.mustChangePassword) {
+      const changed = await page.request.patch("/api/auth/password", {
+        data: {
+          currentPassword: password,
+          newPassword: replacementPassword,
+          confirmPassword: replacementPassword,
+        },
+        headers: { "X-CSRF-Token": session.csrfToken },
+      });
+      expect(changed.ok()).toBe(true);
+    }
+
+    const currentUserResponse = await page.request.get("/api/auth/me");
+    expect(currentUserResponse.ok()).toBe(true);
+    const currentUser = (await currentUserResponse.json()) as AuthResponse;
+    expect(currentUser.user).toMatchObject({ email, role, active: true });
+    expect(currentUser.user.mustChangePassword).toBe(false);
+    return currentUser;
+  }
+
+  throw new Error(
+    `Unable to authenticate seeded User ${email}; reset the local seed or provide its configured password.`,
   );
 }
 
-async function mockStaff(page: Page) {
-  await page.route("**/api/auth/me", (route) =>
-    fulfillJson(route, authResponse(staff)),
-  );
-  await page.route("**/api/staff/tickets**", (route) =>
-    fulfillJson(route, {
-      items: [],
-      eligibleOwners: [{ id: staff.id, name: staff.name, role: "IT_STAFF" }],
-      page: 1,
-      pageSize: 10,
-      totalItems: 0,
-      totalPages: 0,
-    }),
-  );
-  await page.route("**/api/categories", (route) =>
-    fulfillJson(route, categories),
-  );
-  await page.route("**/api/related-systems", (route) =>
-    fulfillJson(route, relatedSystems),
-  );
-}
-
-async function mockAdministrator(page: Page) {
-  await page.route("**/api/auth/me", (route) =>
-    fulfillJson(route, authResponse(administrator)),
-  );
-  await page.route("**/api/admin/users**", (route) =>
-    fulfillJson(route, [
-      {
-        id: administrator.id,
-        name: administrator.name,
-        email: administrator.email,
-        role: administrator.role,
-        status: "ACTIVE",
-      },
-    ]),
-  );
+async function expectForbidden(
+  response: Awaited<ReturnType<Page["request"]["get"]>>,
+  code: string,
+) {
+  expect(response.status()).toBe(403);
+  const body = (await response.json()) as { error?: { code?: string } };
+  expect(body.error?.code).toBe(code);
 }
 
 test.describe("Lab 3 integrated release regression", () => {
-  test("keeps the API health check and role route smoke matrix green", async ({
+  test("runs the seeded API through the role route smoke matrix", async ({
     page,
+    context,
   }) => {
     const health = await page.request.get("/api/health");
     expect(health.ok()).toBe(true);
 
-    await mockRequester(page);
+    await loginSeededUser(page, "requester-a@toktickit.test", "REQUESTER");
     await page.goto("/tickets");
     await expect(
       page.getByRole("heading", { name: "My Tickets" }),
     ).toBeVisible();
+    await expect(page.getByText("TT-20260910-SEED01").first()).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Ticket Queue" }),
     ).toHaveCount(0);
@@ -142,29 +97,51 @@ test.describe("Lab 3 integrated release regression", () => {
       page.getByRole("button", { name: "User Management" }),
     ).toHaveCount(0);
 
-    await mockStaff(page);
+    await context.clearCookies();
+    await loginSeededUser(page, "it-staff-a@toktickit.test", "IT_STAFF");
     await page.goto("/staff/tickets");
     await expect(
       page.getByRole("heading", { name: "Ticket Queue" }),
     ).toBeVisible();
     await expect(
+      page.getByRole("heading", { name: "TT-20260910-SEED01" }),
+    ).toBeVisible();
+    await expect(
       page.getByRole("button", { name: "User Management" }),
     ).toHaveCount(0);
 
-    await mockAdministrator(page);
+    await context.clearCookies();
+    await loginSeededUser(
+      page,
+      "administrator@toktickit.test",
+      "ADMINISTRATOR",
+    );
     await page.goto("/admin/users");
     await expect(
       page.getByRole("heading", { name: "User Management" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("cell", { name: "administrator@toktickit.test" }),
     ).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Ticket Queue" }),
     ).toHaveCount(0);
   });
 
-  test("keeps direct role-forbidden destinations inside the authenticated shell", async ({
+  test("enforces role-forbidden API and destination boundaries with a seeded session", async ({
     page,
   }) => {
-    await mockRequester(page);
+    await loginSeededUser(page, "requester-a@toktickit.test", "REQUESTER");
+
+    await expectForbidden(
+      await page.request.get("/api/staff/tickets"),
+      "STAFF_QUEUE_FORBIDDEN",
+    );
+    await expectForbidden(
+      await page.request.get("/api/admin/users"),
+      "USER_MANAGEMENT_FORBIDDEN",
+    );
+
     await page.goto("/staff/tickets");
     await expect(
       page.getByRole("heading", { name: "Welcome, Requester A" }),

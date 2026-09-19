@@ -16,7 +16,7 @@ Lab 3 is accepted only when the behavior is covered at the right boundary:
 - API/integration tests use Supertest against the importable Express app and an isolated PostgreSQL test database. They verify authentication, server-side authorization, ownership, migration, seed behavior, validation, safe errors, and persistence.
 - Client UI tests use Vitest and Testing Library at the user-observable boundary. They verify labels, role navigation, form states, feedback, Requester regression, Queue, Ticket Detail, Administrator Ticket Review, User Management, and keyboard-accessible behavior.
 - Style and responsive tests verify Zen Green tokens, shared components, viewport-specific representations, no horizontal overflow, and accessible control names.
-- End-to-end tests use Playwright against the integrated application and seeded local data. They verify complete role workflows, direct navigation protection, and evidence capture.
+- End-to-end tests use Playwright against the integrated application and seeded local data for the release regression. Focused browser-boundary specs may use deterministic route fixtures, while the release regression never intercepts business API requests and verifies real seeded responses.
 - Manual visual inspection verifies the rendered desktop, tablet, and mobile screenshots against `ui-spec.md`. A screenshot is not treated as proof of backend authorization without a matching API result.
 
 All tests must use local `.test` fixture accounts and isolated data. Tests must not use real personal credentials, production data, or committed plaintext passwords.
@@ -108,7 +108,7 @@ PR has already been merged to `main`.
 | E2E-03 | E2E | AC-15 through AC-21 | IT Staff Queue, query controls, claim/reassign, priority/status, Public Comments, Internal Notes, and safe failures | Staff can complete the approved operational flow without exposing private notes | `e2e/lab-03/staff-ticket-flow.spec.ts` | Pass |
 | E2E-04 | E2E/security | AC-19, AC-21 through AC-26 | Administrator read-only Ticket Review/IT Priority, list/search/filter/create/edit/reset, and account-safety rejection | Administrator can review any existing Ticket, change only IT Priority, and manage accounts; non-Administrators cannot use the screens or APIs | `e2e/lab-03/user-administration.spec.ts` | Pass |
 | E2E-05 | E2E/visual | AC-27, AC-28, AC-29 | Login, Change Password, Requester, Queue, Ticket Detail, User Management at desktop/tablet/mobile | Screenshots and assertions show usable responsive and accessible states | `e2e/lab-03/responsive-and-accessibility.spec.ts` | Pass |
-| E2E-06 | E2E/release | AC-30 | Integrated seeded workflow and final test/evidence hooks on `lab3-staging` | The final evidence package can link actual passing output to the contract | `e2e/lab-03/release-regression.spec.ts` | Pass |
+| E2E-06 | E2E/release | AC-30 | Real seeded API health, authentication, role route matrix, seeded Ticket/User data, and forbidden API/destination boundaries on the local integrated application | The release evidence exercises the actual seeded API and links passing output to the contract | `e2e/lab-03/release-regression.spec.ts` | Pass |
 
 ## 4. Acceptance-criterion traceability
 
@@ -195,8 +195,9 @@ Issue #77 execution snapshot on 2026-09-18:
 - `bun run check` — Pass; Biome checked 117 files.
 - `bun run typecheck` — Pass; client and server TypeScript projects completed.
 - `bun run test` — Pass; 58 client tests and 143 server tests.
-- `bun run test:e2e -- e2e/lab-03` — Pass after the final selector correction; 12 Lab 3 Playwright tests are required and recorded in the linked evidence file.
-- `bun run build` and `bun run verify` — final-gate commands recorded after the evidence/report files are committed.
+- `bun run test:e2e -- e2e/lab-03` — Pass; 12 Lab 3 Playwright tests passed, including the unmocked seeded release regression in `release-regression.spec.ts`.
+- `bun run report:build:lab3` — Pass; the report source produced the six-page submission PDF.
+- `bun run build` and `bun run verify` — final-gate commands recorded against the immutable verification revision in the linked evidence file.
 
 Before full verification, prepare the test database using the repository workflow and never run `docker compose down -v` during normal development. A passing command is valid evidence only when its output, branch/commit, environment prerequisite, and test scope are recorded. A code review or generated test file is not a test result.
 

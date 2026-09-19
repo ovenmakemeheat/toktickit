@@ -99,6 +99,14 @@
 \end{figure}
 }
 
+\newcommand{\singlecapturecrop}[4]{%
+\begin{figure}[H]
+  \centering
+  \evidenceimagecrop{#1}{#2}{#3}
+  \captionof{figure}{#4}
+\end{figure}
+}
+
 \begin{document}
 
 \begin{titlepage}
@@ -254,44 +262,50 @@ server-side checks.
   {Requester capture is pending.}
   {Requester My Tickets at desktop viewport.}
 
-\section{Answer Part 6: IT Staff Ticket Workflow}
+\section{Answer Part 6: Working IT Staff Ticket Queue UI}
 
-The IT Staff browser flow opens the Queue, changes search/status controls,
-opens a Ticket Detail, verifies existing Attachment metadata and an Internal
-Note, claims the unassigned Ticket, reassigns it to an eligible Administrator,
-changes IT Priority, applies a permitted status transition, posts a Public
-Comment, and adds an Internal Note. The server tests separately verify owner
-eligibility, CSRF, transition confirmation, concurrent conflict handling, and
-private-note visibility.
+The IT Staff Ticket Queue provides realistic seeded work with search, status,
+priority, owner, category, related-system, sort, and pagination controls. It
+shows Ticket Number, dates, summary, Requester, ownership, status, Requested
+Priority, and IT Priority without creating an unreadable mega-grid. API tests
+cover deterministic query behavior, assigned and unassigned ownership, empty
+and no-results states, invalid queries, and safe failures; browser tests cover
+control names, the responsive card/table representation, and opening detail.
 
-The Queue's responsive card/table behavior is covered by the browser regression
-and by the committed captures under
-\path{artifacts/lab-03/screenshots/staff-queue/} and
-\path{artifacts/lab-03/screenshots/staff-ticket-detail/}.
-
-\twocapturescrop
+\singlecapturecrop
   {artifacts/lab-03/screenshots/staff-queue/staff-queue-desktop.png}
   {0pt 3000pt 0pt 0pt}
   {Staff Queue capture is pending.}
-  {IT Staff Queue evidence (cropped top workflow view; full capture retained in the evidence directory).}
+  {IT Staff Ticket Queue evidence (cropped top workflow view; full capture retained in the evidence directory).}
+
+\section{Answer Part 7: Working IT Staff Ticket Detail UI}
+
+The IT Staff Ticket Detail keeps Ticket facts and existing Attachment metadata
+read-only while exposing only the approved operational controls: claim,
+reassign to an eligible owner, IT Priority, permitted status transitions,
+Public Comments, and Internal Notes. The screen distinguishes public and
+private communication, shows the Requester resolution indication, and provides
+validation, confirmation, conflict, and safe-failure feedback. API and client
+suites cover owner eligibility, CSRF, transition confirmation, concurrent
+status conflicts, visibility restrictions, and Attachment continuity.
+
+\singlecapturecrop
   {artifacts/lab-03/screenshots/staff-ticket-detail/staff-ticket-detail-desktop.png}
   {0pt 4700pt 0pt 0pt}
   {Staff Ticket Detail capture is pending.}
   {IT Staff Ticket Detail evidence (cropped top workflow view; full capture retained in the evidence directory).}
 
-\section{Answer Part 7: Administrator Management and Ticket Review}
+\section{Answer Part 8: Working Administrator User Management UI}
 
-The Administrator flow covers the required list columns, name/email search,
-one role filter, create, edit, activation, and initial-password reset. It also
-checks the self-deactivation explanation. It then opens the known Ticket Review
-entry, validates an invalid ID, reviews facts/comments/notes/Attachment
-metadata, confirms that Queue/status/comment/note controls are absent, and
-updates only IT Priority.
-
-A second browser scenario signs in as IT Staff and directly navigates to an
-Administrator route. The route remains inside the authenticated role shell and
-does not render User Management. The real API tests remain the authority for
-`403` responses and Administrator account-safety races.
+The Administrator User Management screen remains intentionally minimalist. It
+shows Name, Email, Role, Status, and Edit; supports name/email search and one
+role filter; and provides create, basic edit, activation/deactivation, and
+initial-password reset. Browser and API tests cover duplicate email, invalid
+role/input, self-deactivation, last-active-Administrator protection, required
+password change after reset, responsive presentation, safe failures, and
+forbidden access by non-Administrators. The companion Ticket Review evidence
+also confirms the separate Administrator read-only Ticket surface and its
+IT-Priority-only operation.
 
 \twocapturescrop
   {artifacts/lab-03/screenshots/user-management/user-management-desktop.png}
@@ -301,9 +315,9 @@ does not render User Management. The real API tests remain the authority for
   {artifacts/lab-03/screenshots/user-management/admin-ticket-review-desktop.png}
   {0pt 4300pt 0pt 0pt}
   {Ticket Review capture is pending.}
-  {Administrator Ticket Review evidence (cropped top workflow view; full capture retained in the evidence directory).}
+  {Administrator Ticket Review companion evidence (cropped top workflow view; full capture retained in the evidence directory).}
 
-\section{Answer Part 8: Evidence, Review, and Release Integration}
+\subsection{Evidence, Review, and Release Integration}
 
 The required evidence inventory is linked in
 \href{https://github.com/ovenmakemeheat/toktickit/blob/feature/19-e2e-evidence-release/docs/lab-03/evidence/integration-verification.md}{\path{integration-verification.md}}.
