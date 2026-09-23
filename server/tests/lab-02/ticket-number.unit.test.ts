@@ -89,7 +89,7 @@ describe("Lab 2 Ticket Number generation", () => {
 
     const result = await createTicket(
       ticketStore as unknown as Parameters<typeof createTicket>[0],
-      "11",
+      11,
       input,
       ticketDate,
       ticketNumberGenerator,

@@ -5,8 +5,8 @@ import { useEffect, type ReactNode } from "react";
 
 import RequesterTicketDetail from "../../src/lab-02/RequesterTicketDetail";
 import {
-  DevelopmentRequesterProvider,
-  useDevelopmentRequester,
+  RequesterProvider,
+  useRequester,
 } from "../../src/lab-02/requester-context";
 
 type MockResponse = {
@@ -69,11 +69,11 @@ function response(payload: unknown, ok = true): MockResponse {
 }
 
 function SelectRequester({ children }: { children: ReactNode }) {
-  const { selectRequester } = useDevelopmentRequester();
+  const { setRequester } = useRequester();
 
   useEffect(() => {
-    selectRequester(requester);
-  }, [selectRequester]);
+    setRequester(requester);
+  }, [setRequester]);
 
   return children;
 }
@@ -81,11 +81,11 @@ function SelectRequester({ children }: { children: ReactNode }) {
 function renderDetail() {
   const onBack = vi.fn();
   render(
-    <DevelopmentRequesterProvider>
+    <RequesterProvider>
       <SelectRequester>
         <RequesterTicketDetail ticketId={101} onBack={onBack} />
       </SelectRequester>
-    </DevelopmentRequesterProvider>,
+    </RequesterProvider>,
   );
   return onBack;
 }
@@ -129,9 +129,16 @@ describe("Issue #55 Requester Ticket Detail", () => {
     ).toBeInTheDocument();
 
     const detailCall = fetchMock.mock.calls[0];
-    expect(detailCall?.[1]).toEqual({
-      headers: { "X-Development-Requester-Id": "1" },
-    });
+    expect(detailCall?.[1]).toEqual(
+      expect.objectContaining({
+        credentials: "same-origin",
+        headers: expect.any(Headers),
+      }),
+    );
+    const detailOptions = detailCall?.[1] as RequestInit | undefined;
+    expect(
+      new Headers(detailOptions?.headers).get("X-Development-Requester-Id"),
+    ).toBeNull();
 
     await userEvent
       .setup()
@@ -207,5 +214,77 @@ describe("Issue #55 Requester Ticket Detail", () => {
     ).toBeInTheDocument();
     expect(detailRequests).toBe(2);
     expect(screen.getByText("new-evidence.png")).toBeInTheDocument();
+  });
+
+  it("lets the Requester post a Public Comment and indicate resolution without closing", async () => {
+    const comment = {
+      id: 203,
+      author: { id: requester.id, name: requester.name, role: "REQUESTER" },
+      content: "The issue still happens on another browser.",
+      createdAt: "2026-08-29T11:00:00.000Z",
+    };
+    let currentTicket = {
+      ...ticket,
+      publicComments: [] as Array<typeof comment>,
+      requesterResolutionIndicatedAt: null as string | null,
+    };
+    const commentedTicket = {
+      ...currentTicket,
+      publicComments: [comment],
+    };
+    const resolvedTicket = {
+      ...commentedTicket,
+      requesterResolutionIndicatedAt: "2026-08-29T11:01:00.000Z",
+    };
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (
+        url === "/api/tickets/101" &&
+        (!init?.method || init.method === "GET")
+      ) {
+        return Promise.resolve(response(currentTicket));
+      }
+      if (url === "/api/tickets/101/comments") {
+        currentTicket = commentedTicket;
+        return Promise.resolve(response(comment));
+      }
+      if (url === "/api/tickets/101/resolution-indication") {
+        currentTicket = resolvedTicket;
+        return Promise.resolve(
+          response({
+            ticketId: 101,
+            requesterResolutionIndicatedAt: "2026-08-29T11:01:00.000Z",
+          }),
+        );
+      }
+      return Promise.reject(new Error(`Unexpected request: ${url}`));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+
+    renderDetail();
+    await screen.findByRole("heading", { name: "TT-20260829-ABC123" });
+    expect(screen.getByText("Public Comments")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Problem Appears Resolved" }),
+    ).toBeInTheDocument();
+
+    await user.type(
+      screen.getByLabelText("Add Public Comment"),
+      comment.content,
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Post public comment" }),
+    );
+    expect(await screen.findByText(comment.content)).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: "Problem Appears Resolved" }),
+    );
+    expect(
+      await screen.findByText(/Your indication was recorded/),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Indicated on/)).toBeInTheDocument();
+    expect(screen.getByLabelText("Current Status")).toHaveValue("New");
   });
 });

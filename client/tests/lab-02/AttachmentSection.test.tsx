@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import AttachmentSection from "../../src/lab-02/AttachmentSection";
+import { setCsrfToken } from "../../src/lib/api";
 
 type MockResponse = {
   ok: boolean;
@@ -47,7 +48,6 @@ function renderAttachments(
 ) {
   render(
     <AttachmentSection
-      requesterId={1}
       ticketId={101}
       attachments={attachments}
       onChanged={onChanged}
@@ -60,6 +60,7 @@ afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  setCsrfToken(undefined);
 });
 
 describe("Issue #55 AttachmentSection", () => {
@@ -85,13 +86,15 @@ describe("Issue #55 AttachmentSection", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("uploads a permitted file with requester context and offers retry on failure", async () => {
+  it("uploads a permitted file with session ownership and offers retry on failure", async () => {
     let shouldFail = true;
     const fetchMock = vi.fn(
       (input: RequestInfo | URL, options?: RequestInit) => {
         expect(String(input)).toBe("/api/tickets/101/attachments");
         expect(options?.method).toBe("POST");
-        expect(options?.headers).toEqual({ "X-Development-Requester-Id": "1" });
+        expect(
+          new Headers(options?.headers).get("X-Development-Requester-Id"),
+        ).toBeNull();
         expect(options?.body).toBeInstanceOf(FormData);
         return Promise.resolve(
           shouldFail
@@ -144,10 +147,9 @@ describe("Issue #55 AttachmentSection", () => {
 
         expect(url).toBe("/api/tickets/101/attachments/201");
         expect(options?.method).toBe("DELETE");
-        expect(options?.headers).toEqual({
-          "Content-Type": "application/json",
-          "X-Development-Requester-Id": "1",
-        });
+        const headers = new Headers(options?.headers);
+        expect(headers.get("Content-Type")).toBe("application/json");
+        expect(headers.get("X-Development-Requester-Id")).toBeNull();
         expect(JSON.parse(String(options?.body))).toEqual({
           removalReason: "No longer needed",
         });
@@ -176,7 +178,7 @@ describe("Issue #55 AttachmentSection", () => {
     ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Download" }));
     expect(fetchMock.mock.calls[0]?.[1]).toEqual({
-      headers: { "X-Development-Requester-Id": "1" },
+      credentials: "same-origin",
     });
     expect(click).toHaveBeenCalled();
 

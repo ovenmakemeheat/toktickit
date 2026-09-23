@@ -3,9 +3,14 @@ import { randomUUID } from "node:crypto";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { seedReferenceData } from "../../prisma/seed-reference-data.js";
-import { app } from "../../src/app.js";
-import { prisma } from "../../src/db.js";
+import {
+  app,
+  lab3TestPassword,
+  loginAgent,
+  prepareLab3Data,
+  prisma,
+} from "../lab-03/test-helpers.js";
+import { hashPassword } from "../../src/services/password-service.js";
 
 type TicketInput = {
   clientRequestId: string;
@@ -18,9 +23,9 @@ type TicketInput = {
 
 const createdTicketIds = new Set<number>();
 
-let requesterAId!: number;
-let requesterBId!: number;
-let inactiveRequesterId!: number;
+let requesterA!: Awaited<ReturnType<typeof loginAgent>>;
+let requesterB!: Awaited<ReturnType<typeof loginAgent>>;
+let emptyRequester!: Awaited<ReturnType<typeof loginAgent>>;
 let emptyRequesterId!: number;
 let hardwareCategoryId!: number;
 let softwareCategoryId!: number;
@@ -44,10 +49,13 @@ function buildInput(
   };
 }
 
-async function createTicket(requesterId: number, input: TicketInput) {
-  const response = await request(app)
+async function createTicket(
+  authenticated: Awaited<ReturnType<typeof loginAgent>>,
+  input: TicketInput,
+) {
+  const response = await authenticated.agent
     .post("/api/tickets")
-    .set("X-Development-Requester-Id", String(requesterId))
+    .set("X-CSRF-Token", authenticated.csrfToken)
     .send(input);
 
   expect(response.status).toBe(201);
@@ -71,34 +79,27 @@ function expectListShape(response: request.Response) {
 
 describe("GET /api/tickets", () => {
   beforeAll(async () => {
-    await seedReferenceData(prisma);
+    await prepareLab3Data();
+    requesterA = await loginAgent("requester-a@toktickit.test");
+    requesterB = await loginAgent("requester-b@toktickit.test");
 
-    const [
-      requesterA,
-      requesterB,
-      requesterC,
-      inactiveRequester,
-      hardware,
-      software,
-      vpn,
-      email,
-    ] = await Promise.all([
-      prisma.developmentRequester.findUnique({
-        where: { email: "requester-a@toktickit.test" },
-        select: { id: true },
-      }),
-      prisma.developmentRequester.findUnique({
-        where: { email: "requester-b@toktickit.test" },
-        select: { id: true },
-      }),
-      prisma.developmentRequester.findUnique({
-        where: { email: "requester-c@toktickit.test" },
-        select: { id: true },
-      }),
-      prisma.developmentRequester.findUnique({
-        where: { email: "inactive-requester@toktickit.test" },
-        select: { id: true },
-      }),
+    const emptyEmail = `empty-${randomUUID()}@toktickit.test`;
+    const passwordHash = await hashPassword(lab3TestPassword);
+    const emptyUser = await prisma.user.create({
+      data: {
+        name: "Empty Requester",
+        email: emptyEmail,
+        role: "REQUESTER",
+        passwordHash,
+        active: true,
+        mustChangePassword: false,
+      },
+      select: { id: true },
+    });
+    emptyRequesterId = emptyUser.id;
+    emptyRequester = await loginAgent(emptyEmail);
+
+    const [hardware, software, vpn, email] = await Promise.all([
       prisma.category.findUnique({
         where: { name: "Hardware" },
         select: { id: true },
@@ -117,36 +118,23 @@ describe("GET /api/tickets", () => {
       }),
     ]);
 
-    if (
-      !requesterA ||
-      !requesterB ||
-      !requesterC ||
-      !inactiveRequester ||
-      !hardware ||
-      !software ||
-      !vpn ||
-      !email
-    ) {
-      throw new Error("Expected Lab 2 reference data was not seeded");
+    if (!hardware || !software || !vpn || !email) {
+      throw new Error("Expected Lab 3 reference data was not seeded");
     }
 
-    requesterAId = requesterA.id;
-    requesterBId = requesterB.id;
-    inactiveRequesterId = inactiveRequester.id;
     hardwareCategoryId = hardware.id;
     softwareCategoryId = software.id;
     vpnSystemId = vpn.id;
     emailSystemId = email.id;
-    emptyRequesterId = requesterC.id;
     marker = `LIST-${randomUUID().slice(0, 8).toUpperCase()}`;
 
     await Promise.all(
       Array.from({ length: 12 }, (_, index) =>
-        createTicket(requesterAId, buildInput("A", index)),
+        createTicket(requesterA, buildInput("A", index)),
       ),
     );
     await createTicket(
-      requesterBId,
+      requesterB,
       buildInput("B", 0, {
         categoryId: softwareCategoryId,
         relatedSystemId: emailSystemId,
@@ -165,32 +153,32 @@ describe("GET /api/tickets", () => {
       });
     }
 
+    await prisma.user.deleteMany({ where: { id: emptyRequesterId } });
     await prisma.$disconnect();
   });
 
-  it("requires an active Development Requester context", async () => {
+  it("requires an authenticated Requester and ignores identity headers", async () => {
     const missing = await request(app).get("/api/tickets");
-    expect(missing.status).toBe(400);
-    expect(missing.body.error.code).toBe("REQUESTER_CONTEXT_REQUIRED");
+    expect(missing.status).toBe(401);
+    expect(missing.body.error.code).toBe("SESSION_REQUIRED");
 
     const malformed = await request(app)
       .get("/api/tickets")
       .set("X-Development-Requester-Id", "not-an-id");
-    expect(malformed.status).toBe(400);
-    expect(malformed.body.error.code).toBe("REQUESTER_CONTEXT_INVALID");
+    expect(malformed.status).toBe(401);
+    expect(malformed.body.error.code).toBe("SESSION_REQUIRED");
 
     const inactive = await request(app)
       .get("/api/tickets")
-      .set("X-Development-Requester-Id", String(inactiveRequesterId));
-    expect(inactive.status).toBe(400);
-    expect(inactive.body.error.code).toBe("REQUESTER_CONTEXT_INVALID");
+      .set("X-Development-Requester-Id", "999999");
+    expect(inactive.status).toBe(401);
+    expect(inactive.body.error.code).toBe("SESSION_REQUIRED");
   });
 
-  it("returns only the selected Requester's tickets and applies case-insensitive search", async () => {
-    const response = await request(app)
+  it("returns only the authenticated Requester's tickets and applies search", async () => {
+    const response = await requesterA.agent
       .get("/api/tickets")
-      .query({ search: marker.toLowerCase(), pageSize: "20" })
-      .set("X-Development-Requester-Id", String(requesterAId));
+      .query({ search: marker.toLowerCase(), pageSize: "20" });
 
     expectListShape(response);
     expect(response.body.totalItems).toBe(12);
@@ -210,7 +198,7 @@ describe("GET /api/tickets", () => {
     ).toBe(false);
     expect(response.body.items[0]).toEqual(
       expect.objectContaining({
-        requester: { id: requesterAId, name: "Requester A" },
+        requester: { id: requesterA.userId, name: "Requester A" },
         category: expect.objectContaining({ id: hardwareCategoryId }),
         relatedSystem: expect.objectContaining({ id: vpnSystemId }),
         currentStatus: "NEW",
@@ -220,18 +208,15 @@ describe("GET /api/tickets", () => {
   });
 
   it("filters, sorts, and paginates deterministically", async () => {
-    const filtered = await request(app)
-      .get("/api/tickets")
-      .query({
-        search: marker,
-        categoryId: hardwareCategoryId,
-        relatedSystemId: vpnSystemId,
-        requestedPriority: "HIGH",
-        currentStatus: "NEW",
-        sortBy: "summary",
-        sortDirection: "asc",
-      })
-      .set("X-Development-Requester-Id", String(requesterAId));
+    const filtered = await requesterA.agent.get("/api/tickets").query({
+      search: marker,
+      categoryId: hardwareCategoryId,
+      relatedSystemId: vpnSystemId,
+      requestedPriority: "HIGH",
+      currentStatus: "NEW",
+      sortBy: "summary",
+      sortDirection: "asc",
+    });
 
     expectListShape(filtered);
     expect(filtered.body.items.length).toBe(4);
@@ -243,14 +228,12 @@ describe("GET /api/tickets", () => {
         .sort((left, right) => left.localeCompare(right)),
     );
 
-    const firstPage = await request(app)
+    const firstPage = await requesterA.agent
       .get("/api/tickets")
-      .query({ search: marker, page: "1", pageSize: "10" })
-      .set("X-Development-Requester-Id", String(requesterAId));
-    const secondPage = await request(app)
+      .query({ search: marker, page: "1", pageSize: "10" });
+    const secondPage = await requesterA.agent
       .get("/api/tickets")
-      .query({ search: marker, page: "2", pageSize: "10" })
-      .set("X-Development-Requester-Id", String(requesterAId));
+      .query({ search: marker, page: "2", pageSize: "10" });
 
     expectListShape(firstPage);
     expectListShape(secondPage);
@@ -282,13 +265,10 @@ describe("GET /api/tickets", () => {
   });
 
   it("returns a common empty response shape for no owned tickets and no matches", async () => {
-    const empty = await request(app)
+    const empty = await emptyRequester.agent.get("/api/tickets");
+    const noResults = await requesterA.agent
       .get("/api/tickets")
-      .set("X-Development-Requester-Id", String(emptyRequesterId));
-    const noResults = await request(app)
-      .get("/api/tickets")
-      .query({ search: "does-not-match-any-ticket" })
-      .set("X-Development-Requester-Id", String(requesterAId));
+      .query({ search: "does-not-match-any-ticket" });
 
     expectListShape(empty);
     expect(empty.body).toEqual({
@@ -316,10 +296,7 @@ describe("GET /api/tickets", () => {
     [{ page: "0" }, "page"],
     [{ pageSize: "15" }, "page size"],
   ])("rejects invalid %s", async (query, _label) => {
-    const response = await request(app)
-      .get("/api/tickets")
-      .query(query)
-      .set("X-Development-Requester-Id", String(requesterAId));
+    const response = await requesterA.agent.get("/api/tickets").query(query);
 
     expect(response.status).toBe(400);
     expect(response.body.error.code).toBe("TICKET_QUERY_INVALID");

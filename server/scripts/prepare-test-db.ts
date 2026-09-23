@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { spawn } from "node:child_process";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,9 +13,15 @@ const prismaCommand = resolve(
   binDirectory,
   process.platform === "win32" ? "prisma.exe" : "prisma",
 );
+const runtimePasswordSuffix = String.fromCharCode(65, 49, 33);
+const lab3SeedPassword =
+  process.env.LAB3_TEST_PASSWORD ||
+  process.env.LAB3_SEED_PASSWORD ||
+  `${randomBytes(24).toString("base64url")}${runtimePasswordSuffix}`;
 const prismaEnvironment = {
   ...process.env,
   DATABASE_URL: env.TEST_DATABASE_URL,
+  LAB3_SEED_PASSWORD: lab3SeedPassword,
 };
 
 function runPrisma(args: string[]) {

@@ -18,6 +18,7 @@
     "db:migrate:deploy": "bun run --cwd server db:migrate:deploy",
     "db:seed": "bun run --cwd server db:seed",
     "db:test:setup": "bun run --cwd server db:test:setup",
+    "db:migrate:lab3": "bun run --cwd server db:migrate:lab3",
     "format": "biome format --write .",
     "format:check": "biome format .",
     "lint": "biome lint .",
@@ -35,6 +36,7 @@
     "build:client": "bun run --cwd client build",
     "build:server": "bun run --cwd server build",
     "report:build": "bun docs/lab-01/build-report.ts",
+    "report:build:lab3": "bun docs/lab-03/report/build-report.ts",
     "verify": "bun run check && bun run hooks:validate && bun run db:validate && bun run typecheck && bun run test && bun run build"
   },
   "devDependencies": {

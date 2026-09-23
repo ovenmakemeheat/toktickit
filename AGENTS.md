@@ -2,7 +2,7 @@
 
 ## Scope
 
-This repository currently implements Lab 1 only. Keep authentication, ticket workflows, uploads, role management, and later-lab screens out of the Lab 1 codebase.
+Lab 1 and Lab 2 are the released foundation for this repository. Lab 3 is being delivered incrementally through Issues #72-#77. Keep each change bounded to its active Lab 3 issue and its approved contract in `docs/lab-03/`; do not add features excluded by that contract.
 
 ## Tooling
 
@@ -32,21 +32,21 @@ bun run db:seed
 bun run db:test:setup
 ```
 
-In PowerShell, use `Copy-Item server/.env.example server/.env`. Keep `server/.env` local. Start the application with `bun dev`; stop only the database with `bun run db:down`.
+In PowerShell, use `Copy-Item server/.env.example server/.env`. Before `bun run db:seed`, set the local-only `LAB3_SEED_PASSWORD` in `server/.env` to a valid development password. Keep `server/.env` local. Start the application with `bun dev`; stop only the database with `bun run db:down`.
 
 ### GitHub project board
 
-- Use the [TokTickIT Lab 1 project board](https://github.com/users/ovenmakemeheat/projects/1/views/2) as the canonical delivery view.
-- Keep exactly the four main Lab 1 issues (#13, #14, #15, and #16) on the board. Native sub-issues stay attached to their parent issues and are not added as separate board items.
+- Use the [TokTickIT Lab 3 project board](https://github.com/users/ovenmakemeheat/projects/1/views/2) as the canonical delivery view.
+- Keep the six Lab 3 issues (#72, #73, #74, #75, #76, and #77) on the board. Native sub-issues stay attached to their parent issues and are not added as separate board items.
 - Use the workflow statuses `Backlog`, `Specified`, `Started`, `PR Review`, `Fixing`, and `Done`.
-- Keep the board synchronized with issue and pull request state. Mark an issue `Done` only after its acceptance criteria, tests, peer review, and merge into `lab1-staging` are complete.
+- Keep the board synchronized with issue and pull request state. Mark an issue `Done` only after its acceptance criteria, tests, peer review, and merge into `lab3-staging` are complete.
 
 ### GitHub state authority
 
 - The agent may inspect issue checklists, acceptance criteria, notes, and evidence, and may check off completed checklist items.
 - The agent may close a native sub-issue only after its checklist and acceptance criteria are complete.
 - The agent must never close or reopen a pull request, merge or unmerge a pull request, or otherwise change pull request state.
-- The agent must never close or reopen a main Lab 1 issue (#13, #14, #15, or #16).
+- The agent must never close or reopen a main Lab 3 issue (#72, #73, #74, #75, #76, or #77).
 - A human must perform all pull request state changes and all main-issue closures or reopenings.
 
 ### Pull request and review rules from Lab 2 onward
@@ -84,7 +84,7 @@ It checks Biome, Lefthook configuration, Prisma schema validity, type checking, 
 
 ### Git flow
 
-- Work on the issue-specific feature branch and target `lab1-staging` through a pull request.
+- Work on the issue-specific feature branch and target `lab3-staging` through a pull request.
 - Keep commits small and focused. Use messages such as `feat(#29): add ...` or `fix(#30): ...`, and include `Refs #29` or the relevant sub-issue reference in the body.
 - Let Lefthook run on commit; fix staged-file failures rather than bypassing the hook.
 - Review `git status` and `git diff --check` before committing. Never include unrelated worktree changes.
@@ -102,14 +102,14 @@ It checks Biome, Lefthook configuration, Prisma schema validity, type checking, 
 
 - API tests use Supertest against the exported Express app and must not start a real listener.
 - Client tests use Vitest and Testing Library at the user-observable boundary.
-- Keep API tests under `server/tests/lab-01/` and client tests in the client workspace.
+- Keep existing Lab 1/Lab 2 unit, API, and client tests in their current locations; add Lab 3 API tests under `server/tests/lab-03/`, client tests under `client/tests/lab-03/`, and E2E tests under `e2e/lab-03/`.
 - Run `bun run test`, `bun run typecheck`, and `bun run build` before handing off implementation work.
 
 ## Git workflow
 
 - Work on the Issue-specific feature branch.
-- Issue #13 uses `feature/1-project-foundation` and targets `lab1-staging`.
-- Do not commit directly to `main` or `lab1-staging`.
+- Lab 3 uses `feature/<issue-number>-<feature-name>` branches and targets `lab3-staging`.
+- Do not commit directly to `main` or `lab3-staging`.
 - Keep commits focused and do not include unrelated worktree changes.
 
 ## Secrets and generated files

@@ -3,11 +3,27 @@ import multer, { MulterError } from "multer";
 
 import { prisma } from "./db.js";
 import {
-  listCategories,
-  listDevelopmentRequesters,
-  listRelatedSystems,
-  ReferenceDataStoreUnavailableError,
-} from "./services/reference-data-service.js";
+  AccountInactiveError,
+  changePassword,
+  CurrentPasswordInvalidError,
+  InvalidCredentialsError,
+  login,
+  PasswordReuseNotAllowedError,
+} from "./services/auth-service.js";
+import {
+  attachAuthContext,
+  clearSessionCookies,
+  ensureCsrfToken,
+  getAuthContext,
+  requireAuthentication,
+  requireCsrfToken,
+  setSessionCookies,
+} from "./services/auth-middleware.js";
+import { AuthInputValidationError } from "./services/auth-validation-service.js";
+import {
+  getAdminTicketDetail,
+  updateAdminTicketPriority,
+} from "./services/admin-ticket-service.js";
 import {
   ActiveAttachmentLimitReachedError,
   AttachmentAlreadyRemovedError,
@@ -43,49 +59,105 @@ import {
   TicketQueryValidationError,
 } from "./services/ticket-query-service.js";
 import {
-  RequesterContextInvalidError,
-  RequesterContextRequiredError,
-} from "./services/requester-context-service.js";
+  CommunicationContentValidationError,
+  createInternalNote,
+  createPublicComment,
+  indicateRequesterResolution,
+  listInternalNotes,
+  listPublicComments,
+  ResolutionIndicationValidationError,
+} from "./services/ticket-communication-service.js";
+import {
+  ItPriorityValidationError,
+  OwnerInvalidError,
+  assignStaffTicket,
+  claimStaffTicket,
+  getStaffTicketDetail,
+  TicketAlreadyAssignedError,
+  TicketAssignmentConflictError,
+  TicketStatusConflictError,
+  updateStaffTicketPriority,
+  updateStaffTicketStatus,
+} from "./services/staff-ticket-service.js";
+import {
+  listStaffTickets,
+  StaffQueueQueryValidationError,
+} from "./services/staff-ticket-query-service.js";
+import {
+  createUser,
+  EmailAlreadyExistsError,
+  LastAdministratorRequiredError,
+  listUsers,
+  PasswordInputValidationError,
+  SelfDeactivationNotAllowedError,
+  setInitialPassword,
+  TransactionFailedError,
+  updateUser,
+  UserIdValidationError,
+  UserInputValidationError,
+  UserNotFoundError,
+  UserOwnsTicketsError,
+  UserQueryValidationError,
+} from "./services/user-management-service.js";
+import {
+  StatusConfirmationRequiredError,
+  TicketStatusTransitionInvalidError,
+} from "./services/ticket-status-service.js";
 import { TicketInputValidationError } from "./services/ticket-validation-service.js";
+import {
+  listCategories,
+  listRelatedSystems,
+  ReferenceDataStoreUnavailableError,
+} from "./services/reference-data-service.js";
 
-function sendReferenceDataError(response: Response, error: unknown) {
-  if (error instanceof ReferenceDataStoreUnavailableError) {
-    response.status(503).json({
-      error: {
-        code: error.code,
-        message: error.message,
-      },
-    });
-    return;
-  }
-
-  response.status(500).json({
+function sendError(
+  response: Response,
+  status: number,
+  code: string,
+  message: string,
+  fields?: unknown,
+) {
+  response.status(status).json({
     error: {
-      code: "REFERENCE_DATA_FAILED",
-      message: "Unable to load reference data",
+      code,
+      message,
+      ...(fields ? { fields } : {}),
     },
   });
 }
 
-function sendTicketCreateError(response: Response, error: unknown) {
-  if (
-    error instanceof RequesterContextRequiredError ||
-    error instanceof RequesterContextInvalidError
-  ) {
-    response.status(400).json({
-      error: { code: error.code, message: error.message },
-    });
+function isMalformedJsonError(error: unknown) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const bodyParserError = error as Error & {
+    status?: number;
+    type?: string;
+  };
+  return (
+    bodyParserError.status === 400 &&
+    bodyParserError.type === "entity.parse.failed"
+  );
+}
+
+function sendReferenceDataError(response: Response, error: unknown) {
+  if (error instanceof ReferenceDataStoreUnavailableError) {
+    sendError(response, 503, error.code, error.message);
     return;
   }
 
+  sendError(
+    response,
+    500,
+    "REFERENCE_DATA_FAILED",
+    "Unable to load reference data",
+  );
+}
+
+function sendTicketCreateError(response: Response, error: unknown) {
   if (error instanceof TicketInputValidationError) {
-    response.status(400).json({
-      error: {
-        code: error.code,
-        message: error.message,
-        fields: error.fields,
-      },
-    });
+    sendError(response, 400, error.code, error.message, error.fields);
     return;
   }
 
@@ -93,158 +165,182 @@ function sendTicketCreateError(response: Response, error: unknown) {
     error instanceof CategoryNotFoundError ||
     error instanceof RelatedSystemNotFoundError
   ) {
-    response.status(404).json({
-      error: { code: error.code, message: error.message },
-    });
+    sendError(response, 404, error.code, error.message);
     return;
   }
 
   if (error instanceof IdempotencyKeyReusedError) {
-    response.status(409).json({
-      error: { code: error.code, message: error.message },
-    });
+    sendError(response, 409, error.code, error.message);
     return;
   }
 
-  response.status(500).json({
-    error: {
-      code: "TICKET_CREATE_FAILED",
-      message: "Unable to create ticket",
-    },
-  });
+  sendError(response, 500, "TICKET_CREATE_FAILED", "Unable to create ticket");
 }
 
 function sendTicketDetailError(response: Response, error: unknown) {
-  if (
-    error instanceof RequesterContextRequiredError ||
-    error instanceof RequesterContextInvalidError ||
-    error instanceof TicketIdValidationError
-  ) {
-    response.status(400).json({
-      error: { code: error.code, message: error.message },
-    });
+  if (error instanceof TicketIdValidationError) {
+    sendError(response, 400, error.code, error.message);
     return;
   }
 
   if (error instanceof TicketNotFoundError) {
-    response.status(404).json({
-      error: { code: error.code, message: error.message },
-    });
+    sendError(response, 404, error.code, error.message);
     return;
   }
 
-  response.status(500).json({
-    error: {
-      code: "TICKET_DETAIL_FAILED",
-      message: "Unable to load ticket detail",
-    },
-  });
+  sendError(
+    response,
+    500,
+    "TICKET_DETAIL_FAILED",
+    "Unable to load ticket detail",
+  );
 }
 
 function sendTicketListError(response: Response, error: unknown) {
-  if (
-    error instanceof RequesterContextRequiredError ||
-    error instanceof RequesterContextInvalidError
-  ) {
-    response.status(400).json({
-      error: { code: error.code, message: error.message },
-    });
-    return;
-  }
-
   if (error instanceof TicketQueryValidationError) {
-    response.status(400).json({
-      error: {
-        code: error.code,
-        message: error.message,
-        fields: error.fields,
-      },
-    });
+    sendError(response, 400, error.code, error.message, error.fields);
     return;
   }
 
-  response.status(500).json({
-    error: {
-      code: "TICKET_LIST_FAILED",
-      message: "Unable to load tickets",
-    },
-  });
+  sendError(response, 500, "TICKET_LIST_FAILED", "Unable to load tickets");
+}
+
+function sendStaffQueueError(response: Response, error: unknown) {
+  if (error instanceof StaffQueueQueryValidationError) {
+    sendError(response, 400, error.code, error.message, error.fields);
+    return;
+  }
+
+  sendError(
+    response,
+    500,
+    "STAFF_QUEUE_FAILED",
+    "Unable to load the Staff Ticket Queue",
+  );
+}
+
+function sendStaffTicketError(response: Response, error: unknown) {
+  if (error instanceof TicketIdValidationError) {
+    sendError(response, 400, error.code, error.message);
+    return;
+  }
+
+  if (error instanceof TicketNotFoundError) {
+    sendError(response, 404, error.code, error.message);
+    return;
+  }
+
+  if (
+    error instanceof TicketAlreadyAssignedError ||
+    error instanceof TicketAssignmentConflictError ||
+    error instanceof TicketStatusConflictError
+  ) {
+    sendError(response, 409, error.code, error.message);
+    return;
+  }
+
+  if (
+    error instanceof OwnerInvalidError ||
+    error instanceof ItPriorityValidationError ||
+    error instanceof TicketStatusTransitionInvalidError ||
+    error instanceof StatusConfirmationRequiredError
+  ) {
+    sendError(response, 400, error.code, error.message);
+    return;
+  }
+
+  sendError(
+    response,
+    500,
+    "STAFF_TICKET_FAILED",
+    "Unable to complete the Staff Ticket operation",
+  );
+}
+
+function sendCommunicationError(
+  response: Response,
+  error: unknown,
+  fallbackCode: string,
+  fallbackMessage: string,
+) {
+  if (error instanceof TicketIdValidationError) {
+    sendError(response, 400, error.code, error.message);
+    return;
+  }
+
+  if (
+    error instanceof CommunicationContentValidationError ||
+    error instanceof ResolutionIndicationValidationError
+  ) {
+    sendError(response, 400, error.code, error.message, error.fields);
+    return;
+  }
+
+  if (error instanceof TicketNotFoundError) {
+    sendError(response, 404, error.code, error.message);
+    return;
+  }
+
+  sendError(response, 500, fallbackCode, fallbackMessage);
 }
 
 function sendAttachmentUploadError(response: Response, error: unknown) {
   if (
-    error instanceof RequesterContextRequiredError ||
-    error instanceof RequesterContextInvalidError ||
     error instanceof TicketIdValidationError ||
     error instanceof AttachmentFileRequiredError ||
     error instanceof AttachmentUploadInvalidError
   ) {
-    response.status(400).json({
-      error: { code: error.code, message: error.message },
-    });
+    sendError(response, 400, error.code, error.message);
     return;
   }
 
   if (error instanceof MulterError) {
-    response.status(error.code === "LIMIT_FILE_SIZE" ? 413 : 400).json({
-      error: {
-        code:
-          error.code === "LIMIT_FILE_SIZE"
-            ? "ATTACHMENT_TOO_LARGE"
-            : "ATTACHMENT_UPLOAD_INVALID",
-        message:
-          error.code === "LIMIT_FILE_SIZE"
-            ? "ATTACHMENT_TOO_LARGE"
-            : "ATTACHMENT_UPLOAD_INVALID",
-      },
-    });
+    sendError(
+      response,
+      error.code === "LIMIT_FILE_SIZE" ? 413 : 400,
+      error.code === "LIMIT_FILE_SIZE"
+        ? "ATTACHMENT_TOO_LARGE"
+        : "ATTACHMENT_UPLOAD_INVALID",
+      error.code === "LIMIT_FILE_SIZE"
+        ? "Each attachment must be 5 MB or smaller."
+        : "Attachment upload is invalid.",
+    );
     return;
   }
 
   if (error instanceof TicketNotFoundError) {
-    response.status(404).json({
-      error: { code: error.code, message: error.message },
-    });
+    sendError(response, 404, error.code, error.message);
     return;
   }
 
   if (error instanceof AttachmentTooLargeError) {
-    response.status(413).json({
-      error: { code: error.code, message: error.message },
-    });
+    sendError(response, 413, error.code, error.message);
     return;
   }
 
   if (error instanceof AttachmentTypeNotAllowedError) {
-    response.status(415).json({
-      error: { code: error.code, message: error.message },
-    });
+    sendError(response, 415, error.code, error.message);
     return;
   }
 
   if (error instanceof ActiveAttachmentLimitReachedError) {
-    response.status(409).json({
-      error: { code: error.code, message: error.message },
-    });
+    sendError(response, 409, error.code, error.message);
     return;
   }
 
   if (error instanceof AttachmentStorageUnavailableError) {
-    response.status(503).json({
-      error: { code: error.code, message: error.message },
-    });
+    sendError(response, 503, error.code, error.message);
     return;
   }
 
-  response.status(500).json({
-    error: {
-      code:
-        error instanceof AttachmentUploadFailedError
-          ? error.code
-          : "ATTACHMENT_UPLOAD_FAILED",
-      message: "Unable to upload attachment",
-    },
-  });
+  sendError(
+    response,
+    500,
+    error instanceof AttachmentUploadFailedError
+      ? error.code
+      : "ATTACHMENT_UPLOAD_FAILED",
+    "Unable to upload attachment",
+  );
 }
 
 function sendAttachmentReadError(
@@ -253,14 +349,8 @@ function sendAttachmentReadError(
   fallbackCode: string,
   fallbackMessage: string,
 ) {
-  if (
-    error instanceof RequesterContextRequiredError ||
-    error instanceof RequesterContextInvalidError ||
-    error instanceof TicketIdValidationError
-  ) {
-    response.status(400).json({
-      error: { code: error.code, message: error.message },
-    });
+  if (error instanceof TicketIdValidationError) {
+    sendError(response, 400, error.code, error.message);
     return;
   }
 
@@ -268,41 +358,29 @@ function sendAttachmentReadError(
     error instanceof TicketNotFoundError ||
     error instanceof AttachmentNotFoundError
   ) {
-    response.status(404).json({
-      error: { code: error.code, message: error.message },
-    });
+    sendError(response, 404, error.code, error.message);
     return;
   }
 
   if (error instanceof AttachmentRemovedError) {
-    response.status(410).json({
-      error: { code: error.code, message: error.message },
-    });
+    sendError(response, 410, error.code, error.message);
     return;
   }
 
   if (error instanceof AttachmentStorageUnavailableError) {
-    response.status(503).json({
-      error: { code: error.code, message: error.message },
-    });
+    sendError(response, 503, error.code, error.message);
     return;
   }
 
-  response.status(500).json({
-    error: { code: fallbackCode, message: fallbackMessage },
-  });
+  sendError(response, 500, fallbackCode, fallbackMessage);
 }
 
 function sendAttachmentRemoveError(response: Response, error: unknown) {
   if (
-    error instanceof RequesterContextRequiredError ||
-    error instanceof RequesterContextInvalidError ||
     error instanceof TicketIdValidationError ||
     error instanceof RemovalReasonInvalidError
   ) {
-    response.status(400).json({
-      error: { code: error.code, message: error.message },
-    });
+    sendError(response, 400, error.code, error.message);
     return;
   }
 
@@ -310,31 +388,153 @@ function sendAttachmentRemoveError(response: Response, error: unknown) {
     error instanceof TicketNotFoundError ||
     error instanceof AttachmentNotFoundError
   ) {
-    response.status(404).json({
-      error: { code: error.code, message: error.message },
-    });
+    sendError(response, 404, error.code, error.message);
     return;
   }
 
   if (error instanceof AttachmentAlreadyRemovedError) {
-    response.status(409).json({
-      error: { code: error.code, message: error.message },
-    });
+    sendError(response, 409, error.code, error.message);
     return;
   }
 
-  response.status(500).json({
-    error: {
-      code: "ATTACHMENT_REMOVE_FAILED",
-      message: "Unable to remove attachment",
-    },
-  });
+  sendError(
+    response,
+    500,
+    "ATTACHMENT_REMOVE_FAILED",
+    "Unable to remove attachment",
+  );
+}
+
+function sendAdminTicketError(
+  response: Response,
+  error: unknown,
+  fallbackCode: "ADMIN_TICKET_DETAIL_FAILED" | "ADMIN_TICKET_PRIORITY_FAILED",
+) {
+  if (
+    error instanceof TicketIdValidationError ||
+    error instanceof ItPriorityValidationError
+  ) {
+    sendError(response, 400, error.code, error.message);
+    return;
+  }
+
+  if (error instanceof TicketNotFoundError) {
+    sendError(response, 404, error.code, error.message);
+    return;
+  }
+
+  sendError(
+    response,
+    500,
+    fallbackCode,
+    "Unable to complete the Administrator Ticket Review operation",
+  );
+}
+
+function sendUserManagementError(
+  response: Response,
+  error: unknown,
+  fallbackCode:
+    | "USER_MANAGEMENT_FAILED"
+    | "USER_CREATE_FAILED"
+    | "USER_UPDATE_FAILED",
+) {
+  if (
+    error instanceof UserIdValidationError ||
+    error instanceof UserInputValidationError
+  ) {
+    sendError(response, 400, error.code, error.message, error.fields);
+    return;
+  }
+
+  if (error instanceof PasswordInputValidationError) {
+    sendError(response, 400, error.code, error.message, error.fields);
+    return;
+  }
+
+  if (error instanceof UserQueryValidationError) {
+    sendError(response, 400, error.code, error.message, error.fields);
+    return;
+  }
+
+  if (error instanceof UserNotFoundError) {
+    sendError(response, 404, error.code, error.message);
+    return;
+  }
+
+  if (
+    error instanceof EmailAlreadyExistsError ||
+    error instanceof SelfDeactivationNotAllowedError ||
+    error instanceof LastAdministratorRequiredError ||
+    error instanceof UserOwnsTicketsError ||
+    error instanceof TransactionFailedError
+  ) {
+    sendError(response, 409, error.code, error.message);
+    return;
+  }
+
+  sendError(response, 500, fallbackCode, "Unable to complete the request");
+}
+
+function sendAuthRouteError(
+  response: Response,
+  error: unknown,
+  fallbackCode: "LOGIN_FAILED" | "PASSWORD_CHANGE_FAILED",
+) {
+  if (error instanceof AuthInputValidationError) {
+    sendError(response, 400, error.code, error.message, error.fields);
+    return;
+  }
+
+  if (error instanceof InvalidCredentialsError) {
+    sendError(response, 401, error.code, error.message);
+    return;
+  }
+
+  if (error instanceof AccountInactiveError) {
+    sendError(response, 403, error.code, error.message);
+    return;
+  }
+
+  if (error instanceof CurrentPasswordInvalidError) {
+    sendError(response, 401, error.code, error.message);
+    return;
+  }
+
+  if (error instanceof PasswordReuseNotAllowedError) {
+    sendError(response, 409, error.code, error.message);
+    return;
+  }
+
+  sendError(response, 500, fallbackCode, "Unable to complete authentication");
+}
+
+function sessionResponse(result: {
+  user: ReturnType<typeof import("./services/session-service.js").toPublicUser>;
+  session: { expiresAt: Date; csrfToken: string };
+}) {
+  return {
+    user: result.user,
+    session: { expiresAt: result.session.expiresAt.toISOString() },
+    csrfToken: result.session.csrfToken,
+  };
+}
+
+function requireCsrf(
+  request: express.Request,
+  response: Response,
+  next: express.NextFunction,
+) {
+  if (requireCsrfToken(request, response)) {
+    next();
+  }
 }
 
 export const app = express();
 
 app.disable("x-powered-by");
 app.use(express.json());
+app.use(attachAuthContext(prisma));
 
 const parseSingleAttachment = multer({
   storage: multer.memoryStorage(),
@@ -345,117 +545,217 @@ app.get("/api/health", (_request, response) => {
   response.json({ status: "ok", service: "TokTickIT API" });
 });
 
-app.get("/api/categories", async (_request, response) => {
+app.post("/api/auth/login", async (request, response) => {
   try {
-    response.json(await listCategories(prisma));
-  } catch (error) {
-    sendReferenceDataError(response, error);
-  }
-});
-
-app.get("/api/related-systems", async (_request, response) => {
-  try {
-    response.json(await listRelatedSystems(prisma));
-  } catch (error) {
-    sendReferenceDataError(response, error);
-  }
-});
-
-app.get("/api/development-requesters", async (_request, response) => {
-  try {
-    response.json(await listDevelopmentRequesters(prisma));
-  } catch (error) {
-    sendReferenceDataError(response, error);
-  }
-});
-
-app.post("/api/tickets", async (request, response) => {
-  try {
-    const result = await createTicket(
-      prisma,
-      request.get("X-Development-Requester-Id"),
-      request.body,
-    );
-    response.status(result.replayed ? 200 : 201).json(result.ticket);
-  } catch (error) {
-    sendTicketCreateError(response, error);
-  }
-});
-
-app.get("/api/tickets", async (request, response) => {
-  try {
-    response.json(
-      await listTickets(
-        prisma,
-        request.get("X-Development-Requester-Id"),
-        request.query,
-      ),
-    );
-  } catch (error) {
-    sendTicketListError(response, error);
-  }
-});
-
-app.get("/api/tickets/:ticketId", async (request, response) => {
-  try {
-    response.json(
-      await getTicketDetail(
-        prisma,
-        request.get("X-Development-Requester-Id"),
-        request.params.ticketId,
-      ),
-    );
-  } catch (error) {
-    sendTicketDetailError(response, error);
-  }
-});
-
-app.get("/api/tickets/:ticketId/attachments", async (request, response) => {
-  try {
-    response.json(
-      await listTicketAttachments(
-        prisma,
-        request.get("X-Development-Requester-Id"),
-        request.params.ticketId,
-      ),
-    );
-  } catch (error) {
-    sendAttachmentReadError(
+    const result = await login(prisma, request.body);
+    setSessionCookies(
       response,
-      error,
-      "ATTACHMENT_LIST_FAILED",
-      "Unable to list attachments",
+      result.session.token,
+      result.session.csrfToken,
+      result.session.expiresAt.getTime() - Date.now(),
     );
+    response.json(sessionResponse(result));
+  } catch (error) {
+    sendAuthRouteError(response, error, "LOGIN_FAILED");
   }
 });
 
-app.post("/api/tickets/:ticketId/attachments", (request, response) => {
-  void requireOwnedTicket(
-    prisma,
-    request.get("X-Development-Requester-Id"),
-    request.params.ticketId,
-  )
-    .then(() => {
-      parseSingleAttachment(request, response, (error) => {
-        if (error) {
-          sendAttachmentUploadError(response, error);
-          return;
-        }
-
-        void uploadTicketAttachment(
-          prisma,
-          request.get("X-Development-Requester-Id"),
-          request.params.ticketId,
-          request.file,
-        )
-          .then((attachment) => response.status(201).json(attachment))
-          .catch((uploadError) =>
-            sendAttachmentUploadError(response, uploadError),
-          );
+app.get(
+  "/api/auth/me",
+  requireAuthentication({ allowPasswordChange: true }),
+  async (request, response) => {
+    try {
+      const csrfToken = await ensureCsrfToken(prisma, request, response);
+      const auth = getAuthContext(request);
+      response.json({
+        user: {
+          id: auth.user.id,
+          name: auth.user.name,
+          email: auth.user.email,
+          role: auth.user.role,
+          active: auth.user.active,
+          mustChangePassword: auth.user.mustChangePassword,
+        },
+        session: { expiresAt: auth.expiresAt.toISOString() },
+        csrfToken,
       });
-    })
-    .catch((error) => sendAttachmentUploadError(response, error));
+    } catch (error) {
+      if (error instanceof Error && error.name === "SessionRequiredError") {
+        sendError(
+          response,
+          401,
+          "SESSION_REQUIRED",
+          "An authenticated session is required.",
+        );
+        return;
+      }
+      sendError(
+        response,
+        500,
+        "AUTH_ME_FAILED",
+        "Unable to load the current user",
+      );
+    }
+  },
+);
+
+app.patch(
+  "/api/auth/password",
+  requireAuthentication({ allowPasswordChange: true }),
+  requireCsrf,
+  async (request, response) => {
+    try {
+      const auth = getAuthContext(request);
+      const result = await changePassword(prisma, auth.user, request.body);
+      setSessionCookies(
+        response,
+        result.session.token,
+        result.session.csrfToken,
+        result.session.expiresAt.getTime() - Date.now(),
+      );
+      response.json(sessionResponse(result));
+    } catch (error) {
+      sendAuthRouteError(response, error, "PASSWORD_CHANGE_FAILED");
+    }
+  },
+);
+
+app.post("/api/auth/logout", async (request, response) => {
+  const auth = request.auth;
+  if (auth && !requireCsrfToken(request, response)) {
+    return;
+  }
+
+  if (auth) {
+    await prisma.session.updateMany({
+      where: { id: auth.sessionId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+  }
+  clearSessionCookies(response);
+  response.status(204).send();
 });
+
+app.get(
+  "/api/categories",
+  requireAuthentication(),
+  async (_request, response) => {
+    try {
+      response.json(await listCategories(prisma));
+    } catch (error) {
+      sendReferenceDataError(response, error);
+    }
+  },
+);
+
+app.get(
+  "/api/related-systems",
+  requireAuthentication(),
+  async (_request, response) => {
+    try {
+      response.json(await listRelatedSystems(prisma));
+    } catch (error) {
+      sendReferenceDataError(response, error);
+    }
+  },
+);
+
+app.post(
+  "/api/tickets",
+  requireAuthentication({ roles: ["REQUESTER"] }),
+  requireCsrf,
+  async (request, response) => {
+    try {
+      const auth = getAuthContext(request);
+      const result = await createTicket(prisma, auth.user.id, request.body);
+      response.status(result.replayed ? 200 : 201).json(result.ticket);
+    } catch (error) {
+      sendTicketCreateError(response, error);
+    }
+  },
+);
+
+app.get(
+  "/api/tickets",
+  requireAuthentication({ roles: ["REQUESTER"] }),
+  async (request, response) => {
+    try {
+      const auth = getAuthContext(request);
+      response.json(await listTickets(prisma, auth.user.id, request.query));
+    } catch (error) {
+      sendTicketListError(response, error);
+    }
+  },
+);
+
+app.get(
+  "/api/tickets/:ticketId",
+  requireAuthentication({ roles: ["REQUESTER"] }),
+  async (request, response) => {
+    try {
+      const auth = getAuthContext(request);
+      response.json(
+        await getTicketDetail(prisma, auth.user.id, request.params.ticketId),
+      );
+    } catch (error) {
+      sendTicketDetailError(response, error);
+    }
+  },
+);
+
+app.get(
+  "/api/tickets/:ticketId/attachments",
+  requireAuthentication({ roles: ["REQUESTER"] }),
+  async (request, response) => {
+    try {
+      const auth = getAuthContext(request);
+      response.json(
+        await listTicketAttachments(
+          prisma,
+          auth.user.id,
+          request.params.ticketId,
+        ),
+      );
+    } catch (error) {
+      sendAttachmentReadError(
+        response,
+        error,
+        "ATTACHMENT_LIST_FAILED",
+        "Unable to list attachments",
+      );
+    }
+  },
+);
+
+app.post(
+  "/api/tickets/:ticketId/attachments",
+  requireAuthentication({ roles: ["REQUESTER"] }),
+  requireCsrf,
+  (request, response) => {
+    const auth = getAuthContext(request);
+    void requireOwnedTicket(prisma, auth.user.id, request.params.ticketId)
+      .then(() => {
+        parseSingleAttachment(request, response, (error) => {
+          if (error) {
+            sendAttachmentUploadError(response, error);
+            return;
+          }
+
+          void uploadTicketAttachment(
+            prisma,
+            auth.user.id,
+            request.params.ticketId,
+            request.file,
+          )
+            .then((attachment) => response.status(201).json(attachment))
+            .catch((uploadError) =>
+              sendAttachmentUploadError(response, uploadError),
+            );
+        });
+      })
+      .catch((error) => sendAttachmentUploadError(response, error));
+  },
+);
 
 function contentDispositionHeader(displayName: string) {
   const safeName = displayName.replace(/["\r\n\\]/g, "_");
@@ -470,11 +770,13 @@ function contentDispositionHeader(displayName: string) {
 
 app.get(
   "/api/tickets/:ticketId/attachments/:attachmentId/download",
+  requireAuthentication({ roles: ["REQUESTER"] }),
   async (request, response) => {
     try {
+      const auth = getAuthContext(request);
       const result = await downloadTicketAttachment(
         prisma,
-        request.get("X-Development-Requester-Id"),
+        auth.user.id,
         request.params.ticketId,
         request.params.attachmentId,
       );
@@ -498,11 +800,14 @@ app.get(
 
 app.delete(
   "/api/tickets/:ticketId/attachments/:attachmentId",
+  requireAuthentication({ roles: ["REQUESTER"] }),
+  requireCsrf,
   async (request, response) => {
     try {
+      const auth = getAuthContext(request);
       await removeTicketAttachment(
         prisma,
-        request.get("X-Development-Requester-Id"),
+        auth.user.id,
         request.params.ticketId,
         request.params.attachmentId,
         request.body?.removalReason,
@@ -514,6 +819,404 @@ app.delete(
   },
 );
 
+app.get(
+  "/api/tickets/:ticketId/comments",
+  requireAuthentication({
+    roles: ["REQUESTER", "IT_STAFF", "ADMINISTRATOR"],
+  }),
+  async (request, response) => {
+    try {
+      const auth = getAuthContext(request);
+      response.json(
+        await listPublicComments(prisma, auth.user, request.params.ticketId),
+      );
+    } catch (error) {
+      sendCommunicationError(
+        response,
+        error,
+        "COMMENT_LIST_FAILED",
+        "Unable to load Public Comments",
+      );
+    }
+  },
+);
+
+app.post(
+  "/api/tickets/:ticketId/comments",
+  requireAuthentication({
+    roles: ["REQUESTER", "IT_STAFF"],
+    roleForbiddenCode: "COMMENT_FORBIDDEN",
+  }),
+  requireCsrf,
+  async (request, response) => {
+    try {
+      const auth = getAuthContext(request);
+      response
+        .status(201)
+        .json(
+          await createPublicComment(
+            prisma,
+            auth.user,
+            request.params.ticketId,
+            request.body,
+          ),
+        );
+    } catch (error) {
+      sendCommunicationError(
+        response,
+        error,
+        "COMMENT_CREATE_FAILED",
+        "Unable to create Public Comment",
+      );
+    }
+  },
+);
+
+app.post(
+  "/api/tickets/:ticketId/resolution-indication",
+  requireAuthentication({
+    roles: ["REQUESTER"],
+    roleForbiddenCode: "ROLE_FORBIDDEN",
+  }),
+  requireCsrf,
+  async (request, response) => {
+    try {
+      const auth = getAuthContext(request);
+      response.json(
+        await indicateRequesterResolution(
+          prisma,
+          auth.user,
+          request.params.ticketId,
+          request.body,
+        ),
+      );
+    } catch (error) {
+      sendCommunicationError(
+        response,
+        error,
+        "RESOLUTION_INDICATION_FAILED",
+        "Unable to record the resolution indication",
+      );
+    }
+  },
+);
+
+app.get(
+  "/api/tickets/:ticketId/internal-notes",
+  requireAuthentication({
+    roles: ["IT_STAFF", "ADMINISTRATOR"],
+    roleForbiddenCode: "INTERNAL_NOTES_FORBIDDEN",
+  }),
+  async (request, response) => {
+    try {
+      const auth = getAuthContext(request);
+      response.json(
+        await listInternalNotes(prisma, auth.user, request.params.ticketId),
+      );
+    } catch (error) {
+      sendCommunicationError(
+        response,
+        error,
+        "INTERNAL_NOTES_FAILED",
+        "Unable to load Internal Notes",
+      );
+    }
+  },
+);
+
+app.post(
+  "/api/tickets/:ticketId/internal-notes",
+  requireAuthentication({
+    roles: ["IT_STAFF"],
+    roleForbiddenCode: "INTERNAL_NOTES_FORBIDDEN",
+  }),
+  requireCsrf,
+  async (request, response) => {
+    try {
+      const auth = getAuthContext(request);
+      response
+        .status(201)
+        .json(
+          await createInternalNote(
+            prisma,
+            auth.user,
+            request.params.ticketId,
+            request.body,
+          ),
+        );
+    } catch (error) {
+      sendCommunicationError(
+        response,
+        error,
+        "INTERNAL_NOTE_CREATE_FAILED",
+        "Unable to create Internal Note",
+      );
+    }
+  },
+);
+
+app.get(
+  "/api/staff/tickets",
+  requireAuthentication({
+    roles: ["IT_STAFF"],
+    roleForbiddenCode: "STAFF_QUEUE_FORBIDDEN",
+  }),
+  async (request, response) => {
+    try {
+      const auth = getAuthContext(request);
+      response.json(
+        await listStaffTickets(prisma, auth.user.id, request.query),
+      );
+    } catch (error) {
+      sendStaffQueueError(response, error);
+    }
+  },
+);
+
+app.get(
+  "/api/staff/tickets/:ticketId",
+  requireAuthentication({
+    roles: ["IT_STAFF"],
+    roleForbiddenCode: "STAFF_TICKET_FORBIDDEN",
+  }),
+  async (request, response) => {
+    try {
+      response.json(
+        await getStaffTicketDetail(prisma, request.params.ticketId),
+      );
+    } catch (error) {
+      sendStaffTicketError(response, error);
+    }
+  },
+);
+
+app.post(
+  "/api/staff/tickets/:ticketId/claim",
+  requireAuthentication({
+    roles: ["IT_STAFF"],
+    roleForbiddenCode: "STAFF_TICKET_FORBIDDEN",
+  }),
+  requireCsrf,
+  async (request, response) => {
+    try {
+      const auth = getAuthContext(request);
+      response.json(
+        await claimStaffTicket(prisma, auth.user.id, request.params.ticketId),
+      );
+    } catch (error) {
+      sendStaffTicketError(response, error);
+    }
+  },
+);
+
+app.patch(
+  "/api/staff/tickets/:ticketId/owner",
+  requireAuthentication({
+    roles: ["IT_STAFF"],
+    roleForbiddenCode: "STAFF_TICKET_FORBIDDEN",
+  }),
+  requireCsrf,
+  async (request, response) => {
+    try {
+      response.json(
+        await assignStaffTicket(prisma, request.params.ticketId, request.body),
+      );
+    } catch (error) {
+      sendStaffTicketError(response, error);
+    }
+  },
+);
+
+app.patch(
+  "/api/staff/tickets/:ticketId/priority",
+  requireAuthentication({
+    roles: ["IT_STAFF"],
+    roleForbiddenCode: "STAFF_TICKET_FORBIDDEN",
+  }),
+  requireCsrf,
+  async (request, response) => {
+    try {
+      response.json(
+        await updateStaffTicketPriority(
+          prisma,
+          request.params.ticketId,
+          request.body,
+        ),
+      );
+    } catch (error) {
+      sendStaffTicketError(response, error);
+    }
+  },
+);
+
+app.patch(
+  "/api/staff/tickets/:ticketId/status",
+  requireAuthentication({
+    roles: ["IT_STAFF"],
+    roleForbiddenCode: "STAFF_TICKET_FORBIDDEN",
+  }),
+  requireCsrf,
+  async (request, response) => {
+    try {
+      response.json(
+        await updateStaffTicketStatus(
+          prisma,
+          request.params.ticketId,
+          request.body,
+        ),
+      );
+    } catch (error) {
+      sendStaffTicketError(response, error);
+    }
+  },
+);
+
+app.get(
+  "/api/admin/tickets/:ticketId",
+  requireAuthentication({
+    roles: ["ADMINISTRATOR"],
+    roleForbiddenCode: "ADMIN_TICKET_FORBIDDEN",
+  }),
+  async (request, response) => {
+    try {
+      response.json(
+        await getAdminTicketDetail(prisma, request.params.ticketId),
+      );
+    } catch (error) {
+      sendAdminTicketError(response, error, "ADMIN_TICKET_DETAIL_FAILED");
+    }
+  },
+);
+
+app.patch(
+  "/api/admin/tickets/:ticketId/priority",
+  requireAuthentication({
+    roles: ["ADMINISTRATOR"],
+    roleForbiddenCode: "ADMIN_TICKET_FORBIDDEN",
+  }),
+  requireCsrf,
+  async (request, response) => {
+    try {
+      response.json(
+        await updateAdminTicketPriority(
+          prisma,
+          request.params.ticketId,
+          request.body,
+        ),
+      );
+    } catch (error) {
+      sendAdminTicketError(response, error, "ADMIN_TICKET_PRIORITY_FAILED");
+    }
+  },
+);
+
+app.get(
+  "/api/admin/users",
+  requireAuthentication({
+    roles: ["ADMINISTRATOR"],
+    roleForbiddenCode: "USER_MANAGEMENT_FORBIDDEN",
+  }),
+  async (request, response) => {
+    try {
+      response.json(await listUsers(prisma, request.query));
+    } catch (error) {
+      sendUserManagementError(response, error, "USER_MANAGEMENT_FAILED");
+    }
+  },
+);
+
+app.post(
+  "/api/admin/users",
+  requireAuthentication({
+    roles: ["ADMINISTRATOR"],
+    roleForbiddenCode: "USER_MANAGEMENT_FORBIDDEN",
+  }),
+  requireCsrf,
+  async (request, response) => {
+    try {
+      response.status(201).json(await createUser(prisma, request.body));
+    } catch (error) {
+      sendUserManagementError(response, error, "USER_CREATE_FAILED");
+    }
+  },
+);
+
+app.patch(
+  "/api/admin/users/:userId",
+  requireAuthentication({
+    roles: ["ADMINISTRATOR"],
+    roleForbiddenCode: "USER_MANAGEMENT_FORBIDDEN",
+  }),
+  requireCsrf,
+  async (request, response) => {
+    try {
+      const auth = getAuthContext(request);
+      response.json(
+        await updateUser(
+          prisma,
+          auth.user.id,
+          request.params.userId,
+          request.body,
+        ),
+      );
+    } catch (error) {
+      sendUserManagementError(response, error, "USER_UPDATE_FAILED");
+    }
+  },
+);
+
+app.post(
+  "/api/admin/users/:userId/initial-password",
+  requireAuthentication({
+    roles: ["ADMINISTRATOR"],
+    roleForbiddenCode: "USER_MANAGEMENT_FORBIDDEN",
+  }),
+  requireCsrf,
+  async (request, response) => {
+    try {
+      await setInitialPassword(prisma, request.params.userId, request.body);
+      response.status(204).send();
+    } catch (error) {
+      sendUserManagementError(response, error, "USER_UPDATE_FAILED");
+    }
+  },
+);
+
 app.get("/", (_request, response) => {
   response.json({ service: "TokTickIT API" });
 });
+
+app.use((_request, response) => {
+  sendError(response, 404, "NOT_FOUND", "Resource was not found");
+});
+
+app.use(
+  (
+    error: unknown,
+    _request: express.Request,
+    response: Response,
+    next: express.NextFunction,
+  ) => {
+    if (response.headersSent) {
+      next(error);
+      return;
+    }
+
+    if (isMalformedJsonError(error)) {
+      sendError(
+        response,
+        400,
+        "INVALID_JSON",
+        "Request body must be valid JSON",
+      );
+      return;
+    }
+
+    sendError(
+      response,
+      500,
+      "INTERNAL_SERVER_ERROR",
+      "Unable to complete request",
+    );
+  },
+);

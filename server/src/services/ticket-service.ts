@@ -3,33 +3,44 @@ import {
   TicketStatus,
   type PrismaClient,
   type RequestedPriority,
+  type Role,
 } from "@prisma/client";
 
-import { requireActiveRequester } from "./requester-context-service.js";
 import { generateTicketNumber } from "./ticket-number-service.js";
 import {
   type CreateTicketInput,
   validateCreateTicketInput,
 } from "./ticket-validation-service.js";
 
-type TicketStore = Pick<
-  PrismaClient,
-  "developmentRequester" | "category" | "relatedSystem" | "ticket"
->;
+type TicketStore = Pick<PrismaClient, "category" | "relatedSystem" | "ticket">;
 type TicketNumberGenerator = (ticketDate: Date) => string;
 
 export const ticketDetailInclude = {
+  requesterUser: { select: { id: true, name: true } },
   requester: { select: { id: true, name: true } },
   category: { select: { id: true, name: true } },
   relatedSystem: { select: { id: true, name: true } },
   attachments: {
     orderBy: [{ uploadedAt: "asc" }, { id: "asc" }],
   },
+  publicComments: {
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+    include: {
+      author: { select: { id: true, name: true, role: true } },
+    },
+  },
 } satisfies Prisma.TicketInclude;
 
 type TicketWithDetails = Prisma.TicketGetPayload<{
   include: typeof ticketDetailInclude;
 }>;
+
+export type TicketPublicCommentResponse = {
+  id: number;
+  author: { id: number; name: string; role: Role };
+  content: string;
+  createdAt: string;
+};
 
 export type TicketDetailResponse = {
   id: number;
@@ -42,8 +53,10 @@ export type TicketDetailResponse = {
   summary: string;
   description: string;
   currentStatus: TicketStatus;
+  requesterResolutionIndicatedAt: string | null;
   createdAt: string;
   lastUpdated: string;
+  publicComments: TicketPublicCommentResponse[];
   attachments: Array<{
     id: number;
     displayName: string;
@@ -110,19 +123,32 @@ export type CreateTicketResult = {
 export function toTicketDetail(
   ticket: TicketWithDetails,
 ): TicketDetailResponse {
+  const requester = ticket.requesterUser ?? ticket.requester;
+  if (!requester) {
+    throw new TicketNotFoundError();
+  }
+
   return {
     id: ticket.id,
     ticketNumber: ticket.ticketNumber,
     ticketDate: ticket.ticketDate.toISOString(),
-    requester: ticket.requester,
+    requester,
     category: ticket.category,
     relatedSystem: ticket.relatedSystem,
     requestedPriority: ticket.requestedPriority,
     summary: ticket.summary,
     description: ticket.description,
     currentStatus: ticket.currentStatus,
+    requesterResolutionIndicatedAt:
+      ticket.requesterResolutionIndicatedAt?.toISOString() ?? null,
     createdAt: ticket.createdAt.toISOString(),
     lastUpdated: ticket.updatedAt.toISOString(),
+    publicComments: (ticket.publicComments ?? []).map((comment) => ({
+      id: comment.id,
+      author: comment.author,
+      content: comment.content,
+      createdAt: comment.createdAt.toISOString(),
+    })),
     attachments: ticket.attachments.map((attachment) => {
       const isActive = attachment.removedAt === null;
       return {
@@ -143,14 +169,16 @@ export function toTicketDetail(
 }
 
 export function parseTicketId(rawTicketId: unknown) {
+  const normalizedTicketId =
+    typeof rawTicketId === "number" ? String(rawTicketId) : rawTicketId;
   if (
-    typeof rawTicketId !== "string" ||
-    !/^[1-9]\d*$/.test(rawTicketId.trim())
+    typeof normalizedTicketId !== "string" ||
+    !/^[1-9]\d*$/.test(normalizedTicketId.trim())
   ) {
     throw new TicketIdValidationError();
   }
 
-  const ticketId = Number(rawTicketId);
+  const ticketId = Number(normalizedTicketId);
   if (!Number.isSafeInteger(ticketId) || ticketId < 1) {
     throw new TicketIdValidationError();
   }
@@ -160,13 +188,12 @@ export function parseTicketId(rawTicketId: unknown) {
 
 export async function getTicketDetail(
   prisma: TicketStore,
-  requesterHeader: string | undefined,
+  requesterUserId: number,
   rawTicketId: unknown,
 ): Promise<TicketDetailResponse> {
-  const requester = await requireActiveRequester(prisma, requesterHeader);
   const ticketId = parseTicketId(rawTicketId);
   const ticket = await prisma.ticket.findFirst({
-    where: { id: ticketId, requesterId: requester.id },
+    where: { id: ticketId, requesterUserId },
     include: ticketDetailInclude,
   });
 
@@ -179,11 +206,11 @@ export async function getTicketDetail(
 
 function hasEquivalentRequest(
   ticket: TicketWithDetails,
-  requesterId: number,
+  requesterUserId: number,
   input: CreateTicketInput,
 ) {
   return (
-    ticket.requesterId === requesterId &&
+    ticket.requesterUserId === requesterUserId &&
     ticket.categoryId === input.categoryId &&
     ticket.relatedSystemId === input.relatedSystemId &&
     ticket.requestedPriority === input.requestedPriority &&
@@ -211,12 +238,11 @@ async function findExistingTicket(
 
 export async function createTicket(
   prisma: TicketStore,
-  requesterHeader: string | undefined,
+  requesterUserId: number,
   rawInput: unknown,
   ticketDate = new Date(),
   ticketNumberGenerator: TicketNumberGenerator = generateTicketNumber,
 ): Promise<CreateTicketResult> {
-  const requester = await requireActiveRequester(prisma, requesterHeader);
   const input = validateCreateTicketInput(rawInput);
   const existingTicket = await findExistingTicket(
     prisma,
@@ -224,7 +250,7 @@ export async function createTicket(
   );
 
   if (existingTicket) {
-    if (!hasEquivalentRequest(existingTicket, requester.id, input)) {
+    if (!hasEquivalentRequest(existingTicket, requesterUserId, input)) {
       throw new IdempotencyKeyReusedError();
     }
 
@@ -257,10 +283,11 @@ export async function createTicket(
           ticketNumber: ticketNumberGenerator(ticketDate),
           clientRequestId: input.clientRequestId,
           ticketDate,
-          requesterId: requester.id,
+          requesterUserId,
           categoryId: input.categoryId,
           relatedSystemId: input.relatedSystemId,
           requestedPriority: input.requestedPriority,
+          itPriority: input.requestedPriority,
           summary: input.summary,
           description: input.description,
           currentStatus: TicketStatus.NEW,
@@ -279,7 +306,7 @@ export async function createTicket(
         input.clientRequestId,
       );
       if (ticketForRequest) {
-        if (!hasEquivalentRequest(ticketForRequest, requester.id, input)) {
+        if (!hasEquivalentRequest(ticketForRequest, requesterUserId, input)) {
           throw new IdempotencyKeyReusedError();
         }
 

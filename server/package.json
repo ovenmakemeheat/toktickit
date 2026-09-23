@@ -15,10 +15,11 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "prisma:generate": "prisma generate",
     "prisma:validate": "prisma validate",
-    "db:migrate": "prisma migrate dev",
-    "db:migrate:deploy": "prisma migrate deploy",
+    "db:migrate": "tsx scripts/run-lab3-migrations.ts dev",
+    "db:migrate:deploy": "tsx scripts/run-lab3-migrations.ts deploy",
     "db:seed": "prisma db seed",
-    "db:test:setup": "tsx scripts/prepare-test-db.ts"
+    "db:test:setup": "tsx scripts/prepare-test-db.ts",
+    "db:migrate:lab3": "tsx scripts/migrate-lab3.ts"
   },
   "dependencies": {
     "@prisma/client": "6.19.0",

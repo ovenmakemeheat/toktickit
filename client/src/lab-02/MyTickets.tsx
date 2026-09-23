@@ -18,7 +18,7 @@ import {
   type TicketSortBy,
 } from "../lib/api";
 import { navigate } from "../lib/navigation";
-import { useDevelopmentRequester } from "./requester-context";
+import { useRequester } from "./requester-context";
 
 type MyTicketsProps = {
   onCreateTicket: () => void;
@@ -63,7 +63,7 @@ function isActiveQuery(query: TicketListQuery) {
 }
 
 export default function MyTickets({ onCreateTicket }: MyTicketsProps) {
-  const { selectedRequester } = useDevelopmentRequester();
+  const { requester } = useRequester();
   const [categories, setCategories] = useState<Category[]>([]);
   const [relatedSystems, setRelatedSystems] = useState<RelatedSystem[]>([]);
   const [referenceError, setReferenceError] = useState(false);
@@ -100,7 +100,7 @@ export default function MyTickets({ onCreateTicket }: MyTicketsProps) {
   }, [loadReferences]);
 
   useEffect(() => {
-    if (!selectedRequester) {
+    if (!requester) {
       return;
     }
 
@@ -112,7 +112,7 @@ export default function MyTickets({ onCreateTicket }: MyTicketsProps) {
     setListError(false);
     setList(null);
 
-    void fetchTickets(selectedRequester.id, query, controller.signal)
+    void fetchTickets(query, controller.signal)
       .then((nextList) => {
         if (requestId !== latestListRequest.current) {
           return;
@@ -135,9 +135,9 @@ export default function MyTickets({ onCreateTicket }: MyTicketsProps) {
       });
 
     return () => controller.abort();
-  }, [query, selectedRequester]);
+  }, [query, requester]);
 
-  if (!selectedRequester) {
+  if (!requester) {
     return null;
   }
 
@@ -180,8 +180,8 @@ export default function MyTickets({ onCreateTicket }: MyTicketsProps) {
           <p className="lab2-eyebrow">Requester ticket workspace</p>
           <h1 id="my-tickets-title">My Tickets</h1>
           <p className="lab2-introduction">
-            Tickets owned by {selectedRequester.name}. The selected requester is
-            a Lab 2 testing context, not a login.
+            Tickets owned by {requester.name}. Your authenticated identity
+            determines this list.
           </p>
         </div>
         <button
@@ -406,7 +406,7 @@ export default function MyTickets({ onCreateTicket }: MyTicketsProps) {
 
       {!listLoading && !listError && list && !hasItems && !activeQuery ? (
         <div className="lab2-state" role="status">
-          <p>{selectedRequester.name} has no tickets yet.</p>
+          <p>{requester.name} has no tickets yet.</p>
           <button
             type="button"
             className="btn btn-success"
@@ -435,7 +435,7 @@ export default function MyTickets({ onCreateTicket }: MyTicketsProps) {
           <div className="lab2-ticket-table-wrapper">
             <table className="table align-middle lab2-ticket-table">
               <caption className="visually-hidden">
-                Tickets for {selectedRequester.name}
+                Tickets for {requester.name}
               </caption>
               <thead>
                 <tr>

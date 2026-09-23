@@ -3,51 +3,42 @@ import { randomUUID } from "node:crypto";
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { seedReferenceData } from "../../prisma/seed-reference-data.js";
-import { app } from "../../src/app.js";
-import { prisma } from "../../src/db.js";
+import {
+  app,
+  loginAgent,
+  prepareLab3Data,
+  prisma,
+} from "../lab-03/test-helpers.js";
 
 const createdTicketIds = new Set<number>();
 
-let requesterAId!: number;
-let requesterBId!: number;
+let requesterA!: Awaited<ReturnType<typeof loginAgent>>;
+let requesterB!: Awaited<ReturnType<typeof loginAgent>>;
 let ticketId!: number;
 
 describe("GET /api/tickets/:ticketId", () => {
   beforeAll(async () => {
-    await seedReferenceData(prisma);
+    await prepareLab3Data();
+    requesterA = await loginAgent("requester-a@toktickit.test");
+    requesterB = await loginAgent("requester-b@toktickit.test");
 
-    const [requesterA, requesterB, category, relatedSystem] = await Promise.all(
-      [
-        prisma.developmentRequester.findUnique({
-          where: { email: "requester-a@toktickit.test" },
-          select: { id: true },
-        }),
-        prisma.developmentRequester.findUnique({
-          where: { email: "requester-b@toktickit.test" },
-          select: { id: true },
-        }),
-        prisma.category.findUnique({
-          where: { name: "Hardware" },
-          select: { id: true },
-        }),
-        prisma.relatedSystem.findUnique({
-          where: { name: "VPN" },
-          select: { id: true },
-        }),
-      ],
-    );
-
-    if (!requesterA || !requesterB || !category || !relatedSystem) {
-      throw new Error("Expected Lab 2 reference data was not seeded");
+    const [category, relatedSystem] = await Promise.all([
+      prisma.category.findUnique({
+        where: { name: "Hardware" },
+        select: { id: true },
+      }),
+      prisma.relatedSystem.findUnique({
+        where: { name: "VPN" },
+        select: { id: true },
+      }),
+    ]);
+    if (!category || !relatedSystem) {
+      throw new Error("Expected Lab 3 reference data was not seeded");
     }
 
-    requesterAId = requesterA.id;
-    requesterBId = requesterB.id;
-
-    const response = await request(app)
+    const response = await requesterA.agent
       .post("/api/tickets")
-      .set("X-Development-Requester-Id", String(requesterAId))
+      .set("X-CSRF-Token", requesterA.csrfToken)
       .send({
         clientRequestId: randomUUID(),
         categoryId: category.id,
@@ -74,16 +65,14 @@ describe("GET /api/tickets/:ticketId", () => {
     await prisma.$disconnect();
   });
 
-  it("returns a complete read-only detail for the selected owner", async () => {
-    const response = await request(app)
-      .get(`/api/tickets/${ticketId}`)
-      .set("X-Development-Requester-Id", String(requesterAId));
+  it("returns a complete read-only detail for the authenticated owner", async () => {
+    const response = await requesterA.agent.get(`/api/tickets/${ticketId}`);
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual(
       expect.objectContaining({
         id: ticketId,
-        requester: { id: requesterAId, name: "Requester A" },
+        requester: { id: requesterA.userId, name: "Requester A" },
         summary: "Detail endpoint test",
         currentStatus: "NEW",
         attachments: [],
@@ -94,12 +83,10 @@ describe("GET /api/tickets/:ticketId", () => {
   });
 
   it("does not disclose a missing or cross-requester Ticket", async () => {
-    const crossRequester = await request(app)
-      .get(`/api/tickets/${ticketId}`)
-      .set("X-Development-Requester-Id", String(requesterBId));
-    const missing = await request(app)
-      .get("/api/tickets/999999999")
-      .set("X-Development-Requester-Id", String(requesterAId));
+    const crossRequester = await requesterB.agent.get(
+      `/api/tickets/${ticketId}`,
+    );
+    const missing = await requesterA.agent.get("/api/tickets/999999999");
 
     expect(crossRequester.status).toBe(404);
     expect(crossRequester.body).toEqual({
@@ -110,14 +97,12 @@ describe("GET /api/tickets/:ticketId", () => {
     expect(missing.body.error.code).toBe("TICKET_NOT_FOUND");
   });
 
-  it("validates the requester context and Ticket ID", async () => {
-    const missingContext = await request(app).get(`/api/tickets/${ticketId}`);
-    const invalidId = await request(app)
-      .get("/api/tickets/not-an-id")
-      .set("X-Development-Requester-Id", String(requesterAId));
+  it("validates the session and Ticket ID", async () => {
+    const missingSession = await request(app).get(`/api/tickets/${ticketId}`);
+    const invalidId = await requesterA.agent.get("/api/tickets/not-an-id");
 
-    expect(missingContext.status).toBe(400);
-    expect(missingContext.body.error.code).toBe("REQUESTER_CONTEXT_REQUIRED");
+    expect(missingSession.status).toBe(401);
+    expect(missingSession.body.error.code).toBe("SESSION_REQUIRED");
     expect(invalidId.status).toBe(400);
     expect(invalidId.body.error.code).toBe("TICKET_ID_INVALID");
   });
