@@ -51,9 +51,11 @@ files. The final evidence therefore records both the exact executed commands
 and the actual file locations instead of claiming that a missing file passed.
 The release is complete: PR #83 integrated into `lab3-staging`, then PR #84 was
 merged into `main` by the peer reviewer. The final `main` Git tree matches the
-staging tree that passed the full gate. A fresh local post-release rerun was
-partially blocked because Docker Engine/PostgreSQL were unavailable; the report
-records that limitation instead of presenting it as a passing run.
+staging tree that passed the full gate. An initial post-release local rerun was
+blocked while PostgreSQL was unavailable. After the database became
+available, the complete verification and seeded E2E suites passed; the
+successful rerun supersedes the earlier blocker and is recorded in the report
+evidence.
 
 ## Human responsibility
 

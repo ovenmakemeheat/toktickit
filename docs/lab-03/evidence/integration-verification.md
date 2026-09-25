@@ -34,28 +34,26 @@ gate is the integrated release-tree result summarized above.
 
 ## Post-release local rerun
 
-A fresh verification attempt was made on 2026-09-25 from the docs branch based
-on final `main` (`eddafe67`). The following checks completed successfully:
+After PostgreSQL was made available, a fresh database-backed verification was
+run on 2026-09-25 from `docs/lab3-complete-document`, based on final `main`
+(`eddafe67`). Application and test files are unchanged from the released tree.
+The repository test-database setup reset and seeded the isolated
+`toktickit_test` database at `localhost:15434`; it did not reset the development
+database.
 
-| Command | Result |
-| --- | --- |
-| `bun run check` | Pass; Biome checked 117 files. |
-| `bun run hooks:validate` | Pass. |
-| `bun run db:validate` | Pass; Prisma schema is valid. |
-| `bun run typecheck` | Pass; client and server TypeScript checks completed. |
-| Client tests (run within `bun run verify`) | Pass; 15 files and 58 tests. |
-| `bun run build` | Pass; client and server builds completed. |
+| Command | Result | Evidence |
+| --- | --- | --- |
+| `bun run db:test:setup` | Pass | Isolated test database reset, migrations applied, and seed completed. |
+| `bun run verify` | Pass | Biome (117 files), Lefthook, Prisma validation, both type checks, 15 client files/58 tests, 22 server files/143 tests, and both builds passed. |
+| `bun run test:e2e -- e2e/lab-03` | Pass | 12/12 Lab 3 Playwright tests passed, including the unmocked seeded release regression. |
+| `bun run report:build:lab3` | Pass | The updated A4 report PDF built successfully. |
 
-The server Vitest suite could not complete: the configured PostgreSQL endpoint
-`localhost:15434` was unavailable. `bun run db:up` was attempted, but this
-machine's Docker Engine was not running (the Docker named pipe was absent), so
-the database could not be started. The full post-release `bun run verify` is
-therefore recorded as **environment-blocked**, not as a passing main rerun.
-The seeded Playwright suite was not rerun locally during this closeout because
-it requires the same database and seeded application. No server-test or E2E
-failure is inferred from that missing prerequisite. The successful full gates
-on `d345420` remain the release-tree evidence because `main` has the identical
-Git tree.
+Client and server Vitest terminal captures are retained at
+`docs/lab-03/report/evidence/client-vitest-run-2026-09-25.png` and
+`docs/lab-03/report/evidence/server-vitest-run-2026-09-25.png`. The seeded
+Playwright run used the local development database and `LAB3_SEED_PASSWORD`
+from ignored `server/.env`; no credential values are recorded here. The earlier
+attempt that could not reach PostgreSQL is superseded by this successful rerun.
 
 ## Lab 3 E2E coverage
 
@@ -89,7 +87,7 @@ invalidation, or account-safety invariants.
 - Staff Queue captures: `artifacts/lab-03/screenshots/staff-queue/`
 - Staff Ticket Detail captures: `artifacts/lab-03/screenshots/staff-ticket-detail/`
 - Administrator captures: `artifacts/lab-03/screenshots/user-management/`
-- GitHub capture evidence (Lab 3 Project #3 Kanban board, final-main README, `.gitignore`, repository root, commit history, and rendered UI spec): `docs/lab-03/report/evidence/`; capture sources and revision notes are in that directory's `README.md`.
+- GitHub captures (Lab 3 Project #3 Kanban board, final-main repository root, and commit history) and client/server Vitest run screenshots: `docs/lab-03/report/evidence/`; capture details are in that directory's `README.md`.
 - Visual inspection record: `docs/lab-03/evidence/visual-inspection-checklist.md`
 - Contract: `docs/lab-03/specification.md`, `api-spec.md`, `ui-spec.md`
 - Test DD and traceability: `docs/lab-03/tests.md`
@@ -105,6 +103,6 @@ Lab 3 is merged to `main`. PR #83 integrated the evidence package into
 peer reviewer `MadMax168`. GitHub returned an empty formal `reviewDecision` for
 PR #84, so this record does not claim a formal `APPROVED` review. The final main
 tree is identical to the tree that passed the full pre-release verification.
-The local post-release database-backed rerun remains blocked by the unavailable
-Docker Engine, as recorded above. This document records that limitation rather
-than claiming a fresh API/E2E run on this machine.
+The fresh post-release database-backed rerun passed after PostgreSQL became
+available; the earlier blocked attempt is superseded by the successful results
+recorded above.

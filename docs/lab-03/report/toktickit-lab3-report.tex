@@ -59,9 +59,8 @@
   }{\pendingnote{#2}}%
 }
 
-% Long browser pages remain complete in the evidence directory but use a
-% cropped top workflow view in the compact submission PDF.
-\newcommand{\evidenceimagecrop}[3]{%
+% Evidence images are presented in bounded views while full captures remain available.
+\newcommand{\evidenceimageview}[3]{%
   \IfFileExists{#1}{%
     \includegraphics[width=\linewidth,height=0.26\textheight,keepaspectratio,trim=#2,clip]{#1}%
   }{\pendingnote{#3}}%
@@ -83,31 +82,31 @@
 \end{figure}
 }
 
-\newcommand{\twocapturescrop}[8]{%
+\newcommand{\twocapturesview}[8]{%
 \begin{figure}[H]
   \centering
   \begin{minipage}[t]{0.48\linewidth}
     \centering
-    \evidenceimagecrop{#1}{#2}{#3}
+    \evidenceimageview{#1}{#2}{#3}
     \captionof{figure}{#4}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.48\linewidth}
     \centering
-    \evidenceimagecrop{#5}{#6}{#7}
+    \evidenceimageview{#5}{#6}{#7}
     \captionof{figure}{#8}
   \end{minipage}
 \end{figure}
 }
 
-\newcommand{\singlecapturecrop}[4]{%
+\newcommand{\singlecaptureview}[4]{%
 \begin{figure}[H]
   \centering
-  \evidenceimagecrop{#1}{#2}{#3}
+  \evidenceimageview{#1}{#2}{#3}
   \captionof{figure}{#4}
 \end{figure}
 }
 
-\newcommand{\widecapturecrop}[4]{%
+\newcommand{\widecaptureview}[4]{%
 \begin{figure}[H]
   \centering
   \IfFileExists{#1}{%
@@ -144,7 +143,7 @@
     Stack & React, TypeScript, Vite, Bootstrap, Express, Prisma, PostgreSQL \\
   \end{tabular}
   \vfill
-  \statusnote{\textbf{FINAL-MAIN CLOSEOUT -- 2026-09-25.} Release PR \#84 merged Lab 3 into \path{main} at \texttt{eddafe67}, with \texttt{MadMax168} as merger. The complete verification suite passed on staging commit \texttt{d345420}; its Git tree is identical to the release commit. A fresh local post-release rerun was partially blocked by unavailable Docker/PostgreSQL, as detailed in the evidence record; no unrun server or E2E check is reported as passing.}
+  \statusnote{\textbf{FINAL-MAIN CLOSEOUT -- 2026-09-25.} Release PR \#84 merged Lab 3 into \path{main} at \texttt{eddafe67}, with \texttt{MadMax168} as merger. The complete verification suite passed on staging commit \texttt{d345420}; its Git tree is identical to the release commit. A fresh post-release rerun on 2026-09-25 passed \texttt{bun run verify} (58 client and 143 server tests) and all 12 Lab 3 E2E tests against the seeded local application.}
   \vfill
   {\small One concise PDF is required by the labsheet; this source contains Answer Part 1 through Answer Part 9 in order.}
 \end{titlepage}
@@ -191,9 +190,9 @@ on 2026-09-10, before the Lab 3 implementation PRs. The final release merge is
 \href{https://github.com/ovenmakemeheat/toktickit/commit/eddafe67d6fd8d742b98d4673a731b25540cc57d}{\texttt{eddafe67}};
 \texttt{d345420} is the identical verified staging tree.
 
-\widecapturecrop
+\widecaptureview
   {docs/lab-03/report/evidence/final-main-history.png}
-  {0pt 0pt 0pt 0pt}
+  {0pt 300pt 0pt 0pt}
   {Final-main commit history screenshot unavailable.}
   {GitHub commit history at final-main release revision \texttt{eddafe67}, showing PRs \#84 and \#83 and the evidence-fix commits.}
 
@@ -202,21 +201,9 @@ documents Bun/Docker setup, migration, seed, test database, and verification
 commands. The linked
 \href{https://github.com/ovenmakemeheat/toktickit/blob/eddafe67d6fd8d742b98d4673a731b25540cc57d/.gitignore}{\texttt{.gitignore}}
 excludes local environment files and secrets, local database/storage state,
-build output, test output, and LaTeX intermediates. Captures of the rendered
-final-main GitHub pages are saved in \path{docs/lab-03/report/evidence/}; the
-complete screenshots are retained there while content-focused views are used
-in this PDF.
-
-\widecapturecrop
-  {docs/lab-03/report/evidence/final-main-readme.png}
-  {435pt 1155pt 225pt 247pt}
-  {Final-main README screenshot unavailable.}
-  {Rendered README on final \texttt{main}: project overview, stack, prerequisites, and setup (cropped; full capture retained).}
-\widecapturecrop
-  {docs/lab-03/report/evidence/final-main-gitignore.png}
-  {0pt 0pt 0pt 0pt}
-  {Final-main .gitignore screenshot unavailable.}
-  {Rendered final-main \texttt{.gitignore}, including secrets, local state, test output, and LaTeX exclusions.}
+build output, test output, and LaTeX intermediates. The final-main commit
+history, repository tree, and public Kanban board captures are retained in
+\path{docs/lab-03/report/evidence/} and shown below.
 
 \begin{quote}\small
 \texttt{client/} (React app and Lab 3 UI/tests) \quad
@@ -226,7 +213,7 @@ in this PDF.
 \texttt{artifacts/lab-03/screenshots/} (full-resolution role and viewport captures)
 \end{quote}
 
-\widecapturecrop
+\widecaptureview
   {docs/lab-03/report/evidence/final-main-repository-tree.png}
   {0pt 54pt 225pt 0pt}
   {Final-main repository tree screenshot unavailable.}
@@ -242,7 +229,7 @@ are summarized below. The GitHub API returned no formal \texttt{APPROVED}
 decision for PRs \#83 or \#84, so no approval is invented here; PR \#84's human
 merger is recorded separately.
 
-\widecapturecrop
+\widecaptureview
   {docs/lab-03/report/evidence/lab3-project-board-kanban.png}
   {0pt 0pt 0pt 0pt}
   {Lab 3 Project Kanban screenshot unavailable.}
@@ -352,6 +339,27 @@ Build & Client and server builds passed. \\
 \end{tabularx}
 \end{center}
 
+A fresh post-release run on 2026-09-25 prepared the isolated test database with
+\texttt{bun run db:test:setup}, then passed \texttt{bun run verify} and
+\texttt{bun run test:e2e -- e2e/lab-03}. The full gate passed 58 client and
+143 server tests; all 12 Lab 3 Playwright tests passed against the seeded local
+application. The application and test files are unchanged from final
+\path{main} at \texttt{eddafe67}. The client and server Vitest run captures are
+shown below; exact environment and command details are in
+\path{docs/lab-03/evidence/integration-verification.md}.
+
+\widecaptureview
+  {docs/lab-03/report/evidence/client-vitest-run-2026-09-25.png}
+  {0pt 0pt 0pt 0pt}
+  {Client Vitest run screenshot unavailable.}
+  {Client Vitest run on 2026-09-25: 15 files and 58 tests passed.}
+
+\widecaptureview
+  {docs/lab-03/report/evidence/server-vitest-run-2026-09-25.png}
+  {0pt 0pt 0pt 0pt}
+  {Server Vitest run screenshot unavailable.}
+  {Server Vitest run on 2026-09-25: 22 files and 143 tests passed.}
+
 The E2E files are listed below; together they cover valid and invalid
 credentials, inactive accounts, mandatory password changes, logout, Requester
 regression, Queue/detail operations, comments/notes, Administrator User
@@ -380,8 +388,8 @@ summary; the linked \texttt{tests.md} contains the full per-test trace table.
 }
 
 The release-tree result is 58 client tests, 143 server tests, type checks and
-both builds passing, plus 12/12 Lab 3 E2E tests. The exact revision and the
-post-release local database limitation are recorded in
+both builds passing, plus 12/12 Lab 3 E2E tests. The exact revision and successful
+post-release local rerun results are recorded in
 \href{https://github.com/ovenmakemeheat/toktickit/blob/main/docs/lab-03/evidence/integration-verification.md}{\path{integration-verification.md}}.
 
 \section{Answer Part 4: AI Use with Reflection}
@@ -458,11 +466,11 @@ tests cover controls, badges, card/table behavior, and opening detail
 \path{client/tests/lab-03/StaffTicketQueue.test.tsx},
 \path{e2e/lab-03/staff-ticket-flow.spec.ts}).
 
-\singlecapturecrop
+\singlecaptureview
   {artifacts/lab-03/screenshots/staff-queue/staff-queue-desktop.png}
   {0pt 3000pt 0pt 0pt}
   {Staff Queue screenshot unavailable.}
-  {IT Staff Ticket Queue evidence (cropped top workflow view; full capture retained in the evidence directory).}
+  {IT Staff Ticket Queue screenshot.}
 
 \section{Answer Part 7: Working IT Staff Ticket Detail UI}
 
@@ -478,11 +486,11 @@ and Attachment continuity (\path{server/tests/lab-03/staff-ticket-detail.api.tes
 API and destination checks are exercised by
 \path{e2e/lab-03/release-regression.spec.ts}; they do not rely on hidden buttons.
 
-\singlecapturecrop
+\singlecaptureview
   {artifacts/lab-03/screenshots/staff-ticket-detail/staff-ticket-detail-desktop.png}
   {0pt 4700pt 0pt 0pt}
   {Staff Ticket Detail screenshot unavailable.}
-  {IT Staff Ticket Detail evidence (cropped top workflow view; full capture retained in the evidence directory).}
+  {IT Staff Ticket Detail screenshot.}
 
 \section{Answer Part 8: Working Administrator User Management UI}
 
@@ -499,7 +507,7 @@ coverage is in \path{client/tests/lab-03/UserManagement.test.tsx},
 \path{client/tests/lab-03/AdminTicketReview.test.tsx}, and
 \path{server/tests/lab-03/users-admin.api.test.ts}.
 
-\twocapturescrop
+\twocapturesview
   {artifacts/lab-03/screenshots/user-management/user-management-desktop.png}
   {0pt 0pt 0pt 0pt}
   {User Management screenshot unavailable.}
@@ -507,8 +515,8 @@ coverage is in \path{client/tests/lab-03/UserManagement.test.tsx},
   {artifacts/lab-03/screenshots/user-management/admin-ticket-review-desktop.png}
   {0pt 4300pt 0pt 0pt}
   {Ticket Review screenshot unavailable.}
-  {Administrator Ticket Review companion evidence (cropped top workflow view; full capture retained in the evidence directory).}
-\singlecapturecrop
+  {Administrator Ticket Review companion screenshot.}
+\singlecaptureview
   {artifacts/lab-03/screenshots/user-management/user-management-create-desktop.png}
   {0pt 0pt 0pt 0pt}
   {Create User screenshot unavailable.}
@@ -534,7 +542,7 @@ modified in this documentation update.
 
 The release sequence is complete: PR \#83 merged into \path{lab3-staging}, the
 integrated release tree passed verification, and PR \#84 merged it into
-\path{main}. The post-release local verification limitation is recorded in the
+\path{main}. The successful post-release local verification is recorded in the
 linked evidence file.
 
 \section{Answer Part 9: Zen Green, Responsive Evidence, and Limits}
@@ -549,19 +557,11 @@ Loading, saving, validation, success, empty, no-results, forbidden, not-found,
 conflict, and safe-failure states are designed; responsive shells preserve role
 navigation and keep public/private communication distinct. The linked
 \href{https://github.com/ovenmakemeheat/toktickit/blob/eddafe67d6fd8d742b98d4673a731b25540cc57d/docs/lab-03/evidence/visual-inspection-checklist.md}{completed visual checklist}
-records viewport and overflow/accessibility inspection. The rendered UI-spec
-capture below is cropped to its overview; the complete screenshot is retained
-under \path{docs/lab-03/report/evidence/}.
-
-\widecapturecrop
-  {docs/lab-03/report/evidence/final-main-ui-specification.png}
-  {0pt 7772pt 0pt 0pt}
-  {Final-main UI specification screenshot unavailable.}
-  {Rendered final-main \texttt{docs/lab-03/ui-spec.md} overview (cropped; full capture retained).}
+records viewport and overflow/accessibility inspection.
 
 The desktop captures above are embedded. The following links open the original
 full-resolution desktop/tablet/mobile screenshots from the immutable release
-commit; long views are cropped only in the PDF, never in the evidence files.
+commit.
 
 \begin{center}\scriptsize
 \begin{tabularx}{\linewidth}{@{}p{39mm}ccc@{}}
@@ -585,7 +585,7 @@ Administrator Ticket Review & \screenshotlink{user-management/admin-ticket-revie
 Labels, live/status regions, named buttons, visible focus, required indicators,
 and non-color state cues are tested at the user-observable boundary.
 
-\statusnote{\textbf{Verification note.} Lab 3 is released on \path{main} at \texttt{eddafe67}; this release has the same Git tree as the staging revision \texttt{d345420} that passed \texttt{bun run verify}, the 12-test Lab 3 Playwright suite, and the report build. A fresh local run on 2026-09-25 passed lint/hooks/schema/type checks, all 58 client tests, and both builds, but PostgreSQL-backed server tests and seeded E2E could not be rerun because Docker Engine was unavailable. The full local \texttt{bun run verify} attempt is documented as environment-blocked, not passed. The public Project \#3 Kanban capture in Part 1 shows all six Lab 3 issue cards in \texttt{Done}; it was inspected read-only and no board fields were changed. No formal \texttt{APPROVED} review is claimed for PRs \#83/\#84.}
+\statusnote{\textbf{Verification note.} Lab 3 is released on \path{main} at \texttt{eddafe67}; this release has the same Git tree as the staging revision \texttt{d345420} that passed \texttt{bun run verify}, the 12-test Lab 3 Playwright suite, and the report build. The fresh post-release rerun on 2026-09-25 passed \texttt{bun run verify}, including all 58 client and 143 server tests, and \texttt{bun run test:e2e -- e2e/lab-03} passed all 12 tests against the seeded local application. The earlier attempt made before PostgreSQL was available is superseded; exact commands and results are recorded in the linked evidence. The public Project \#3 Kanban capture in Part 1 shows all six Lab 3 issue cards in \texttt{Done}; it was inspected read-only and no board fields were changed. No formal \texttt{APPROVED} review is claimed for PRs \#83/\#84.}
 
 No out-of-scope feature is claimed: there is no email delivery, social login,
 MFA, self-registration, User deletion, bulk User operation, SLA engine,

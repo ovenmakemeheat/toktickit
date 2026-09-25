@@ -51,7 +51,7 @@ The rows below map the approved test IDs to the actual files that ran. A `Pass`
 status is supported by the command and counts in
 [evidence/integration-verification.md](evidence/integration-verification.md);
 these are the recorded integrated release-tree results. The exact test revision
-and the post-release local rerun limitation are recorded in
+and the successful post-release local rerun results are recorded in
 [evidence/integration-verification.md](evidence/integration-verification.md).
 
 ### 3.1 Unit tests
@@ -208,16 +208,15 @@ release. PR #84 merged this exact tree into `main` at
 `eddafe67d6fd8d742b98d4673a731b25540cc57d`; both commits have the same Git
 tree.
 
-A fresh local attempt on 2026-09-25 completed `bun run check`,
-`bun run hooks:validate`, `bun run db:validate`, `bun run typecheck`, all 58
-client tests, and `bun run build`. The server tests could not complete because
-PostgreSQL at `localhost:15434` was unavailable; `bun run db:up` could not start
-the container because Docker Engine was not running. The seeded E2E suite was
-not rerun locally for the same prerequisite. See
-[evidence/integration-verification.md](evidence/integration-verification.md)
-for exact results. The local full `bun run verify` is therefore environment-
-blocked, not a pass; the release tree's full pre-release gate is the recorded
-passing result.
+A fresh post-release run on 2026-09-25 reset and seeded the isolated test
+database with `bun run db:test:setup`, then passed `bun run verify`: Biome,
+Lefthook, Prisma validation, type checks, 58 client tests, 143 server tests,
+and both builds. `bun run test:e2e -- e2e/lab-03` also passed 12/12 tests,
+including the unmocked seeded release regression. PostgreSQL was available at
+`localhost:15434`; the full command record is in
+[evidence/integration-verification.md](evidence/integration-verification.md).
+Client and server Vitest run screenshots are retained under
+`report/evidence/`.
 
 Before database-backed verification, prepare the test database using the
 repository workflow and never run `docker compose down -v` during normal
