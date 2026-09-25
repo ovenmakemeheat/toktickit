@@ -59,9 +59,8 @@
   }{\pendingnote{#2}}%
 }
 
-% Long browser pages remain complete in the evidence directory but use a
-% cropped top workflow view in the compact submission PDF.
-\newcommand{\evidenceimagecrop}[3]{%
+% Evidence images are presented in bounded views while full captures remain available.
+\newcommand{\evidenceimageview}[3]{%
   \IfFileExists{#1}{%
     \includegraphics[width=\linewidth,height=0.26\textheight,keepaspectratio,trim=#2,clip]{#1}%
   }{\pendingnote{#3}}%
@@ -83,28 +82,42 @@
 \end{figure}
 }
 
-\newcommand{\twocapturescrop}[8]{%
+\newcommand{\twocapturesview}[8]{%
 \begin{figure}[H]
   \centering
   \begin{minipage}[t]{0.48\linewidth}
     \centering
-    \evidenceimagecrop{#1}{#2}{#3}
+    \evidenceimageview{#1}{#2}{#3}
     \captionof{figure}{#4}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.48\linewidth}
     \centering
-    \evidenceimagecrop{#5}{#6}{#7}
+    \evidenceimageview{#5}{#6}{#7}
     \captionof{figure}{#8}
   \end{minipage}
 \end{figure}
 }
 
-\newcommand{\singlecapturecrop}[4]{%
+\newcommand{\singlecaptureview}[4]{%
 \begin{figure}[H]
   \centering
-  \evidenceimagecrop{#1}{#2}{#3}
+  \evidenceimageview{#1}{#2}{#3}
   \captionof{figure}{#4}
 \end{figure}
+}
+
+\newcommand{\widecaptureview}[4]{%
+\begin{figure}[H]
+  \centering
+  \IfFileExists{#1}{%
+    \includegraphics[width=0.92\linewidth,height=0.45\textheight,keepaspectratio,trim=#2,clip]{#1}%
+  }{\pendingnote{#3}}%
+  \caption{#4}
+\end{figure}
+}
+
+\newcommand{\screenshotlink}[1]{%
+  \href{https://github.com/ovenmakemeheat/toktickit/blob/eddafe67d6fd8d742b98d4673a731b25540cc57d/artifacts/lab-03/screenshots/#1}{view}%
 }
 
 \begin{document}
@@ -126,11 +139,11 @@
     Issue & \href{https://github.com/ovenmakemeheat/toktickit/issues/77}{\#77 -- Lab 3 E2E evidence and release integration} \\
     Feature branch & \path{feature/19-e2e-evidence-release} \\
     Integrated target & \path{lab3-staging}, baseline \texttt{4cb1049} \\
-    Current final branch & \path{main}, \texttt{0c21ee2} (Lab 2 release; Lab 3 release pending) \\
+    Current final branch & \path{main}, \texttt{eddafe67} (Lab 3 release PR \#84 merged 2026-09-23) \\
     Stack & React, TypeScript, Vite, Bootstrap, Express, Prisma, PostgreSQL \\
   \end{tabular}
   \vfill
-  \statusnote{\textbf{STAGING EVIDENCE -- 2026-09-18.} This report records the Issue \#77 feature-branch evidence and the reviewed Lab 3 feature sequence. The feature PR and the later \path{lab3-staging} to \path{main} release PR require human review and merge; this document does not claim that the Lab 3 release is already on \path{main}.}
+  \statusnote{\textbf{FINAL-MAIN CLOSEOUT -- 2026-09-25.} Release PR \#84 merged Lab 3 into \path{main} at \texttt{eddafe67}, with \texttt{MadMax168} as merger. The complete verification suite passed on staging commit \texttt{d345420}; its Git tree is identical to the release commit. A fresh post-release rerun on 2026-09-25 passed \texttt{bun run verify} (58 client and 143 server tests) and all 12 Lab 3 E2E tests against the seeded local application.}
   \vfill
   {\small One concise PDF is required by the labsheet; this source contains Answer Part 1 through Answer Part 9 in order.}
 \end{titlepage}
@@ -140,10 +153,11 @@
 
 \section{Answer Part 1: Git Use with Engineering Workflow}
 
-Lab 3 uses one feature branch per approved Issue and integrates reviewed Pull
-Requests into \path{lab3-staging}. The human reviewer merges feature PRs; the
-PR author does not merge their own work. The Issue \#77 branch inherited the
-latest merged PR \#82 rather than branching from an older feature branch.
+Lab 3 used one feature branch per approved Issue and integrated feature Pull
+Requests into \path{lab3-staging}. The peer reviewer merged the feature PRs;
+the PR author did not merge their own work. The Issue \#77 branch inherited
+the latest merged PR \#82 rather than branching from an older feature branch.
+Release PR \#84 then merged the integrated staging tree into \path{main}.
 
 \begin{center}
 \small
@@ -156,23 +170,141 @@ Issue / PR & Branch and merge state \\
 \href{https://github.com/ovenmakemeheat/toktickit/issues/74}{\#74} / \href{https://github.com/ovenmakemeheat/toktickit/pull/80}{\#80} & \path{feature/16-it-staff-ticket-workflow}; merged into \path{lab3-staging} by \texttt{MadMax168}. \\
 \href{https://github.com/ovenmakemeheat/toktickit/issues/75}{\#75} / \href{https://github.com/ovenmakemeheat/toktickit/pull/81}{\#81} & \path{feature/17-administrator-user-management}; merged into \path{lab3-staging} by \texttt{MadMax168}. \\
 \href{https://github.com/ovenmakemeheat/toktickit/issues/76}{\#76} / \href{https://github.com/ovenmakemeheat/toktickit/pull/82}{\#82} & \path{feature/18-zen-green-visual-inspection}; merged into \path{lab3-staging} by \texttt{MadMax168}. \\
-\href{https://github.com/ovenmakemeheat/toktickit/issues/77}{\#77} / pending & \path{feature/19-e2e-evidence-release}; this integration PR targets \path{lab3-staging}; the separate release PR targets \path{main}. \\
+\href{https://github.com/ovenmakemeheat/toktickit/issues/77}{\#77} / \href{https://github.com/ovenmakemeheat/toktickit/pull/83}{\#83} & \path{feature/19-e2e-evidence-release}; merged into \path{lab3-staging} by \texttt{MadMax168} on 2026-09-19. \\
+Release / \href{https://github.com/ovenmakemeheat/toktickit/pull/84}{\#84} & \path{lab3-staging} to \path{main}; merged by \texttt{MadMax168} on 2026-09-23 at \texttt{eddafe67}. \\
 \bottomrule
 \end{tabularx}
 \end{center}
 
-The current repository state is therefore intentionally two-stage: the feature
-branch supplies the evidence package, then the human reviewer verifies and
-merges it into \path{lab3-staging}. Only after that integration check should a
-separate release PR be opened from \path{lab3-staging} to \path{main}.
+The completed two-stage sequence is: PR \#83 integrated the evidence package
+into \path{lab3-staging}, then PR \#84 released that tree to \path{main}. The
+final main commit and staging merge commit have identical Git trees. The
+reviewer record distinguishes the human merge evidence from formal GitHub
+approval state.
+
+\subsection{Repository, history, and review evidence}
+
+The engineering contract was first committed as
+\href{https://github.com/ovenmakemeheat/toktickit/commit/a4bd921699e6f10e72d529e5014ffdf5e35252e0}{\texttt{a4bd921}}
+on 2026-09-10, before the Lab 3 implementation PRs. The final release merge is
+\href{https://github.com/ovenmakemeheat/toktickit/commit/eddafe67d6fd8d742b98d4673a731b25540cc57d}{\texttt{eddafe67}};
+\texttt{d345420} is the identical verified staging tree.
+
+\widecaptureview
+  {docs/lab-03/report/evidence/final-main-history.png}
+  {0pt 300pt 0pt 0pt}
+  {Final-main commit history screenshot unavailable.}
+  {GitHub commit history at final-main release revision \texttt{eddafe67}, showing PRs \#84 and \#83 and the evidence-fix commits.}
+
+The linked \href{https://github.com/ovenmakemeheat/toktickit/blob/eddafe67d6fd8d742b98d4673a731b25540cc57d/README.md}{README}
+documents Bun/Docker setup, migration, seed, test database, and verification
+commands. The linked
+\href{https://github.com/ovenmakemeheat/toktickit/blob/eddafe67d6fd8d742b98d4673a731b25540cc57d/.gitignore}{\texttt{.gitignore}}
+excludes local environment files and secrets, local database/storage state,
+build output, test output, and LaTeX intermediates. The final-main commit
+history, repository tree, and public Kanban board captures are retained in
+\path{docs/lab-03/report/evidence/} and shown below.
+
+\begin{quote}\small
+\texttt{client/} (React app and Lab 3 UI/tests) \quad
+\texttt{server/} (Express, Prisma/migrations, Lab 3 API tests)\\
+\texttt{e2e/lab-03/} (Playwright) \quad
+\texttt{docs/lab-03/} (specification, API/UI contracts, tests, evidence, report)\\
+\texttt{artifacts/lab-03/screenshots/} (full-resolution role and viewport captures)
+\end{quote}
+
+\widecaptureview
+  {docs/lab-03/report/evidence/final-main-repository-tree.png}
+  {0pt 54pt 225pt 0pt}
+  {Final-main repository tree screenshot unavailable.}
+  {GitHub repository root at the Lab 3 release commit, showing the project folders, root files, and PR \#84 merge.}
+
+The public
+\href{https://github.com/users/ovenmakemeheat/projects/3/views/1}{TokTickIT Lab 3 project board, Kanban view (Project \#3)}
+was captured read-only after release. It shows Issues \#72--\#77 in
+\texttt{Done}; no project fields were changed during this documentation work.
+The reviewer record names peer reviewer Polwarit Watthanhemmarat
+(\texttt{MadMax168}) and links PRs \#78--\#84; its review comments and responses
+are summarized below. The GitHub API returned no formal \texttt{APPROVED}
+decision for PRs \#83 or \#84, so no approval is invented here; PR \#84's human
+merger is recorded separately.
+
+\widecaptureview
+  {docs/lab-03/report/evidence/lab3-project-board-kanban.png}
+  {0pt 0pt 0pt 0pt}
+  {Lab 3 Project Kanban screenshot unavailable.}
+  {Public GitHub Kanban view, captured 2026-09-25; all six Lab 3 issue cards are in Done.}
+
+\begin{center}\small
+\begin{tabularx}{\linewidth}{@{}p{13mm}p{57mm}Y@{}}
+\toprule
+PR & Peer review topic & Author response / disposition \\
+\midrule
+\#78 & Contract consistency, Administrator boundaries, migration handoff & Contracts and handoff were aligned; merged. \\
+\#79 & Database-enforced Requester ownership, repeat-safe migration, Lab 2 regression & Ownership/migration flow and regression coverage were corrected; merged. \\
+\#80 & Queue pagination, eligible owners, stale requests, concurrent status & Query/request handling and typed conflict feedback were corrected; merged. \\
+\#81 & Mobile User Management, last-Administrator and assignment safety & Responsive cards and serialized account safeguards were added; merged. \\
+\#82 & Responsive/accessibility assertions and missing Requester captures & Browser assertions and all nine Requester viewport captures were added; merged. \\
+\#83 & Real seeded API evidence, immutable revision, report alignment & Unmocked seeded regression and review fixes were added; merged to staging. \\
+\#84 & Release integration to \path{main} & Merged by \texttt{MadMax168}; no formal \texttt{APPROVED} review was returned by GitHub. \\
+\bottomrule
+\end{tabularx}
+\end{center}
 
 \section{Answer Part 2: Specification DD}
 
 The contract is maintained in
-\href{https://github.com/ovenmakemeheat/toktickit/blob/58f3587/docs/lab-03/specification.md}{\path{docs/lab-03/specification.md}}
+\href{https://github.com/ovenmakemeheat/toktickit/blob/eddafe67d6fd8d742b98d4673a731b25540cc57d/docs/lab-03/specification.md}{\path{docs/lab-03/specification.md}}
 and is derived from the committed UTF-8 handout
-\href{https://github.com/ovenmakemeheat/toktickit/blob/58f3587/docs/lab-03/requirements/UTF-8_Lab_3_sheet.pdf}{\path{UTF-8_Lab_3_sheet.pdf}}.
-The API, UI, and test contracts are linked from that specification.
+\href{https://github.com/ovenmakemeheat/toktickit/blob/eddafe67d6fd8d742b98d4673a731b25540cc57d/docs/lab-03/requirements/UTF-8_Lab_3_sheet.pdf}{\path{UTF-8_Lab_3_sheet.pdf}}.
+The API, UI, and test contracts are linked from that specification. The
+contract's first commit, \texttt{a4bd921} (2026-09-10), predates the feature
+implementation PRs; PR \#78 records its review/follow-up.
+
+The contract numbers FR-01--FR-32, BR-01--BR-29, and AC-01--AC-30. The
+requirements are summarized here; the linked specification contains the full
+rules, matrix, transition table, data model, migration plan, and Product
+Definition of Done.
+
+\begin{center}\small
+\begin{tabularx}{\linewidth}{@{}p{30mm}p{34mm}Y@{}}
+\toprule
+Area & Contract IDs & Specified behavior / decision \\
+\midrule
+Identity & FR-01--08; BR-01--09; AC-01--08 & Active-user login, opaque sessions, mandatory password change, CSRF, safe errors, and role navigation. \\
+Migration / Requester & FR-09--15; BR-10--12; AC-09--14 & Match Development Requesters by normalized email; preserve Ticket/Attachment ownership; derive new ownership from the session. \\
+IT Staff & FR-16--20; BR-13--23; AC-15--21 & Shared searchable Queue; eligible ownership; Requested/IT Priority separation; confirmed status matrix; public/private communication. \\
+Administration & FR-21--26; BR-24--26; AC-22--26 & Minimal User list/search/filter/create/edit/reset with one role, duplicate-email, self-deactivation, and last-Administrator safeguards. \\
+Quality / scope & FR-27--32; BR-27--29; AC-27--30 & Safe API errors, idempotent seed, responsive/accessibility states, test traceability, and explicit exclusions. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{center}\small
+\begin{tabularx}{\linewidth}{@{}p{25mm}YYY@{}}
+\toprule
+Role & Requester data & IT Staff workflow & Administrator access \\
+\midrule
+Requester & Own Tickets/Attachments, Public Comments, resolution indication & None & None \\
+IT Staff & None as Requester & Queue, ownership, status, priority, comments, notes & None \\
+Administrator & None as Requester & No Queue/status/operational mutation & User Management; read-only Ticket Review and IT-Priority-only change \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Selected acceptance criteria from AC-01--AC-30: AC-05 blocks normal screens until
+initial-password change succeeds; AC-09 preserves Ticket/Attachment ownership
+through migration; AC-20 accepts only confirmed status-matrix transitions;
+AC-21 limits Administrator Ticket Review to read-only data plus IT Priority;
+AC-26 protects self/last-Administrator status; and AC-28 requires usable,
+overflow-free desktop, tablet, and mobile screens.
+
+Migration preserves Ticket and Attachment identity, maps Requester ownership
+by normalized email, hashes generated local-only initial passwords, and verifies
+counts/orphans before enforcing the new relationship. The Product Definition
+of Done ties these contracts to passing tests, review, responsive inspection,
+release evidence, and the single nine-part PDF; the formal-approval limitation
+is stated in Part 1 rather than silently marked complete.
 
 Issue \#77 does not add another role feature. It connects the already reviewed
 authentication/Requester, IT Staff, Administrator, and Zen Green increments to
@@ -190,8 +322,8 @@ important boundaries are:
 \section{Answer Part 3: Test DD and Traceability}
 
 The executed matrix is recorded in
-\href{https://github.com/ovenmakemeheat/toktickit/blob/58f3587/docs/lab-03/tests.md}{\path{docs/lab-03/tests.md}}.
-The final Issue \#77 feature-branch snapshot is:
+\href{https://github.com/ovenmakemeheat/toktickit/blob/main/docs/lab-03/tests.md}{\path{docs/lab-03/tests.md}}.
+The integrated release-tree snapshot passed on staging commit \texttt{d345420}; final \path{main} at \texttt{eddafe67} has the identical Git tree:
 
 \begin{center}
 \begin{tabularx}{\linewidth}{@{}p{65mm}Y@{}}
@@ -207,6 +339,27 @@ Build & Client and server builds passed. \\
 \end{tabularx}
 \end{center}
 
+A fresh post-release run on 2026-09-25 prepared the isolated test database with
+\texttt{bun run db:test:setup}, then passed \texttt{bun run verify} and
+\texttt{bun run test:e2e -- e2e/lab-03}. The full gate passed 58 client and
+143 server tests; all 12 Lab 3 Playwright tests passed against the seeded local
+application. The application and test files are unchanged from final
+\path{main} at \texttt{eddafe67}. The client and server Vitest run captures are
+shown below; exact environment and command details are in
+\path{docs/lab-03/evidence/integration-verification.md}.
+
+\widecaptureview
+  {docs/lab-03/report/evidence/client-vitest-run-2026-09-25.png}
+  {0pt 0pt 0pt 0pt}
+  {Client Vitest run screenshot unavailable.}
+  {Client Vitest run on 2026-09-25: 15 files and 58 tests passed.}
+
+\widecaptureview
+  {docs/lab-03/report/evidence/server-vitest-run-2026-09-25.png}
+  {0pt 0pt 0pt 0pt}
+  {Server Vitest run screenshot unavailable.}
+  {Server Vitest run on 2026-09-25: 22 files and 143 tests passed.}
+
 The E2E files are listed below; together they cover valid and invalid
 credentials, inactive accounts, mandatory password changes, logout, Requester
 regression, Queue/detail operations, comments/notes, Administrator User
@@ -221,24 +374,50 @@ direct role-route protection.
   \item \path{e2e/lab-03/release-regression.spec.ts}
 \end{itemize}
 
-The API and component suites remain the evidence for backend authorization and
-persistence.
+The test plan was written before implementation and maps every criterion to
+tests. The following ID ranges and actual paths render the plan's coverage
+summary; the linked \texttt{tests.md} contains the full per-test trace table.
+
+{\small
+\begin{itemize}
+  \item \textbf{UNIT-01--06 (Pass; AC-01--06, 09--10, 16, 20, 25):} password hashing, sessions/CSRF, migration, query parsing, and status transitions. Paths: \path{server/tests/lab-03/} (auth.unit.test.ts, query.unit.test.ts, status-transition.unit.test.ts, migration.api.test.ts).
+  \item \textbf{API-01--16 (Pass; AC-01--27):} authentication, ownership, migration, direct authorization, Queue, communication, account safety, and safe errors. Path: \path{server/tests/lab-03/}; see the linked trace table for the individual files.
+  \item \textbf{UI-01--09 (Pass; AC-02--08, 13--29):} labels/feedback, role shell, Requester regression, Staff/Admin screens, responsive and accessibility states. Paths: \path{client/tests/lab-03/} (Login.test.tsx, ChangePassword.test.tsx, ApplicationShell.test.tsx, StaffTicketQueue.test.tsx, StaffTicketDetail.test.tsx, UserManagement.test.tsx, AdminTicketReview.test.tsx).
+  \item \textbf{E2E-01--06 (Pass; AC-01--08, 11--30):} authentication, Requester, Staff, Administrator, responsive/accessibility, and unmocked release regression. The five actual files are listed above under \path{e2e/lab-03/}.
+\end{itemize}
+}
+
+The release-tree result is 58 client tests, 143 server tests, type checks and
+both builds passing, plus 12/12 Lab 3 E2E tests. The exact revision and successful
+post-release local rerun results are recorded in
+\href{https://github.com/ovenmakemeheat/toktickit/blob/main/docs/lab-03/evidence/integration-verification.md}{\path{integration-verification.md}}.
 
 \section{Answer Part 4: AI Use with Reflection}
 
 The complete record is in
-\href{https://github.com/ovenmakemeheat/toktickit/blob/58f3587/docs/lab-03/ai-use.md}{\path{docs/lab-03/ai-use.md}}.
-OpenAI Codex (`gpt-5.6-luna`, maximum reasoning) assisted with repository
-inspection, E2E implementation, test execution, evidence writing, and report
-preparation. The student reviewed the PDF-derived contract, selected the
-feature scope, inspected diffs and screenshots, ran the gates, and retained
-responsibility for human review responses and release decisions.
+\href{https://github.com/ovenmakemeheat/toktickit/blob/main/docs/lab-03/ai-use.md}{\path{docs/lab-03/ai-use.md}}.
+OpenAI Codex coding agent (`gpt-5.6-luna`, provider `openai-codex`, maximum
+reasoning) assisted with specification follow-up, E2E implementation, test
+execution, evidence writing, and report preparation.
 
-The useful design decision was to keep this issue bounded to integration. The
-coding agent did not add a new database model or broaden role permissions; it
-added browser-level evidence around the already merged product slices and
-explicitly documented where mocked browser responses differ from real API
-proof.
+\textbf{Selected prompts used (7):}
+\begin{enumerate}
+  \item Read the Lab 3 repository instructions, issues, Pull Requests, and the PDF-derived contract before starting the next issue branch.
+  \item Verify that the next feature branch inherits the latest merged \path{lab3-staging} commit rather than an earlier feature branch.
+  \item Implement only Issue \#77: browser E2E coverage for authentication, Requester regression, IT Staff operations, Administrator management, and release smoke checks.
+  \item Add actual final evidence records for test outputs, screenshots, review conversations, AI use, and the single Answer Part 1--9 PDF.
+  \item Check accessible roles/labels, direct role-route boundaries, queue/detail operations, public/private communication, and Administrator read-only boundaries in Playwright.
+  \item Run the focused E2E suites and then repository verification commands; record the exact branch, commit, prerequisites, and results without presenting a mocked browser test as proof of backend authorization.
+  \item After the release PR merged, reconcile the report and evidence records with the final \path{main} revision; distinguish the previously verified release tree from any post-release checks blocked by local infrastructure.
+\end{enumerate}
+
+\textbf{My Reflection.} The specification-agent work translated the handout into
+numbered requirements, business rules, authorization boundaries, and testable
+acceptance criteria before implementation. The coding agent then stayed within
+that approved contract to implement integration tests and evidence. Keeping
+those roles distinct reduced the risk of deriving requirements from generated
+code. I reviewed the contract, diffs, screenshots, and test evidence and retain
+responsibility for human review responses and release decisions.
 
 \section{Answer Part 5: Authentication and Requester Regression}
 
@@ -249,34 +428,49 @@ mandatory first-login password change, role navigation, logout, and the absence
 of the old Development Requester selector and Change Requester action.
 
 The Requester regression keeps Create Ticket, My Tickets, Ticket Detail, and
-responsive overflow checks under the authenticated identity. Existing Lab 2
-Attachment and ownership API tests remain part of the integrated test suite;
-the Playwright browser fixture intentionally does not pretend to replace those
-server-side checks.
+responsive overflow checks under the authenticated identity. Evidence covers
+valid/invalid credentials, inactive-account feedback, busy and safe-failure
+states, authenticated name/role navigation, mandatory password change, logout,
+and direct-route denial after logout. The browser tests are
+\path{e2e/lab-03/authentication-and-requester.spec.ts},
+\path{client/tests/lab-03/Login.test.tsx}, and
+\path{client/tests/lab-03/ChangePassword.test.tsx}; Lab 2 Attachment and
+ownership API tests remain the evidence for server-side persistence.
 
 \twocaptures
   {artifacts/lab-03/screenshots/authentication/login-desktop.png}
-  {Authentication capture is pending.}
-  {Authentication at desktop viewport.}
+  {Authentication screenshot unavailable.}
+  {Login at desktop viewport.}
+  {artifacts/lab-03/screenshots/authentication/change-password-desktop.png}
+  {Change Password screenshot unavailable.}
+  {Mandatory initial-password change at desktop viewport.}
+\twocaptures
   {artifacts/lab-03/screenshots/requester/my-tickets-desktop.png}
-  {Requester capture is pending.}
+  {Requester screenshot unavailable.}
   {Requester My Tickets at desktop viewport.}
+  {artifacts/lab-03/screenshots/requester/create-ticket-desktop.png}
+  {Create Ticket screenshot unavailable.}
+  {Authenticated Create Ticket at desktop viewport.}
 
 \section{Answer Part 6: Working IT Staff Ticket Queue UI}
 
 The IT Staff Ticket Queue provides realistic seeded work with search, status,
 priority, owner, category, related-system, sort, and pagination controls. It
 shows Ticket Number, dates, summary, Requester, ownership, status, Requested
-Priority, and IT Priority without creating an unreadable mega-grid. API tests
-cover deterministic query behavior, assigned and unassigned ownership, empty
-and no-results states, invalid queries, and safe failures; browser tests cover
-control names, the responsive card/table representation, and opening detail.
+Priority, and IT Priority without creating an unreadable mega-grid. The visual
+contract requires readable status/priority badges and a card representation at
+narrow widths. API tests cover deterministic queries, assigned/unassigned
+ownership, empty/no-results, invalid queries, and safe failures; client/E2E
+tests cover controls, badges, card/table behavior, and opening detail
+(\path{staff-queue.api.test.ts},
+\path{client/tests/lab-03/StaffTicketQueue.test.tsx},
+\path{e2e/lab-03/staff-ticket-flow.spec.ts}).
 
-\singlecapturecrop
+\singlecaptureview
   {artifacts/lab-03/screenshots/staff-queue/staff-queue-desktop.png}
   {0pt 3000pt 0pt 0pt}
-  {Staff Queue capture is pending.}
-  {IT Staff Ticket Queue evidence (cropped top workflow view; full capture retained in the evidence directory).}
+  {Staff Queue screenshot unavailable.}
+  {IT Staff Ticket Queue screenshot.}
 
 \section{Answer Part 7: Working IT Staff Ticket Detail UI}
 
@@ -285,15 +479,18 @@ read-only while exposing only the approved operational controls: claim,
 reassign to an eligible owner, IT Priority, permitted status transitions,
 Public Comments, and Internal Notes. The screen distinguishes public and
 private communication, shows the Requester resolution indication, and provides
-validation, confirmation, conflict, and safe-failure feedback. API and client
-suites cover owner eligibility, CSRF, transition confirmation, concurrent
-status conflicts, visibility restrictions, and Attachment continuity.
+validation, confirmation, conflict, and safe-failure feedback. API/client tests
+cover owner eligibility, CSRF, confirmation, concurrency, note visibility,
+and Attachment continuity (\path{server/tests/lab-03/staff-ticket-detail.api.test.ts},
+\path{server/tests/lab-03/comments-notes.api.test.ts}). Direct role-forbidden
+API and destination checks are exercised by
+\path{e2e/lab-03/release-regression.spec.ts}; they do not rely on hidden buttons.
 
-\singlecapturecrop
+\singlecaptureview
   {artifacts/lab-03/screenshots/staff-ticket-detail/staff-ticket-detail-desktop.png}
   {0pt 4700pt 0pt 0pt}
-  {Staff Ticket Detail capture is pending.}
-  {IT Staff Ticket Detail evidence (cropped top workflow view; full capture retained in the evidence directory).}
+  {Staff Ticket Detail screenshot unavailable.}
+  {IT Staff Ticket Detail screenshot.}
 
 \section{Answer Part 8: Working Administrator User Management UI}
 
@@ -301,57 +498,94 @@ The Administrator User Management screen remains intentionally minimalist. It
 shows Name, Email, Role, Status, and Edit; supports name/email search and one
 role filter; and provides create, basic edit, activation/deactivation, and
 initial-password reset. Browser and API tests cover duplicate email, invalid
-role/input, self-deactivation, last-active-Administrator protection, required
+role/input, self-deactivation, last-active-Administrator protection, forced
 password change after reset, responsive presentation, safe failures, and
-forbidden access by non-Administrators. The companion Ticket Review evidence
-also confirms the separate Administrator read-only Ticket surface and its
-IT-Priority-only operation.
+forbidden access by non-Administrators. The User list, create form, and
+companion Ticket Review screenshots show the required fields and separate
+read-only Ticket surface with IT-Priority-only operation. The direct client/API
+coverage is in \path{client/tests/lab-03/UserManagement.test.tsx},
+\path{client/tests/lab-03/AdminTicketReview.test.tsx}, and
+\path{server/tests/lab-03/users-admin.api.test.ts}.
 
-\twocapturescrop
+\twocapturesview
   {artifacts/lab-03/screenshots/user-management/user-management-desktop.png}
   {0pt 0pt 0pt 0pt}
-  {User Management capture is pending.}
+  {User Management screenshot unavailable.}
   {Administrator User Management evidence.}
   {artifacts/lab-03/screenshots/user-management/admin-ticket-review-desktop.png}
   {0pt 4300pt 0pt 0pt}
-  {Ticket Review capture is pending.}
-  {Administrator Ticket Review companion evidence (cropped top workflow view; full capture retained in the evidence directory).}
+  {Ticket Review screenshot unavailable.}
+  {Administrator Ticket Review companion screenshot.}
+\singlecaptureview
+  {artifacts/lab-03/screenshots/user-management/user-management-create-desktop.png}
+  {0pt 0pt 0pt 0pt}
+  {Create User screenshot unavailable.}
+  {Administrator Create User form; full capture retained in the evidence directory.}
 
 \subsection{Evidence, Review, and Release Integration}
 
 The required evidence inventory is linked in
-\href{https://github.com/ovenmakemeheat/toktickit/blob/58f3587/docs/lab-03/evidence/integration-verification.md}{\path{integration-verification.md}}.
+\href{https://github.com/ovenmakemeheat/toktickit/blob/main/docs/lab-03/evidence/integration-verification.md}{\path{integration-verification.md}}.
 It includes authentication, IT Staff Queue, Staff Ticket Detail, User
 Management, Requester, and desktop/tablet/mobile screenshot directories. The
 visual inspection checklist records the target viewports `1280x900`, `820x900`,
 and `390x844`, no horizontal overflow, accessible names, focus, and the
 card/table representation.
 
-\href{https://github.com/ovenmakemeheat/toktickit/blob/58f3587/docs/lab-03/reviewer.md}{\path{reviewer.md}}
-records the student and peer reviewer identities, PRs \#78--\#82, human review
-comments, author responses, merge evidence, and the pending Issue \#77 review.
-It keeps automated Codex and GitGuardian output separate from human approval.
-The Lab 3 project-board status and issue closure remain human responsibilities.
+\href{https://github.com/ovenmakemeheat/toktickit/blob/main/docs/lab-03/reviewer.md}{\path{reviewer.md}}
+records the student and peer reviewer identities, PRs \#78--\#84, review
+comments, author responses, and merge evidence. It keeps automated Codex and
+GitGuardian output separate from formal human approval. GitHub reports Issues
+\#72--\#77 closed at closeout; the public Lab 3 Project board capture in Part 1
+shows all six in \texttt{Done}. The board was inspected read-only and not
+modified in this documentation update.
 
-The release sequence is:
-
-\begin{enumerate}
-  \item review and merge this Issue \#77 PR into \path{lab3-staging};
-  \item rerun the integration checks on the merged staging branch;
-  \item open a separate \path{lab3-staging} to \path{main} release PR;
-  \item obtain human review and human merge of that release PR.
-\end{enumerate}
+The release sequence is complete: PR \#83 merged into \path{lab3-staging}, the
+integrated release tree passed verification, and PR \#84 merged it into
+\path{main}. The successful post-release local verification is recorded in the
+linked evidence file.
 
 \section{Answer Part 9: Zen Green, Responsive Evidence, and Limits}
 
-The visual contract remains in
-\href{https://github.com/ovenmakemeheat/toktickit/blob/58f3587/docs/lab-03/ui-spec.md}{\path{docs/lab-03/ui-spec.md}}.
-The committed screenshots and browser assertions show the required screens at
-desktop, tablet, and mobile sizes. Labels, live/status regions, named buttons,
-visible focus, required indicators, and non-color state cues are tested at the
-user-observable boundary.
+The visual contract is in
+\href{https://github.com/ovenmakemeheat/toktickit/blob/eddafe67d6fd8d742b98d4673a731b25540cc57d/docs/lab-03/ui-spec.md}{\path{docs/lab-03/ui-spec.md}}.
+It applies Zen Green colors: primary \texttt{\#006B3C}, secondary
+\texttt{\#0B7A46}, and pale \texttt{\#EAF6EF}. It also specifies readable
+system typography, a 4px spacing scale, grouped white surfaces, labels above
+fields, visible focus, and text-plus-color state cues.
+Loading, saving, validation, success, empty, no-results, forbidden, not-found,
+conflict, and safe-failure states are designed; responsive shells preserve role
+navigation and keep public/private communication distinct. The linked
+\href{https://github.com/ovenmakemeheat/toktickit/blob/eddafe67d6fd8d742b98d4673a731b25540cc57d/docs/lab-03/evidence/visual-inspection-checklist.md}{completed visual checklist}
+records viewport and overflow/accessibility inspection.
 
-\statusnote{\textbf{Boundary note.} The evidence in this feature branch is not final-main evidence because Lab 3 has not yet been released from \path{lab3-staging} to \path{main}. The report is complete as an Issue \#77 integration package, but the final release check, project-board transition, and issue closure require the human reviewer/owner.}
+The desktop captures above are embedded. The following links open the original
+full-resolution desktop/tablet/mobile screenshots from the immutable release
+commit.
+
+\begin{center}\scriptsize
+\begin{tabularx}{\linewidth}{@{}p{39mm}ccc@{}}
+\toprule
+Screen & Desktop & Tablet & Mobile \\
+\midrule
+Login & \screenshotlink{authentication/login-desktop.png} & \screenshotlink{authentication/login-tablet.png} & \screenshotlink{authentication/login-mobile.png} \\
+Change Password & \screenshotlink{authentication/change-password-desktop.png} & \screenshotlink{authentication/change-password-tablet.png} & \screenshotlink{authentication/change-password-mobile.png} \\
+Requester My Tickets & \screenshotlink{requester/my-tickets-desktop.png} & \screenshotlink{requester/my-tickets-tablet.png} & \screenshotlink{requester/my-tickets-mobile.png} \\
+Requester Create Ticket & \screenshotlink{requester/create-ticket-desktop.png} & \screenshotlink{requester/create-ticket-tablet.png} & \screenshotlink{requester/create-ticket-mobile.png} \\
+Requester Ticket Detail & \screenshotlink{requester/ticket-detail-desktop.png} & \screenshotlink{requester/ticket-detail-tablet.png} & \screenshotlink{requester/ticket-detail-mobile.png} \\
+IT Staff Queue & \screenshotlink{staff-queue/staff-queue-desktop.png} & \screenshotlink{staff-queue/staff-queue-tablet.png} & \screenshotlink{staff-queue/staff-queue-mobile.png} \\
+IT Staff Ticket Detail & \screenshotlink{staff-ticket-detail/staff-ticket-detail-desktop.png} & \screenshotlink{staff-ticket-detail/staff-ticket-detail-tablet.png} & \screenshotlink{staff-ticket-detail/staff-ticket-detail-mobile.png} \\
+User Management & \screenshotlink{user-management/user-management-desktop.png} & \screenshotlink{user-management/user-management-tablet.png} & \screenshotlink{user-management/user-management-mobile.png} \\
+Create User & \screenshotlink{user-management/user-management-create-desktop.png} & \screenshotlink{user-management/user-management-create-tablet.png} & \screenshotlink{user-management/user-management-create-mobile.png} \\
+Administrator Ticket Review & \screenshotlink{user-management/admin-ticket-review-desktop.png} & \screenshotlink{user-management/admin-ticket-review-tablet.png} & \screenshotlink{user-management/admin-ticket-review-mobile.png} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Labels, live/status regions, named buttons, visible focus, required indicators,
+and non-color state cues are tested at the user-observable boundary.
+
+\statusnote{\textbf{Verification note.} Lab 3 is released on \path{main} at \texttt{eddafe67}; this release has the same Git tree as the staging revision \texttt{d345420} that passed \texttt{bun run verify}, the 12-test Lab 3 Playwright suite, and the report build. The fresh post-release rerun on 2026-09-25 passed \texttt{bun run verify}, including all 58 client and 143 server tests, and \texttt{bun run test:e2e -- e2e/lab-03} passed all 12 tests against the seeded local application. The earlier attempt made before PostgreSQL was available is superseded; exact commands and results are recorded in the linked evidence. The public Project \#3 Kanban capture in Part 1 shows all six Lab 3 issue cards in \texttt{Done}; it was inspected read-only and no board fields were changed. No formal \texttt{APPROVED} review is claimed for PRs \#83/\#84.}
 
 No out-of-scope feature is claimed: there is no email delivery, social login,
 MFA, self-registration, User deletion, bulk User operation, SLA engine,

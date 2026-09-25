@@ -1,9 +1,9 @@
 # Lab 3 AI-use record
 
 Scope: Lab 3 contract implementation, E2E evidence, review follow-up, and
-release-readiness documentation for Issues #72-#77.
+final-main release documentation for Issues #72-#77.
 
-Record date: 2026-09-18
+Record date: 2026-09-25 (post-release closeout)
 
 ## LLM used
 
@@ -30,6 +30,9 @@ screenshots, and responding to every human review comment.
 6. Run the focused E2E suites and then the repository verification commands;
    record the exact branch, commit, prerequisites, and results without
    presenting a mocked browser test as proof of backend authorization.
+7. After the release PR merged, reconcile the report and evidence records with
+   the final `main` revision; distinguish the previously verified release tree
+   from any post-release checks blocked by local infrastructure.
 
 ## Specification-agent / coding-agent reflection
 
@@ -46,9 +49,13 @@ The coding agent also found that the pre-existing test plan named several
 planned files that were intentionally consolidated into the actual Lab 3 test
 files. The final evidence therefore records both the exact executed commands
 and the actual file locations instead of claiming that a missing file passed.
-The final release boundary remains explicit: this branch targets
-`lab3-staging`; only a human reviewer may merge the integration PR and prepare
-or merge the later `lab3-staging` to `main` release PR.
+The release is complete: PR #83 integrated into `lab3-staging`, then PR #84 was
+merged into `main` by the peer reviewer. The final `main` Git tree matches the
+staging tree that passed the full gate. An initial post-release local rerun was
+blocked while PostgreSQL was unavailable. After the database became
+available, the complete verification and seeded E2E suites passed; the
+successful rerun supersedes the earlier blocker and is recorded in the report
+evidence.
 
 ## Human responsibility
 
@@ -64,5 +71,7 @@ The student must still:
   authorization and migration evidence;
 - answer all review comments, obtain human peer review, and ensure the peer
   reviewer—not the PR author—merges the feature PR;
-- verify the integrated `lab3-staging` branch before asking for a separately
-  reviewed release PR to `main`.
+- keep the release history and formal GitHub review state distinct: PR #84 is
+  recorded as merged by the peer reviewer.
+- keep the GitHub project-board status accurate; this documentation update did
+  not change or claim a board transition.

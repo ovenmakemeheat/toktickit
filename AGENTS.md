@@ -36,7 +36,7 @@ In PowerShell, use `Copy-Item server/.env.example server/.env`. Before `bun run 
 
 ### GitHub project board
 
-- Use the [TokTickIT Lab 3 project board](https://github.com/users/ovenmakemeheat/projects/1/views/2) as the canonical delivery view.
+- Use the [TokTickIT Lab 3 project board](https://github.com/users/ovenmakemeheat/projects/3/views/1) as the canonical delivery view.
 - Keep the six Lab 3 issues (#72, #73, #74, #75, #76, and #77) on the board. Native sub-issues stay attached to their parent issues and are not added as separate board items.
 - Use the workflow statuses `Backlog`, `Specified`, `Started`, `PR Review`, `Fixing`, and `Done`.
 - Keep the board synchronized with issue and pull request state. Mark an issue `Done` only after its acceptance criteria, tests, peer review, and merge into `lab3-staging` are complete.
