@@ -1,12 +1,12 @@
 # Lab 3 Test DD and traceability plan
 
-Status: executed on the Issue #77 feature branch; suite results are recorded below and the release-to-main boundary remains pending human integration
+Status: pre-implementation plan retained; full gates passed on the integrated release tree at `d345420`, later merged unchanged to `main` at `eddafe67`
 Origin issue: #72 - Lab 3 - Sprint specification and test plan
 Contract: [specification.md](specification.md)
 UI contract: [ui-spec.md](ui-spec.md)
 API contract: [api-spec.md](api-spec.md)
 
-This test plan for the Lab 3 increment was created before feature implementation so that tests were derived from the approved contract rather than reconstructed from generated code. The status snapshot below records actual execution evidence on the Issue #77 feature branch; the final-main release boundary remains pending human integration.
+This test plan for the Lab 3 increment was created before feature implementation so that tests were derived from the approved contract rather than reconstructed from generated code. The historical Issue #77 feature-branch snapshot and the final integrated release-tree result are distinguished below. PR #84 merged the exact `d345420` Git tree into final `main` as `eddafe67`.
 
 ## 1. Test strategy
 
@@ -50,8 +50,9 @@ Fixture requirements:
 The rows below map the approved test IDs to the actual files that ran. A `Pass`
 status is supported by the command and counts in
 [evidence/integration-verification.md](evidence/integration-verification.md);
-these are feature-branch/staging evidence, not a claim that the later release
-PR has already been merged to `main`.
+these are the recorded integrated release-tree results. The exact test revision
+and the post-release local rerun limitation are recorded in
+[evidence/integration-verification.md](evidence/integration-verification.md).
 
 ### 3.1 Unit tests
 
@@ -190,16 +191,39 @@ bun run build
 bun run verify
 ```
 
-Issue #77 execution snapshot on 2026-09-18:
+Issue #77 feature-branch execution snapshot on 2026-09-18:
 
 - `bun run check` — Pass; Biome checked 117 files.
 - `bun run typecheck` — Pass; client and server TypeScript projects completed.
 - `bun run test` — Pass; 58 client tests and 143 server tests.
 - `bun run test:e2e -- e2e/lab-03` — Pass; 12 Lab 3 Playwright tests passed, including the unmocked seeded release regression in `release-regression.spec.ts`.
 - `bun run report:build:lab3` — Pass; the report source produced the six-page submission PDF.
-- `bun run build` and `bun run verify` — final-gate commands recorded against the immutable verification revision in the linked evidence file.
+- `bun run build` and `bun run verify` — final-gate results are recorded against the immutable integrated revision in the linked evidence file.
 
-Before full verification, prepare the test database using the repository workflow and never run `docker compose down -v` during normal development. A passing command is valid evidence only when its output, branch/commit, environment prerequisite, and test scope are recorded. A code review or generated test file is not a test result.
+### 6.1 Integrated release-tree and post-release results
+
+The full repository gate, Lab 3 Playwright suite (12/12), and report build
+passed on `lab3-staging` at `d345420782b2e14bbee7c7c70a586bc67d026434` before
+release. PR #84 merged this exact tree into `main` at
+`eddafe67d6fd8d742b98d4673a731b25540cc57d`; both commits have the same Git
+tree.
+
+A fresh local attempt on 2026-09-25 completed `bun run check`,
+`bun run hooks:validate`, `bun run db:validate`, `bun run typecheck`, all 58
+client tests, and `bun run build`. The server tests could not complete because
+PostgreSQL at `localhost:15434` was unavailable; `bun run db:up` could not start
+the container because Docker Engine was not running. The seeded E2E suite was
+not rerun locally for the same prerequisite. See
+[evidence/integration-verification.md](evidence/integration-verification.md)
+for exact results. The local full `bun run verify` is therefore environment-
+blocked, not a pass; the release tree's full pre-release gate is the recorded
+passing result.
+
+Before database-backed verification, prepare the test database using the
+repository workflow and never run `docker compose down -v` during normal
+development. A passing command is valid evidence only when its output,
+branch/commit, environment prerequisite, and test scope are recorded. A code
+review or generated test file is not a test result.
 
 ## 7. Completion rules
 
@@ -208,4 +232,4 @@ Before full verification, prepare the test database using the repository workflo
 - If a test reveals an implementation defect, fix the implementation or update the reviewed contract before changing the test expectation.
 - Keep server tests under `server/tests/lab-03/`, client tests under `client/tests/lab-03/`, E2E tests under `e2e/lab-03/`, and screenshots under `artifacts/lab-03/screenshots/`.
 - Every review comment on the implementation PR must receive an author response before the reviewer merges it.
-- The final release evidence must come from the integrated final `main` branch, while the specification and test plan must show that they existed before the main implementation PRs were completed.
+- Tie release evidence to an exact revision. If a post-release rerun is blocked by local infrastructure, state the blocker and distinguish it from the full passing gate on an identical release tree; do not claim an unrun main-branch test passed.

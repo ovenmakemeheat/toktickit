@@ -19,7 +19,7 @@ Peer reviewer GitHub: [`MadMax168`](https://github.com/MadMax168)
 
 Human reviewer account: `MadMax168`
 
-Record date: 2026-09-18
+Record date: 2026-09-25 (post-release closeout)
 
 This record distinguishes human review comments from automated review output.
 A positive human comment is recorded as review evidence, but it is not relabeled
@@ -35,12 +35,13 @@ review decision.
 | #74 | `feature/16-it-staff-ticket-workflow` | [PR #80](https://github.com/ovenmakemeheat/toktickit/pull/80) | Merged into `lab3-staging` by `MadMax168` on 2026-09-17. |
 | #75 | `feature/17-administrator-user-management` | [PR #81](https://github.com/ovenmakemeheat/toktickit/pull/81) | Merged into `lab3-staging` by `MadMax168` on 2026-09-18. |
 | #76 | `feature/18-zen-green-visual-inspection` | [PR #82](https://github.com/ovenmakemeheat/toktickit/pull/82) | Merged into `lab3-staging` by `MadMax168` on 2026-09-18. |
-| #77 | `feature/19-e2e-evidence-release` | [PR #83](https://github.com/ovenmakemeheat/toktickit/pull/83) | Open; review fixes are pushed, human re-review and merge into `lab3-staging` are pending. |
+| #77 | `feature/19-e2e-evidence-release` | [PR #83](https://github.com/ovenmakemeheat/toktickit/pull/83) | Merged into `lab3-staging` by `MadMax168` on 2026-09-19; merge commit `d345420`. |
 
-At the start of Issue #77 work, `lab3-staging` and this feature branch were at
-`4cb1049` (`Merge pull request #82`). The release PR from the completed
-`lab3-staging` branch to `main` is intentionally a later human-reviewed action;
-this feature PR must not claim that release has already happened.
+At the start of Issue #77 work, `lab3-staging` and the feature branch were at
+`4cb1049` (`Merge pull request #82`). The separate release PR [#84](https://github.com/ovenmakemeheat/toktickit/pull/84)
+merged `lab3-staging` into `main` by `MadMax168` on 2026-09-23. The resulting
+main commit is `eddafe67d6fd8d742b98d4673a731b25540cc57d`; its Git tree is
+identical to the verified staging tree at `d345420`.
 
 ## Human review comments and responses
 
@@ -51,22 +52,31 @@ this feature PR must not claim that release has already happened.
 | [#80](https://github.com/ovenmakemeheat/toktickit/pull/80) | `MadMax168` requested pagination preservation, complete owner options, stale-request loading protection, and typed concurrent status conflicts. | The author replied with `4e16ee0`; queue pagination and request guards were corrected, eligible owners are returned separately, and concurrent status updates return `409 TICKET_STATUS_CONFLICT` with refresh feedback. | Addressed and merged. |
 | [#81](https://github.com/ovenmakemeheat/toktickit/pull/81) | `MadMax168` requested a mobile User Management representation, serialized last-Administrator protection, and coordination between deactivation and Ticket assignment. | The author replied with `7fe6fe3`; mobile cards and edit actions were added, PostgreSQL transaction safeguards serialize the account/assignment checks, and concurrent regressions were added. | Addressed and merged. |
 | [#82](https://github.com/ovenmakemeheat/toktickit/pull/82) | `MadMax168` requested browser-level responsive/accessibility assertions and missing Requester screenshots at all required viewports. | The author replied with `d3db36c`; `e2e/lab-03/responsive-and-accessibility.spec.ts` and the nine Requester captures were added, the checklist was updated, and the verification gate was rerun. | Addressed and merged. |
-| [#83](https://github.com/ovenmakemeheat/toktickit/pull/83) | `MadMax168` requested real seeded API coverage instead of mocked business routes, an immutable tested revision, stable report links, and exact labsheet alignment for Answer Parts 6–8. | The author added an unmocked seeded release regression, recorded verification at `32fc2b7`, split the report into Working IT Staff Ticket Queue, Working IT Staff Ticket Detail, and Working Administrator User Management sections, and prepared immutable evidence links. | Addressed; human re-review pending. |
+| [#83](https://github.com/ovenmakemeheat/toktickit/pull/83) | `MadMax168` requested real seeded API coverage instead of mocked business routes, an immutable tested revision, stable report links, and exact labsheet alignment for Answer Parts 6–8. | The author added an unmocked seeded release regression, recorded verification at `32fc2b7`, split the report into Working IT Staff Ticket Queue, Working IT Staff Ticket Detail, and Working Administrator User Management sections, and prepared immutable evidence links. | Addressed; merged by `MadMax168` into `lab3-staging` on 2026-09-19. |
+
+## Release PR and merge record
+
+| Pull Request | Human reviewer / merger evidence | Recorded GitHub review state |
+| --- | --- | --- |
+| [#84](https://github.com/ovenmakemeheat/toktickit/pull/84) | `MadMax168` merged the `lab3-staging` to `main` release on 2026-09-23; merge commit `eddafe67d6fd8d742b98d4673a731b25540cc57d`. | `MERGED`; the API returned an empty formal `reviewDecision` and no formal `APPROVED` review. The automated GitGuardian comment is not peer approval. |
 
 ## Review and merge boundaries
 
-- All feature PRs above target `lab3-staging` and link their corresponding Lab 3
-  Issues.
-- The feature PR author did not merge PRs #78-#82; merge evidence identifies
-  `MadMax168` as the human merger.
+- All feature PRs #78-#83 targeted `lab3-staging` and linked their
+  corresponding Lab 3 Issues. Their merger was `MadMax168`, not the feature PR
+  author.
+- PR #84 is the separate release integration to `main`; its merge actor is
+  `MadMax168`. This record distinguishes that human merge from a formal GitHub
+  `APPROVED` review, which was not returned by the API.
 - Automated Codex review comments and GitGuardian alerts are retained as audit
   history and are not counted as peer approval.
-- GitHub's current formal review records for the earlier PRs are either
-  `COMMENTED` or empty; this document does not infer `APPROVED` from a
-  “ready to merge” or “look good” comment.
-- Issue #77 remains open until a human confirms the acceptance criteria,
-  reviews PR #83, merges it, verifies the integrated `lab3-staging` branch, and
-  separately reviews the release PR to `main`.
-- The project-board status requires the configured GitHub Project permission;
-  if the API does not expose that permission, the human project owner must
-  apply the required Kanban transition manually.
+- The retrieved formal review states for PRs #78-#84 are `COMMENTED` or empty;
+  this record does not infer `APPROVED` from a “ready to merge” or “look good”
+  comment.
+- GitHub reports Issues #72-#77 closed at closeout. Issue #77's closure was
+  recorded on 2026-09-21; PR #84 merged later on 2026-09-23. No issue state was
+  changed during this documentation closeout.
+- The public [TokTickIT Lab 3 Project board](https://github.com/users/ovenmakemeheat/projects/3/views/1)
+  was inspected read-only on 2026-09-25. Its six Lab 3 Issues (#72-#77) all
+  display `Done`; no board fields were changed during this documentation work.
+  The Kanban screenshot is retained at `docs/lab-03/report/evidence/lab3-project-board-kanban.png`.
