@@ -23,7 +23,7 @@ Scope: Issues #86–#90, their feature Pull Requests into `lab4-staging`, and th
 
 | Issue | Feature branch | Pull Request | Human reviewer / review state | Comments and author responses | Merge evidence |
 | --- | --- | --- | --- | --- | --- |
-| #87 Contract and test plan | `feature/20-lab4-contract-test-plan` | [PR #91](https://github.com/ovenmakemeheat/toktickit/pull/91) → `lab4-staging` | Commenter: `MadMax168`; formal approval pending | [Comment](https://github.com/ovenmakemeheat/toktickit/pull/91#issuecomment-6017639317); author response pending | Pending |
+| #87 Contract and test plan | `feature/20-lab4-contract-test-plan` | [PR #91](https://github.com/ovenmakemeheat/toktickit/pull/91) → `lab4-staging` | Commenter: `MadMax168`; formal approval pending | [Original comment](https://github.com/ovenmakemeheat/toktickit/pull/91#issuecomment-6017639317); author replies: [scope](https://github.com/ovenmakemeheat/toktickit/pull/91#discussion_r4197269211), [dashboard](https://github.com/ovenmakemeheat/toktickit/pull/91#discussion_r4197269213), [idempotency](https://github.com/ovenmakemeheat/toktickit/pull/91#discussion_r4197269201), [hardening](https://github.com/ovenmakemeheat/toktickit/pull/91#discussion_r4197269200), [summary](https://github.com/ovenmakemeheat/toktickit/pull/91#issuecomment-6019690579) | Pending |
 | #88 Actions Taken and Ticket workflow | `feature/21-lab4-actions-taken-ticket-workflow` | Pending | Pending | Pending | Pending |
 | #89 Role dashboards | `feature/22-lab4-role-dashboards` | Pending | Pending | Pending | Pending |
 | #90 Regression and demo readiness | `feature/23-lab4-regression-demo-readiness` | Pending | Pending | Pending | Pending |
@@ -34,7 +34,7 @@ Scope: Issues #86–#90, their feature Pull Requests into `lab4-staging`, and th
 - Human reviewer: Pending.
 - Review date and formal decision: Pending.
 - Review comment: [MadMax168 on PR #91](https://github.com/ovenmakemeheat/toktickit/pull/91#issuecomment-6017639317); requested complete FR/BR test traceability, accurate PR ledger, and explicit Administrator communication permissions from parent issue #86.
-- Author response/changes: Pending until posted/observed; this document records the observed comment and current documentation changes only.
+- Author response/changes: Posted on [PR #91](https://github.com/ovenmakemeheat/toktickit/pull/91), with a consolidated [response to the human comment](https://github.com/ovenmakemeheat/toktickit/pull/91#issuecomment-6019690579) and replies to all four inline threads. Formal approval and merge remain pending.
 - Formal approval evidence: Pending. No approval or merge is claimed.
 - State remains **Draft—review required** until a human records the review and any requested changes are addressed.
 
