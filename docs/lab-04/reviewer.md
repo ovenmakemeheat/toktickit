@@ -6,7 +6,7 @@ Scope: Issues #86–#90, their feature Pull Requests into `lab4-staging`, and th
 
 - Student/author: `GUNTEE DOUNGMANEE` (`ovenmakemeheat`)
 - Student ID: `67070501003`
-- Peer reviewer: **Pending confirmation for Lab 4**. Lab 3's recorded reviewer was `MadMax168`; do not assume that person reviewed Lab 4 unless the actual PR/review record confirms it.
+- PR #91 commenter: `MadMax168` (commenter identity observed on the linked comment; this does not establish formal review approval).
 - Record opened: 2026-09-27
 
 ## Review and merge rules
@@ -23,7 +23,7 @@ Scope: Issues #86–#90, their feature Pull Requests into `lab4-staging`, and th
 
 | Issue | Feature branch | Pull Request | Human reviewer / review state | Comments and author responses | Merge evidence |
 | --- | --- | --- | --- | --- | --- |
-| #87 Contract and test plan | `feature/20-lab4-contract-test-plan` | Pending | Pending | Pending | Pending |
+| #87 Contract and test plan | `feature/20-lab4-contract-test-plan` | [PR #91](https://github.com/ovenmakemeheat/toktickit/pull/91) → `lab4-staging` | Commenter: `MadMax168`; formal approval pending | [Comment](https://github.com/ovenmakemeheat/toktickit/pull/91#issuecomment-6017639317); author response pending | Pending |
 | #88 Actions Taken and Ticket workflow | `feature/21-lab4-actions-taken-ticket-workflow` | Pending | Pending | Pending | Pending |
 | #89 Role dashboards | `feature/22-lab4-role-dashboards` | Pending | Pending | Pending | Pending |
 | #90 Regression and demo readiness | `feature/23-lab4-regression-demo-readiness` | Pending | Pending | Pending | Pending |
@@ -33,9 +33,9 @@ Scope: Issues #86–#90, their feature Pull Requests into `lab4-staging`, and th
 - Contract documents created: `specification.md`, `api-spec.md`, `ui-spec.md`, and `tests.md`.
 - Human reviewer: Pending.
 - Review date and formal decision: Pending.
-- Review comments: Pending.
-- Author responses/changes: Pending.
-- Approval evidence: Pending.
+- Review comment: [MadMax168 on PR #91](https://github.com/ovenmakemeheat/toktickit/pull/91#issuecomment-6017639317); requested complete FR/BR test traceability, accurate PR ledger, and explicit Administrator communication permissions from parent issue #86.
+- Author response/changes: Pending until posted/observed; this document records the observed comment and current documentation changes only.
+- Formal approval evidence: Pending. No approval or merge is claimed.
 - State remains **Draft—review required** until a human records the review and any requested changes are addressed.
 
 ## Release Pull Request ledger

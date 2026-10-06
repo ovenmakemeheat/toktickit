@@ -37,7 +37,7 @@ Authorization is always enforced by the API. Hiding a screen or control is not a
 | Queue, Ticket Detail, owner, Action Taken, status workflow | No | Yes | Yes, as required by Lab 4 |
 | User Management and existing Ticket Review/IT-Priority capability | No | No | Retain the Lab 3 capabilities |
 | Formal status transition | No | Yes | Yes |
-| Public Comment/Internal Note write | Requester may add Public Comments to owned Tickets | Existing Lab 3 Staff write permissions remain | Existing Lab 3 Administrator read permissions remain; no new comment/note authoring permission is inferred |
+| Public Comment/Internal Note write | Requester may add Public Comments to owned Tickets | Existing Lab 3 Staff write permissions remain | Read-only for Public Comments and Internal Notes; no authoring. This preserves the Lab 3 matrix as explicitly required by parent issue #86. |
 | “Problem Appears Resolved” indication | Own Ticket only; advisory | Read only where shown | Read only where shown |
 
 Administrators receive the Lab 4 operational Ticket capabilities while retaining User Management and Ticket Review. Do not add a separate Administrator dashboard or account metrics. The Requester’s “Problem Appears Resolved” action never performs a staff transition.
@@ -84,6 +84,8 @@ Administrators receive the Lab 4 operational Ticket capabilities while retaining
 | FR-16 | Lab 1–3 authentication, authorization, Requester ownership, Ticket workflows, Attachments, comments, notes, User Management, Ticket Review, and Zen Green behavior continue to work. |
 | FR-17 | Role navigation, work history, dashboards, status controls, and feedback remain readable and operable at desktop, tablet, and mobile sizes with keyboard and assistive technology. |
 | FR-18 | Tests/evidence trace each acceptance criterion to actual observable behavior, executed tests, commands, and manual inspection where applicable. |
+| FR-19 | The shared Staff/Admin dashboard includes a bounded `myRecentActions` list of Actions Taken performed by the authenticated current User, independent of Ticket Owner and Ticket status. |
+| FR-20 | Final release hardening checks representative Lab 4 and prior-lab navigation for browser console errors and uncaught page errors, broken app-internal links, visible placeholder/TODO text, and visibly unfinished or inert controls. |
 
 ## 5. Business Rules
 
@@ -97,11 +99,11 @@ Administrators receive the Lab 4 operational Ticket capabilities while retaining
 | BR-04 | `actionDescription` and `result` are required, trimmed, non-empty plain text. Each is limited to 2,000 characters. |
 | BR-05 | `followUpRequired` is required. When true, `followUpNote` must be non-empty after trimming. When false, the stored/returned note is null. The note is limited to 2,000 characters. This flag alone does not block resolution. |
 | BR-06 | `attachmentNotes` is optional trimmed plain text, limited to 2,000 characters. It identifies an existing Ticket Attachment for the reader to inspect; it does not upload, create, or grant access to a file. |
-| BR-07 | The server derives `performedByUserId` from the authenticated session and does not accept caller-selected performer identity. The original performer, parent Ticket, idempotency key, and creation timestamp are immutable. |
+| BR-07 | The server derives `performedByUserId` from the authenticated session and does not accept caller-selected performer identity. The original performer, parent Ticket, idempotency key, request fingerprint, and creation timestamp are immutable. Editing any Action Taken field never changes the fingerprint. |
 | BR-08 | IT Staff and Administrators may update `actionAt`, `actionDescription`, `result`, `followUpRequired`, `followUpNote`, and `attachmentNotes`. Each update records `updatedAt`, `updatedByUserId`, and an incremented `version`. |
 | BR-09 | Actions Taken cannot be deleted. Create/update operations are atomic. A rejected request leaves both the action and parent Ticket unchanged. |
 | BR-10 | Reads order by `actionAt` ascending, then Action Taken `id` ascending. The ID is the stable tie-breaker. |
-| BR-11 | Create requires a client-generated UUID idempotency key. Repeating the same key with the same Ticket, authenticated creator, and equivalent normalized payload returns the existing Action Taken. Reusing it for different content, actor, or Ticket returns safe `409 IDEMPOTENCY_KEY_REUSED`; it never creates a second row. |
+| BR-11 | Create requires a client-generated UUID idempotency key. At first successful create, persist an immutable SHA-256 `requestFingerprint` over canonical normalized create input: Ticket ID, authenticated performer ID, normalized UTC `actionAt`, trimmed `actionDescription` and `result`, normalized follow-up fields (false implies null note), and normalized `attachmentNotes` (omitted/null canonicalizes to null). On key reuse compare the incoming fingerprint to the persisted fingerprint, not the editable Action Taken fields. A match replays the existing resource even after it has been edited, without creating or overwriting a row; a mismatch (including changed normalized input, actor, or Ticket) returns safe `409 IDEMPOTENCY_KEY_REUSED`. |
 | BR-12 | Update requires the record's expected `version`. If the stored version differs, return `409 ACTION_TAKEN_CONFLICT` and preserve the latest value. A successful update increments the version exactly once. |
 | BR-13 | Requesters can read Actions Taken only through a Ticket whose authenticated `requesterUserId` matches the session. Non-owned Ticket reads use a non-disclosing `404`. Requesters cannot create or update. |
 | BR-14 | IT Staff and Administrators can read/write Actions Taken on Tickets they are permitted to access, independent of Ticket ownership. Administrator gains the Lab 4 IT Staff operational Ticket workflow while retaining existing User Management and Ticket Review/IT-Priority behavior. |
@@ -136,6 +138,12 @@ All transitions are available only to IT Staff and Administrators. Confirmation 
 | `REOPENED` | `OPEN`, `IN_PROGRESS`, `WAITING_FOR_REQUESTER`, `RESOLVED`, `CANCELLED` | `RESOLVED`, `CANCELLED` |
 | `CANCELLED` | `REOPENED` | `REOPENED` |
 
+### Dashboard and current-user Actions Taken rule
+
+| ID | Rule |
+| --- | --- |
+| BR-25 | The Staff/Admin `myRecentActions` list is scoped by immutable `performedByUserId` to the authenticated User, independent of Ticket Owner/status, and includes Actions Taken from every Ticket status. It uses the inclusive UTC 30-day creation window, orders by `createdAt` descending then Action Taken ID descending, is capped at five, returns `[]` when empty, and contains only the documented safe summary with a matching Ticket Detail drill-down. |
+
 ### Dashboard calculation contract
 
 For each response, compute one server-side `asOf` UTC timestamp. The rolling window is `[asOf - 30 days, asOf]`, inclusive at both ends. “Active” means `NEW`, `OPEN`, `IN_PROGRESS`, `WAITING_FOR_REQUESTER`, or `REOPENED`; `RESOLVED`, `CLOSED`, and `CANCELLED` are not active. Counts are calculated from authoritative Ticket rows and scoped by authenticated identity where indicated.
@@ -153,8 +161,9 @@ For each response, compute one server-side `asOf` UTC timestamp. The rolling win
 | Staff/Admin `itPriorityBreakdown` | Counts for `LOW`, `MEDIUM`, and `HIGH` among active Tickets; include zero-valued keys. |
 | Staff/Admin `highPriorityActiveCount` | Count of active Tickets with `HIGH` IT Priority. |
 | Staff/Admin `recentlyUpdated` | Up to five active Tickets with `updatedAt` in the rolling window; `updatedAt` descending, then `id` descending. |
+| Staff/Admin `myRecentActions` | Up to five Actions Taken whose immutable `performedByUserId` is the authenticated User and whose `createdAt` is in the inclusive rolling window; all Ticket statuses qualify. Order `createdAt` descending, then Action Taken `id` descending. Each summary includes Action Taken ID, Ticket ID/number, Ticket summary, Action Description, Result, `createdAt`, and performer name/role; omit notes and other private detail. Each row drills down to that Ticket's Staff Detail and focuses the matching Action Taken. |
 
-Dashboard responses contain `asOf`, these counts/breakdowns, and bounded recent Ticket summaries only (maximum five per recent list). They do not return all Tickets or Internal Note content. Each card/list row links to a matching existing Queue filter or Ticket Detail. A zero count is represented as `0`; an empty list as `[]`; neither is treated as an error. Dashboard queries use indexes appropriate to ownership/status/priority/time filters. Administrators reuse the Staff response; no separate account metric is introduced.
+Dashboard responses contain `asOf`, these counts/breakdowns, and bounded recent Ticket/action summaries only (maximum five per recent list). `myRecentActions` is `[]` when no qualifying action exists, including for users whose owned Tickets differ from the Tickets on which they performed work. They do not return all Tickets or Internal Note content. Each card/list row links to a matching existing Queue filter or Ticket Detail. A zero count is represented as `0`; an empty list as `[]`; neither is treated as an error. Dashboard queries use indexes appropriate to ownership/status/priority/time filters. Administrators reuse the Staff response; no separate account metric is introduced.
 
 ## 6. UI Specification Summary
 
@@ -177,7 +186,8 @@ The contract adds an `ActionTaken` record with:
 | `followUpRequired` | Required Boolean | Whether follow-up is needed. |
 | `followUpNote` | Nullable text, max 2,000 characters | Required when flag true; null when false. |
 | `attachmentNotes` | Nullable text, max 2,000 characters | Plain-text pointer to existing Ticket evidence. |
-| `idempotencyKey` | Required globally unique UUID | Create retry protection. |
+| `idempotencyKey` | Required globally unique UUID | Create retry protection; never changed by edits. |
+| `requestFingerprint` | Required immutable 32-byte SHA-256 value | Fingerprint of canonical normalized create input; never returned in DTOs or written to logs. |
 | `version` | Required integer, starts at 1 | Optimistic edit conflict control. |
 | `createdAt` | Required UTC timestamp | Immutable record creation; used for post-reopen work gate. |
 | `updatedAt` | Required UTC timestamp | Last record update. |
@@ -187,7 +197,7 @@ Ticket gains nullable UTC `resolvedAt` and nullable UTC `lastReopenedAt`. User g
 
 ### Indexes and data-design rationale
 
-- Index Actions Taken by `(ticketId, actionAt, id)` for stable history reads and by `(ticketId, createdAt)` for the post-reopen resolution gate. Enforce UUID idempotency-key uniqueness in the database.
+- Index Actions Taken by `(ticketId, actionAt, id)` for stable history reads, `(ticketId, createdAt)` for the post-reopen resolution gate, and `(performedByUserId, createdAt, id)` for the current-user recent-action feed. Enforce UUID idempotency-key uniqueness in the database and persist the immutable `requestFingerprint` with each row; no raw create payload is retained.
 - Index dashboard filters to support Requester ownership/status/`resolvedAt`/`updatedAt` and operational owner/status/IT-Priority/`updatedAt`; retain current useful Lab 3 indexes and add only those needed by observed queries.
 - Keep `actionAt` separate from `createdAt`: editing a description must not rewrite when work happened, and the reopened-work rule needs immutable creation time.
 - Use a monotonically increasing `version` and conditional update rather than last-write-wins; this makes stale edits observable and prevents silent overwrite.
@@ -248,6 +258,8 @@ Each criterion maps to one or more test IDs in [tests.md](tests.md). The mapping
 | AC-22 | Dashboards and Actions Taken are keyboard/assistive-technology usable and work at desktop/tablet/mobile sizes without clipping or horizontal overflow. |
 | AC-23 | Populated-seed dashboard performance smoke verifies bounded summaries and records local response timing. |
 | AC-24 | Engineering contracts, test matrix, review/AI-use evidence, and Product Definition of Done are complete and human-reviewed before dependent feature implementation is treated as unblocked. |
+| AC-25 | Staff and Administrators see at most five recent actions performed by the authenticated current User, not actions selected by Ticket Owner; results include all Ticket statuses, obey inclusive 30-day UTC `createdAt` bounds and descending `createdAt`/ID order, use safe summaries, show `[]` when empty, and drill down to the matching action in Ticket Detail. |
+| AC-26 | During representative Lab 4 and prior-lab navigation, capture zero unexpected browser console errors and page errors, verify app-internal links resolve, and find no placeholder/TODO text or visibly unfinished/inert controls; record automated/manual evidence with route, role, revision, and pass/fail. Screenshots alone do not prove authorization. |
 
 ## 10. Product Definition of Done
 
@@ -260,7 +272,7 @@ Each criterion maps to one or more test IDs in [tests.md](tests.md). The mapping
 - [ ] All earlier Lab 1–3 authentication, ownership, Ticket assignment, Attachments, Public Comments, Internal Notes, User Management, Ticket Review, and Zen Green behavior remains passing; no prior approved capability is removed.
 - [ ] Loading, validation, success, empty/no-results, forbidden, not-found, conflict, safe failure, and recoverable input behavior is implemented where applicable.
 - [ ] Keyboard, visible focus, semantic names, announcements, non-color state cues, desktop/tablet/mobile layout, and visual consistency are tested/inspected; required role screenshots and visual checklist are captured.
-- [ ] Unit, API/integration, UI, authorization, workflow, migration/seed/regression, performance-smoke, E2E, responsive, and accessibility tests pass on the integrated Lab 4 tree. Final evidence records exact test files, commands, commit, and results; screenshots alone do not prove authorization.
+- [ ] Unit, API/integration, UI, authorization, workflow, migration/seed/regression, performance-smoke, E2E, responsive, accessibility, and final release-hardening checks pass on the integrated Lab 4 tree. E2E-04 captures console/page errors and verifies internal links and unfinished UI; VIS-01 records any checks requiring manual inspection with route, role, revision, evidence, and pass/fail. Screenshots alone do not prove authorization. Final evidence records exact test files, commands, commit, and results; screenshots alone do not prove authorization.
 - [ ] Setup, migration, seed, test, and local demonstration instructions, including the README instructions required by the handout, are current before final release.
 - [ ] `reviewer.md` identifies actual human review, linked PRs, comments, author responses, approvals, and merger; no automated output is represented as peer approval.
 - [ ] `ai-use.md` names the model used, records 6–10 selected key prompts and a reflection, and states the student's responsibility.
@@ -271,7 +283,7 @@ Each criterion maps to one or more test IDs in [tests.md](tests.md). The mapping
   - **Answer Part 2:** Rendered specification with numbered requirements, business rules, workflows, dashboard calculations, acceptance criteria, migration choices, Product DoD, and evidence it predated completion of implementation PRs.
   - **Answer Part 3:** Test plan, AC traceability, actual test-file paths, final status, and complete passing test output from `main`.
   - **Answer Part 4:** AI-use record naming the LLM, 6–10 selected prompts, and “My Reflection.”
-  - **Answer Part 5:** Staff metrics matched to database queries, recent/urgent Tickets, drill-downs, loading/empty/forbidden/safe-failure states, and responsive behavior.
+  - **Answer Part 5:** Staff metrics matched to database queries, recent/urgent Tickets, current-user Actions Taken (performer-scoped, not Ticket-Owner-scoped), drill-downs, loading/empty/forbidden/safe-failure states, and responsive behavior.
   - **Answer Part 6:** Ticket list/create/assignment; Actions Taken create/edit; status transition, resolve, and cancel; validation; inactive-assignee rejection; role restrictions; safe failures; responsiveness; and multiple actions on one Ticket.
   - **Answer Part 7:** Permitted transitions, stable Action Taken ordering, append-only/no-delete behavior with audit-preserving edits, and role visibility.
   - **Answer Part 8:** Requester-owned metrics, attention/recent Tickets, drill-downs, ownership protection, and regression for authentication, My Tickets, Ticket Detail, Attachments, Public Comments, Staff functions, Internal Notes, and Administrator User Management.
@@ -280,9 +292,9 @@ Each criterion maps to one or more test IDs in [tests.md](tests.md). The mapping
 ## 11. Assumptions and Decisions
 
 - The handout allows an optional Administrator dashboard/account counts. This contract chooses no separate Administrator dashboard/metrics: Administrators reuse the IT Staff operational dashboard, as approved in parent issue #86.
-- The handout's Administrator “perform IT Staff behavior” statement is interpreted using the explicit parent decision: Lab 4 expands operational Queue, Ticket Detail, ownership/priority/status, and Actions Taken access; it does not silently change the Lab 3 Public Comment/Internal Note authoring matrix. Administrators retain their existing read visibility. Human review must resolve this interpretation before implementation.
+- Parent issue #86 explicitly grants Administrators the IT Staff Dashboard, Queue, Ticket Detail, Action Taken, and status-transition capabilities while retaining User Management and Ticket Review/IT-Priority. It also requires prior comment/note behavior to remain intact. Accepted decision: Administrators remain read-only for Public Comments/Internal Notes; IT Staff retain existing write permissions, and Requesters retain Public Comment authoring on their own Tickets. No human decision about these permissions is pending.
 - “Different staff may take action” does not mean reassignment. The existing primary owner remains the coordinator; the authenticated action performer is separately recorded. Existing owner assignment still accepts only active IT Staff or Administrator Users and rejects inactive/invalid targets.
-- `actionAt` can be corrected by authorized staff; immutable `createdAt` is used for idempotency and post-reopen gating. The UI displays both the action time and performer/creation attribution needed to understand the work record.
+- `actionAt` can be corrected by authorized staff; immutable `requestFingerprint` is used for create idempotency and immutable `createdAt` for post-reopen gating. The fingerprint is computed once from canonical normalized create input and is not recomputed from mutable row fields. The UI displays both the action time and performer/creation attribution needed to understand the work record.
 - Legacy `resolvedAt` and `lastReopenedAt` use `updatedAt` only as documented approximations; earlier status history cannot be reconstructed. No Action Taken is inferred from historic Ticket activity.
 - The 30-day window is UTC and includes both its calculated lower boundary and response `asOf` upper boundary. All displayed counts derive from the same `asOf` instant.
 - Follow-up is a flag and note only. No follow-up assignment, scheduling, reminder, completion state, or resolution block is introduced.

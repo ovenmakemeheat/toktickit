@@ -67,8 +67,9 @@ Display:
 - Active Tickets by status; every active status is represented, including zero counts, and links to the matching Queue filter.
 - Active Tickets by IT Priority, plus `High Priority Active`; each links to the matching priority filter.
 - `Recently Updated` with up to five active Ticket rows, ordered exactly as the API specifies; each opens Staff Ticket Detail.
+- `My Recent Actions` (`myRecentActions`): up to five safe summaries of Actions Taken performed by the authenticated current User. This is performer-scoped, not Ticket-Owner-scoped, and includes actions regardless of Ticket status. Show the action description/result and logged time; each row opens `/staff/tickets/:ticketId#action-taken-:actionId`, bringing the matching Action Taken into view and focus.
 
-The Dashboard offers an operational starting point, not a full Queue replacement. All calculations use the authenticated staff/admin identity where defined. A zero count is shown as `0`; an empty recent list is explained without an error message. Administrators see the same operational Dashboard and retain their User Management/Ticket Review paths.
+The Dashboard offers an operational starting point, not a full Queue replacement. All calculations use the authenticated staff/admin identity where defined. A zero count is shown as `0`; an empty recent list, including `My Recent Actions`, is explained without an error message (`[]` is a normal empty state). Administrators see the same operational Dashboard and retain their User Management/Ticket Review paths.
 
 ### 3.4 Dashboard states and interactions
 
@@ -147,7 +148,7 @@ A Requester who owns the Ticket sees all Actions Taken in the stable order with 
 
 - Preserve Requester My Tickets, Create Ticket, Ticket Detail, Attachments, and Public Comments.
 - Preserve IT Staff Queue, ownership/claim/reassign, priority, status, Public Comments, Internal Notes, and Attachments behavior.
-- Preserve Administrator User Management and Ticket Review/IT-Priority behavior while exposing the approved Lab 4 operational capabilities.
+- Preserve Administrator User Management and Ticket Review/IT-Priority behavior while exposing the parent #86-approved Lab 4 Dashboard, Queue, Ticket Detail, Action Taken, and status-transition capabilities. Administrators remain read-only for Public Comments/Internal Notes; IT Staff retain existing write permissions and Requesters retain Public Comment authoring on their own Tickets.
 - Keep Public Comments shared and Internal Notes restricted/private in Ticket Detail. Dashboards never show Internal Note content.
 - Preserve existing cards, tables, badges, feedback, mobile navigation, form conventions, and safe API error states. Remove only genuinely obsolete/duplicate/placeholder controls; do not remove a prior approved capability.
 
@@ -190,7 +191,7 @@ Inspect both dashboards, staff/admin Ticket Detail, Requester read-only Ticket D
 | --- | --- |
 | Navigation | `Dashboard`, `My Tickets`, `Create Ticket`, `Ticket Queue`, `User Management`, `Log out` (role-appropriate). |
 | Requester dashboard | `Open Tickets`, `Waiting for You`, `Recently Updated`, `Recently Resolved`. |
-| Staff/Admin dashboard | `Unassigned Active`, `My Active Tickets`, `By Status`, `By IT Priority`, `High Priority Active`, `Recently Updated`. |
+| Staff/Admin dashboard | `Unassigned Active`, `My Active Tickets`, `By Status`, `By IT Priority`, `High Priority Active`, `Recently Updated`, `My Recent Actions`. |
 | Actions Taken | `Actions Taken`, `Add Action Taken`, `Action Date/Time`, `Action Description`, `Result`, `Performed by`, `Follow-Up Required?`, `Follow-up Note`, `Attachment Notes`, `Edit`. |
 | Workflow | Visible current status, only permitted transition target, explicit confirmation action, conflict/reload message. |
 

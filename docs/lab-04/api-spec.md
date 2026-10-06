@@ -62,7 +62,7 @@ Base URL: `/api`. This contract extends the existing Lab 3 Express API and prese
 
 - `performedBy` and `createdAt` are immutable; `updatedBy` is null until the first edit and then identifies the last authenticated editor.
 - `version` is a positive integer used for optimistic concurrency. `followUpNote` is null whenever `followUpRequired` is false.
-- The DTO does not expose `idempotencyKey`, internal migration fields, or `lastReopenedAt`.
+- The DTO does not expose `idempotencyKey`, immutable `requestFingerprint`, internal migration fields, or `lastReopenedAt`. The fingerprint is persistence-only and must not be logged.
 
 ### Bounded Ticket summary
 
@@ -101,7 +101,7 @@ Requester summaries are scoped to the session Requester and omit staff-only fiel
 | PATCH | `/api/staff/tickets/:ticketId/status` | IT Staff/Admin; CSRF | `200` updated Ticket detail |
 | Existing Lab 1–3 routes | Existing paths | Existing scope; only the named Staff operational routes are extended to Administrator | Existing contract |
 
-The three Actions Taken paths are Ticket-scoped. Do not add global Action Taken list, delete, or file-upload routes. The existing `/api/staff/tickets*` Queue/detail/claim/owner/priority/status route family is authorized for IT Staff and Administrator in Lab 4. Public Comment/Internal Note authoring permissions remain as in Lab 3; Administrator's new operational access does not silently grant communication-write permissions. The existing `/api/admin/tickets/:ticketId` Ticket Review and `/api/admin/tickets/:ticketId/priority` exception remain available.
+The three Actions Taken paths are Ticket-scoped. Do not add global Action Taken list, delete, or file-upload routes. The existing `/api/staff/tickets*` Queue/detail/claim/owner/priority/status route family is authorized for IT Staff and Administrator in Lab 4, as explicitly granted by parent issue #86, alongside the Staff Dashboard and Action Taken routes. Public Comment/Internal Note authoring permissions remain as in Lab 3: Administrators are read-only; IT Staff retain their existing write permissions, and Requesters may add Public Comments to their own Tickets. The existing `/api/admin/tickets/:ticketId` Ticket Review and `/api/admin/tickets/:ticketId/priority` exception remain available.
 
 ## 4. Actions Taken endpoints
 
@@ -141,8 +141,8 @@ Validation and behavior:
 - `actionDescription` and `result` are required, trimmed, non-empty, plain text, at most 2,000 characters each.
 - `followUpRequired` is required Boolean. If true, trimmed `followUpNote` is required and at most 2,000 characters. If false, any submitted note is discarded and stored/returned as null.
 - `attachmentNotes` may be omitted/null or trimmed plain text up to 2,000 characters. It creates no Attachment and grants no file permission.
-- The server derives the performer from the session, inserts `version: 1`, captures immutable `createdAt`, and atomically advances the parent Ticket's `updatedAt`.
-- New key and valid body returns `201` with the Action Taken DTO. Repeating the same key for the same Ticket, creator, and equivalent normalized payload returns `200` with the original DTO and creates no duplicate. Same key with a different Ticket, actor, or normalized payload returns `409 IDEMPOTENCY_KEY_REUSED`.
+- The server derives the performer from the session, inserts `version: 1`, captures immutable `createdAt`, computes and persists immutable `requestFingerprint`, and atomically advances the parent Ticket's `updatedAt`. The fingerprint is SHA-256 over a canonical serialization of normalized create input: path Ticket ID, authenticated performer ID, UTC-normalized `actionAt`, trimmed description/result, normalized follow-up fields (false maps to null note), and trimmed `attachmentNotes` (omitted/null maps to null). No raw payload is retained.
+- New key and valid body returns `201` with the Action Taken DTO. Repeating the same key and equivalent normalized request returns `200` with the existing resource, including after any editable Action Taken fields have changed. Compare against its persisted original fingerprint; do not recompute from the mutable row and do not overwrite the edited resource or advance Ticket activity on replay. Same key with a different Ticket, actor, or normalized input returns safe `409 IDEMPOTENCY_KEY_REUSED` with no mutation. The fingerprint is never included in responses or logs.
 - A caller who is not authorized to write receives `403 ACTION_TAKEN_FORBIDDEN`; Requester writes are always denied even for owned Tickets. Inaccessible/missing Ticket returns safe `404` as applicable.
 
 Errors: `400 ACTION_TAKEN_INPUT_INVALID`, `400 ACTION_TAKEN_IDEMPOTENCY_KEY_INVALID`, `401 SESSION_REQUIRED`, `403 ACTION_TAKEN_FORBIDDEN` or `CSRF_TOKEN_INVALID`, `404 TICKET_NOT_FOUND`, `409 IDEMPOTENCY_KEY_REUSED`, and generic `500 ACTION_TAKEN_CREATE_FAILED`.
@@ -164,7 +164,7 @@ Requires IT Staff/Admin role, CSRF, positive path IDs, and the current Action Ta
 ```
 
 - At least one editable field is required. Allowed fields are `actionAt`, `actionDescription`, `result`, `followUpRequired`, `followUpNote`, and `attachmentNotes`.
-- `expectedVersion` is required and is not itself editable. `performedBy`, performer ID, Ticket ID, `createdAt`, idempotency key, and version are rejected if supplied.
+- `expectedVersion` is required and is not itself editable. `performedBy`, performer ID, Ticket ID, `createdAt`, idempotency key, request fingerprint, and version are rejected if supplied. Updates never modify the immutable fingerprint.
 - Apply all supplied fields and the parent Ticket activity timestamp atomically. Preserve omitted fields. Clearing `followUpRequired` also clears `followUpNote`; setting it true requires a non-empty note after the resulting update.
 - Success returns `200` with the updated DTO and incremented version. If `expectedVersion` does not equal the stored version, return `409 ACTION_TAKEN_CONFLICT` with no field changed. Unknown/missing Action Taken on the Ticket returns `404 ACTION_TAKEN_NOT_FOUND` without revealing another Ticket's data.
 
@@ -251,7 +251,19 @@ IT Staff and Administrator. Same operational calculation for either role; no sep
     },
     "itPriorityBreakdown": { "LOW": 1, "MEDIUM": 3, "HIGH": 2 }
   },
-  "recentlyUpdated": [/* up to 5 active Ticket summaries */]
+  "recentlyUpdated": [/* up to 5 active Ticket summaries */],
+  "myRecentActions": [
+    {
+      "id": 47,
+      "ticketId": 315,
+      "ticketNumber": "TT-20260926-ABC123",
+      "ticketSummary": "Unable to sign in to course email",
+      "actionDescription": "Reset the account lock and verified sign-in.",
+      "result": "The Requester can sign in successfully.",
+      "createdAt": "2026-09-26T13:46:05.000Z",
+      "performedBy": { "id": 12, "name": "IT Staff A", "role": "IT_STAFF" }
+    }
+  ]
 }
 ```
 
@@ -261,6 +273,7 @@ IT Staff and Administrator. Same operational calculation for either role; no sep
 - `statusBreakdown`: include each active status, even at zero.
 - `itPriorityBreakdown`: active Tickets by `LOW`, `MEDIUM`, `HIGH`, even at zero.
 - `recentlyUpdated`: active Tickets updated in the inclusive window, ordered `updatedAt desc, id desc`.
+- `myRecentActions`: up to five Action Taken summaries where immutable `performedByUserId` equals the authenticated session User and `createdAt` is within the inclusive `[asOf - 30 days, asOf]` UTC window. Ticket status and Ticket Owner do not filter this list. Order by `createdAt desc, ActionTaken.id desc`. Include only the action ID, Ticket ID/number/summary, Action Description, Result, `createdAt`, and performer identity; omit Follow-up Note, Attachment Notes, and other private detail. Return `[]` if none qualify. Each item navigates to `/staff/tickets/:ticketId#action-taken-:actionId`, where the matching Action Taken is brought into view and focus.
 - Every metric links to `/staff/tickets` with the matching status, IT Priority, owner or unassigned filter. Recent rows open `/staff/tickets/:ticketId`.
 
 Errors: `401 SESSION_REQUIRED`, `403 STAFF_DASHBOARD_FORBIDDEN`, generic `500 STAFF_DASHBOARD_FAILED`.
@@ -274,7 +287,7 @@ Errors: `401 SESSION_REQUIRED`, `403 STAFF_DASHBOARD_FORBIDDEN`, generic `500 ST
 | Requester dashboard | Own data | `403` | `403` |
 | Staff dashboard | `403` | Own operational metrics | Same operational metrics |
 | Ticket status transition | `403` | Matrix + confirmation + resolution gate | Matrix + confirmation + resolution gate |
-| Public Comment/Internal Note write | Own Public Comment only | Existing Lab 3 Staff write permissions | Existing Lab 3 Admin read permissions; write remains denied |
+| Public Comment/Internal Note write | Own Public Comment only | Existing Lab 3 Staff write permissions | Read-only; write remains denied under the parent #86 decision to preserve the Lab 3 matrix |
 | Requester resolution indication | Owned Ticket, advisory only | Existing role behavior | Existing role behavior |
 
 Use `400` for invalid IDs/body/enums/missing confirmation, `401` for no valid session, `403` for a valid session without role permission or invalid CSRF, `404` for missing/non-disclosing inaccessible resources, and `409` for idempotency/version/status/resolution precondition conflicts. Every error path is safe and mutation-free.
@@ -283,7 +296,7 @@ Use `400` for invalid IDs/body/enums/missing confirmation, `401` for no valid se
 
 - UNIT-01 covers action fields, follow-up normalization, UUID idempotency shape, and validation.
 - UNIT-02 covers transition graph, confirmation, resolvedAt/lastReopenedAt behavior, and resolution gate.
-- API-01 through API-05 cover Action Taken writes/reads, actor/owner/role rules, idempotency, stale updates, status gate, direct authorization, atomicity, and safe errors.
+- API-01 through API-05 cover Action Taken writes/reads, actor/owner/role rules, idempotency, stale updates, status gate, direct authorization, atomicity, and safe errors. API-04 explicitly verifies Administrator read-only Public Comments/Internal Notes, retained IT Staff write permissions, and Requester-owned Public Comment authoring.
 - API-06/API-07 cover exact dashboard queries, authenticated scoping, bounds, date boundaries, stable ordering, zero/non-zero values, and drill-down destinations.
 - API-08 covers migration, timestamp backfill, seed repeatability, and Labs 1–3 regression.
 - UI-01/UI-02/UI-03 cover user-observable actions/dashboard/role/accessibility states.

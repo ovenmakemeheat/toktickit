@@ -41,7 +41,7 @@ Seed/fixture data must include:
 - Tickets with zero, one, and multiple Actions Taken; both follow-up values; and an action performer different from the Ticket Owner.
 - Action times with equal timestamps (ID tie-break), out-of-order insertion, and an update that does not change `actionAt` unless explicitly edited.
 - An Action Taken with follow-up required and a non-empty note; one with the flag cleared and a null note; Attachment Notes referencing a seeded existing Attachment without upload.
-- Requester and Staff dashboard metrics with zero and non-zero results; exact inclusive lower-window and `asOf` boundaries; ties for `updatedAt`/`resolvedAt`; and resolved/closed/cancelled examples.
+- Requester and Staff dashboard metrics with zero and non-zero results; exact inclusive lower-window and `asOf` boundaries; ties for `updatedAt`/`resolvedAt`/Action Taken `createdAt`; resolved/closed/cancelled examples; and current-user-performed actions on Tickets with a different owner across statuses.
 - Legacy Lab 3 database shapes with zero Actions Taken and current `RESOLVED`, `CLOSED`, and `REOPENED` Tickets for timestamp backfill/behavior checks.
 
 Reset or isolate data using the existing test database setup. The migration test starts from a Lab 3-shaped database, records before/after row counts and ownership, and never uses/destroys the developer database volume.
@@ -54,15 +54,15 @@ The filenames below follow the Lab 4 handout's minimum structure and the reposit
 
 | Test ID | Type | AC mapping | Observable behavior covered | Planned test file(s) | Status |
 | --- | --- | --- | --- | --- | --- |
-| UNIT-01 | Unit | AC-01, AC-04, AC-05, AC-08 | Required Action Taken fields, trimming/length bounds, follow-up note conditionality/clearing, UUID header validation, normalized idempotency payload | `server/tests/lab-04/actions-taken.unit.test.ts` | Planned—not run |
+| UNIT-01 | Unit | AC-01, AC-04, AC-05, AC-08 | Required Action Taken fields, trimming/length bounds, follow-up note conditionality/clearing, UUID header validation, canonical normalized create fingerprint (including actor/Ticket and UTC/follow-up normalization), and stable fingerprint across later edits | `server/tests/lab-04/actions-taken.unit.test.ts` | Planned—not run |
 | UNIT-02 | Unit | AC-10, AC-11, AC-12 | Complete status matrix, required confirmations, new-resolution gate, reopen marker, legacy resolved/closed behavior, and stale-state decision | `server/tests/lab-04/ticket-workflow.unit.test.ts` | Planned—not run |
 | API-01 | API | AC-01, AC-02, AC-04, AC-05 | Create persists under correct Ticket; session-derived performer; other staff may perform without changing owner; field validation; no upload from Attachment Notes; Ticket `updatedAt` changes | `server/tests/lab-04/actions-taken.api.test.ts` | Planned—not run |
 | API-02 | API | AC-06 | GET returns stable action-time/ID ordering; Requester sees only owned Ticket; foreign/missing Ticket has non-disclosing result; empty list shape is stable | `server/tests/lab-04/actions-taken.api.test.ts` | Planned—not run |
-| API-03 | API/concurrency | AC-03, AC-08, AC-09 | Idempotent replay versus conflicting key reuse; update metadata/version; immutable actor/parent/creation; stale version 409 preserves winning data; no partial Ticket timestamp mutation | `server/tests/lab-04/actions-taken.api.test.ts` | Planned—not run |
-| API-04 | API/security | AC-02, AC-07, AC-17 | Requester write rejection; cross-owner access; missing role/CSRF; IT Staff/Admin Queue/detail/claim/owner/priority/status operations; Admin retains user-management/review boundaries; existing communication-write roles remain safe | `server/tests/lab-04/actions-taken.api.test.ts`, `server/tests/lab-04/ticket-workflow.api.test.ts`, existing Lab 3 authorization suites | Planned—not run |
+| API-03 | API/concurrency | AC-03, AC-08, AC-09 | Create, edit one or more fingerprinted fields, then retry the same key with the original equivalent normalized request: return the edited existing resource without creating/overwriting a row or advancing Ticket activity. Verify persisted fingerprint remains unchanged and is absent from DTO/log output. Same key with changed normalized input, actor, or Ticket returns safe 409 without mutation; also cover update metadata/version and stale version 409 preserving winning data | `server/tests/lab-04/actions-taken.api.test.ts` | Planned—not run |
+| API-04 | API/security | AC-02, AC-07, AC-17, AC-19 | Requester write rejection; cross-owner access; missing role/CSRF; IT Staff/Admin Queue/detail/claim/owner/priority/status operations; Admin retains user-management/review boundaries; Admin is read-only for Public Comments/Internal Notes; IT Staff existing write permissions and Requester-owned Public Comment authoring remain intact | `server/tests/lab-04/actions-taken.api.test.ts`, `server/tests/lab-04/ticket-workflow.api.test.ts`, existing Lab 3 authorization suites | Planned—not run |
 | API-05 | API/concurrency | AC-10, AC-11, AC-12 | Full transition matrix; confirmations; no-action resolution rejection; success after new action; reopened Ticket requires post-reopen action; Requester advisory; expected-status race returns typed 409; atomicity | `server/tests/lab-04/ticket-workflow.api.test.ts` | Planned—not run |
 | API-06 | API/database | AC-13, AC-14, AC-16 | Requester-only query scope; exact open/waiting/recently-resolved definitions; inclusive UTC boundaries; stable ties; zero/non-zero values; top-five bounds; no private fields | `server/tests/lab-04/requester-dashboard.api.test.ts` | Planned—not run |
-| API-07 | API/database | AC-15, AC-16, AC-17 | Staff/Admin unassigned, `myActive`, status/priority/high metrics; active status set; recent top-five ordering; role equivalence; bounded DTO and drill-down filters | `server/tests/lab-04/staff-dashboard.api.test.ts` | Planned—not run |
+| API-07 | API/database | AC-15, AC-16, AC-17, AC-25 | Staff/Admin unassigned, owner-based `myActive`, status/priority/high metrics; `myRecentActions` scopes by authenticated performer (distinct from Ticket owner), includes all Ticket statuses, applies inclusive UTC `createdAt` window, descending timestamp/ID ordering and five-item cap; role equivalence; safe bounded DTO and action drill-down destination | `server/tests/lab-04/staff-dashboard.api.test.ts` | Planned—not run |
 | API-08 | Migration/seed/regression | AC-19, AC-20, AC-21 | Lab 3 migration preserves Users/Tickets/Attachments/comments/notes and IDs/ownership; `resolvedAt`/`lastReopenedAt` approximations; zero fabricated actions; repeat-safe migration/seed; required fixture distribution; `/api/health`, inactive-assignee rejection, and prior Lab 1–3 API behavior | `server/tests/lab-04/migration-seed.api.test.ts`, existing `server/tests/lab-02/` and `server/tests/lab-03/` suites | Planned—not run |
 
 ### 3.2 Client UI, E2E, performance, visual, and docs
@@ -70,14 +70,14 @@ The filenames below follow the Lab 4 handout's minimum structure and the reposit
 | Test ID | Type | AC mapping | Observable behavior covered | Planned test file/evidence | Status |
 | --- | --- | --- | --- | --- | --- |
 | UI-01 | UI component | AC-01–09, AC-18 | Ordered list, Staff/Admin create/edit, Requester read-only, follow-up validation, action retries/conflict/input preservation, actor/owner distinction, no delete/upload control | `client/tests/lab-04/ActionsTaken.test.tsx` | Planned—not run |
-| UI-02 | UI component | AC-13–16, AC-18 | Requester/Staff dashboard loading, zero/non-zero, safe failure/retry, metrics, recent lists, labels, bounded rows, drill-down destinations | `client/tests/lab-04/RequesterDashboard.test.tsx`, `client/tests/lab-04/StaffDashboard.test.tsx` | Planned—not run |
+| UI-02 | UI component | AC-13–16, AC-18, AC-25 | Requester/Staff dashboard loading, zero/non-zero, safe failure/retry, metrics, recent Ticket and `My Recent Actions` lists, labels, bounded rows, and Ticket/action drill-down destinations | `client/tests/lab-04/RequesterDashboard.test.tsx`, `client/tests/lab-04/StaffDashboard.test.tsx` | Planned—not run |
 | UI-03 | UI/style/responsive/accessibility | AC-17–19, AC-22 | Role navigation, Administrator operational access plus retained admin features, transition controls/confirmations, focus/labels/announcements, Zen Green visual consistency, responsive states, no regressions | `client/tests/lab-04/TicketWorkflow.test.tsx`, existing Lab 2/3 suites, `e2e/lab-04/prior-labs-regression.spec.ts`, VIS-01 checklist | Planned—not run |
 | E2E-01 | Seeded full-stack | AC-01–09, AC-19 | Staff creates and edits actions on a real Ticket; owner remains distinct; Requester can read same history but cannot mutate; repeated request does not duplicate | `e2e/lab-04/actions-taken-flow.spec.ts` | Planned—not run |
 | E2E-02 | Seeded full-stack | AC-10–12 | Resolution is rejected with no Action Taken, allowed after required work, Requester advisory stays advisory, confirmation and concurrent conflict feedback work | `e2e/lab-04/ticket-resolution.spec.ts` | Planned—not run |
-| E2E-03 | Seeded full-stack | AC-13–17, AC-21 | Requester/Staff/Admin metrics match seeded data and cards/rows open matching filters/details; zero/non-zero cases; Admin reuses Staff dashboard | `e2e/lab-04/dashboards.spec.ts` | Planned—not run |
-| E2E-04 | Seeded role/regression | AC-07, AC-17, AC-19, AC-22 | Direct forbidden API/navigation matrix; Requester cross-owner denial; Staff/Admin access; prior authentication, Ticket, Attachment, comment/note, User Management, Ticket Review flows | `e2e/lab-04/prior-labs-regression.spec.ts`, existing release-regression suites | Planned—not run |
+| E2E-03 | Seeded full-stack | AC-13–17, AC-21, AC-25 | Requester/Staff/Admin metrics match seeded data; current-user `My Recent Actions` distinguishes performer from owner, scopes to the signed-in staff/admin, orders and bounds results across statuses/window, and rows focus the matching action; zero/non-zero cases; Admin reuses Staff dashboard | `e2e/lab-04/dashboards.spec.ts` | Planned—not run |
+| E2E-04 | Seeded role/regression/release hardening | AC-07, AC-17, AC-19, AC-22, AC-26 | Direct forbidden API/navigation matrix; Requester cross-owner denial; Staff/Admin access; prior authentication, Ticket, Attachment, comment/note, User Management, Ticket Review flows. During representative Lab 4/prior-lab navigation collect browser console errors and uncaught page errors (fail on unexpected errors); verify app-internal links resolve and no placeholder/TODO text or visibly unfinished/inert controls remain. Save machine-readable run output/report under `artifacts/lab-04/e2e/e2e-04-hardening/` with tested routes/roles and revision. | `e2e/lab-04/prior-labs-regression.spec.ts`, existing release-regression suites; `artifacts/lab-04/e2e/e2e-04-hardening/` | Planned—not run |
 | PERF-01 | API performance smoke | AC-16, AC-23 | Populated database; dashboard responses are bounded summaries with correct list caps and no full Ticket/Note payload; record actual local response timing and environment | `server/tests/lab-04/dashboard-performance.api.test.ts` | Planned—not run |
-| VIS-01 | Manual UI style/responsive/accessibility | AC-18, AC-22 | Compare Zen Green visual consistency with the approved Lab 3 UI; inspect Staff/Requester dashboards and Action Taken detail at desktop/tablet/mobile; keyboard/focus/labels/live states, validation placement, clipping/overlap/overflow, and non-color cues | `docs/lab-04/evidence/visual-inspection-checklist.md` and `artifacts/lab-04/screenshots/` | Planned—not run |
+| VIS-01 | Manual UI style/responsive/accessibility/release hardening | AC-18, AC-22, AC-26 | Compare Zen Green visual consistency with the approved Lab 3 UI; inspect Staff/Requester dashboards and Action Taken detail at desktop/tablet/mobile; keyboard/focus/labels/live states, validation placement, clipping/overlap/overflow, and non-color cues. For checks requiring manual inspection, navigate representative Lab 4/prior-lab routes and record browser console/page errors, internal-link resolution, placeholder/TODO text, and visibly unfinished/inert controls as pass/fail. Each record includes route, role, viewport, revision, evidence path, and result. Screenshots are visual evidence only, not authorization proof. | `docs/lab-04/evidence/visual-inspection-checklist.md` and `artifacts/lab-04/evidence/visual-inspection/` (screenshots under `artifacts/lab-04/screenshots/`) | Planned—not run |
 | DOC-01 | Contract/documentation review | AC-24 | All FR/BR/AC trace to tests/evidence; API/UI/schema/seed decisions agree; out-of-scope stays excluded; reviewer and AI-use/DoD records are complete; handout requirements are not lost | `specification.md`, `api-spec.md`, `ui-spec.md`, `tests.md`, `reviewer.md`, `ai-use.md` | Planned—not run |
 
 ## 4. Acceptance-criterion traceability
@@ -108,8 +108,64 @@ The filenames below follow the Lab 4 handout's minimum structure and the reposit
 | AC-22 | UI-03, E2E-04, VIS-01 |
 | AC-23 | PERF-01 |
 | AC-24 | DOC-01 |
+| AC-25 | API-07, UI-02, E2E-03, PERF-01 |
+| AC-26 | E2E-04, VIS-01 |
 
 A check on a document or screenshot is not a replacement for automated API evidence. All ACs must retain at least one mapped test after any reviewed contract change.
+
+## 4.1 Functional requirement and business rule traceability
+
+The following is the complete identifier inventory in the current `specification.md` (FR-01–FR-20 and BR-01–BR-25). Every requirement maps to at least one planned automated test ID or manual/documentation check. IDs refer to the catalog above; all remain Planned—not run.
+
+| Specification ID | Planned test ID(s) / manual check |
+| --- | --- |
+| FR-01 | API-01, API-04, E2E-01 |
+| FR-02 | UNIT-01, API-01, UI-01 |
+| FR-03 | API-02, API-04, UI-01, E2E-01 |
+| FR-04 | API-01, API-03, UI-01 |
+| FR-05 | UNIT-01, API-02, API-03, UI-01 |
+| FR-06 | API-04, UI-01 |
+| FR-07 | UNIT-02, API-05, API-04 |
+| FR-08 | UNIT-02, API-05, E2E-02 |
+| FR-09 | UNIT-02, API-05, API-08 |
+| FR-10 | API-06, UI-02, E2E-03 |
+| FR-11 | API-07, UI-02, E2E-03 |
+| FR-12 | API-06, API-07, UI-02, PERF-01 |
+| FR-13 | API-06, API-07, PERF-01 |
+| FR-14 | API-08 |
+| FR-15 | API-08, E2E-03 |
+| FR-16 | API-08, API-04, E2E-04 |
+| FR-17 | UI-03, VIS-01 |
+| FR-18 | DOC-01 |
+| FR-19 | API-07, UI-02, E2E-03 |
+| FR-20 | E2E-04, VIS-01 |
+| BR-01 | UNIT-01, API-01 |
+| BR-02 | API-01, API-04, E2E-01 |
+| BR-03 | UNIT-01, API-01, UI-01 |
+| BR-04 | UNIT-01, API-01, UI-01 |
+| BR-05 | UNIT-01, API-01, UI-01 |
+| BR-06 | UNIT-01, API-01, UI-01 |
+| BR-07 | API-01, API-03, API-04 |
+| BR-08 | API-03, UI-01 |
+| BR-09 | API-01, API-03, API-04 |
+| BR-10 | API-02, UI-01 |
+| BR-11 | UNIT-01, API-03, E2E-01 |
+| BR-12 | API-03, UI-01 |
+| BR-13 | API-02, API-04, E2E-01 |
+| BR-14 | API-04, API-07, E2E-03 |
+| BR-15 | API-01, API-03 |
+| BR-16 | UNIT-02, API-05 |
+| BR-17 | UNIT-02, API-04, API-05 |
+| BR-18 | UNIT-02, API-05, E2E-02 |
+| BR-19 | UNIT-02, API-05, E2E-02 |
+| BR-20 | UNIT-02, API-05, API-08 |
+| BR-21 | UNIT-02, API-05, API-08 |
+| BR-22 | UNIT-02, API-05, E2E-02 |
+| BR-23 | API-05, E2E-02 |
+| BR-24 | API-05, API-08 |
+| BR-25 | API-07, UI-02, E2E-03, PERF-01 |
+
+DOC-01 additionally performs an explicit inventory comparison against `specification.md` to reject missing or unknown FR/BR identifiers; the table above contains FR-01–FR-20 and BR-01–BR-25 exactly, with no gaps.
 
 ## 5. Planned commands and evidence recording
 
@@ -131,6 +187,7 @@ For DB-backed suites, use the isolated test database and the repository's approv
 VIS-01 records the actual route, role, viewport, fixture marker, commit, evidence path, and outcome for:
 
 - Zen Green visual consistency with Lab 3: shared design tokens, typography, spacing, cards, tables, badges, buttons, forms, feedback, and responsive navigation; remove only temporary/duplicate/obsolete/inconsistent UI elements without regressing prior capabilities.
+- Final hardening on representative Lab 4/prior-lab navigation: capture unexpected browser console errors and uncaught page errors; resolve app-internal links; inspect rendered UI for placeholder/TODO text and visibly unfinished or inert controls. Record route, role, viewport, revision, evidence path, and pass/fail in VIS-01 when manual inspection is needed; retain E2E-04 run report. Screenshots alone do not establish authorization.
 - Requester, IT Staff, and Administrator navigation/role boundary.
 - Requester Dashboard ownership scope, zero/non-zero metrics, recent lists, and drill-down.
 - Staff/Admin Dashboard cards, status/IT-Priority counts, unassigned/my-owned/recent lists, and drill-down.
