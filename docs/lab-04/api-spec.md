@@ -172,6 +172,8 @@ Errors: `400 ACTION_TAKEN_INPUT_INVALID`, `400 ACTION_TAKEN_ID_INVALID`, `401 SE
 
 ## 5. Ticket status and resolution API
 
+`GET /api/staff/tickets/:ticketId` includes `hasEligibleResolutionAction`, a boolean for the current Ticket state. It is true when at least one Action Taken exists and, after a reopen, its immutable `createdAt` is later than `lastReopenedAt`. The UI may use this to explain or disable the `RESOLVED` control; the internal reopen marker itself is never returned.
+
 ### PATCH `/api/staff/tickets/:ticketId/status`
 
 This extends the existing status endpoint to Administrator as well as IT Staff. Request body:

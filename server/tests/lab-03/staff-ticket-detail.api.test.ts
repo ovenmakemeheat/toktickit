@@ -1,4 +1,5 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { randomUUID } from "node:crypto";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { loginAgent, prepareLab3Data, prisma } from "./test-helpers.js";
 
@@ -120,14 +121,18 @@ describe("IT Staff Ticket operations", () => {
     const open = await staff.agent
       .patch(`/api/staff/tickets/${ticketId}/status`)
       .set("X-CSRF-Token", staff.csrfToken)
-      .send({ status: "OPEN", confirmation: false });
+      .send({ expectedStatus: "NEW", status: "OPEN", confirmation: false });
     expect(open.status, JSON.stringify(open.body)).toBe(200);
     expect(open.body.currentStatus).toBe("OPEN");
 
     const missingConfirmation = await staff.agent
       .patch(`/api/staff/tickets/${ticketId}/status`)
       .set("X-CSRF-Token", staff.csrfToken)
-      .send({ status: "RESOLVED", confirmation: false });
+      .send({
+        expectedStatus: "OPEN",
+        status: "RESOLVED",
+        confirmation: false,
+      });
     expect(missingConfirmation.status).toBe(400);
     expect(missingConfirmation.body.error.code).toBe(
       "STATUS_CONFIRMATION_REQUIRED",
@@ -137,17 +142,29 @@ describe("IT Staff Ticket operations", () => {
         .currentStatus,
     ).toBe("OPEN");
 
+    const action = await staff.agent
+      .post(`/api/tickets/${ticketId}/actions-taken`)
+      .set("X-CSRF-Token", staff.csrfToken)
+      .set("Idempotency-Key", randomUUID())
+      .send({
+        actionAt: new Date().toISOString(),
+        actionDescription: "Restored the service connection.",
+        result: "The Requester can use the service.",
+        followUpRequired: false,
+      });
+    expect(action.status).toBe(201);
+
     const resolved = await staff.agent
       .patch(`/api/staff/tickets/${ticketId}/status`)
       .set("X-CSRF-Token", staff.csrfToken)
-      .send({ status: "RESOLVED", confirmation: true });
+      .send({ expectedStatus: "OPEN", status: "RESOLVED", confirmation: true });
     expect(resolved.status).toBe(200);
     expect(resolved.body.currentStatus).toBe("RESOLVED");
 
     const invalidTransition = await staff.agent
       .patch(`/api/staff/tickets/${ticketId}/status`)
       .set("X-CSRF-Token", staff.csrfToken)
-      .send({ status: "OPEN", confirmation: true });
+      .send({ expectedStatus: "RESOLVED", status: "OPEN", confirmation: true });
     expect(invalidTransition.status).toBe(400);
     expect(invalidTransition.body.error.code).toBe(
       "TICKET_STATUS_TRANSITION_INVALID",
@@ -155,7 +172,11 @@ describe("IT Staff Ticket operations", () => {
 
     const missingCsrf = await staff.agent
       .patch(`/api/staff/tickets/${ticketId}/status`)
-      .send({ status: "CLOSED", confirmation: true });
+      .send({
+        expectedStatus: "RESOLVED",
+        status: "CLOSED",
+        confirmation: true,
+      });
     expect(missingCsrf.status).toBe(403);
     expect(missingCsrf.body.error.code).toBe("CSRF_TOKEN_INVALID");
 
@@ -166,27 +187,19 @@ describe("IT Staff Ticket operations", () => {
     expect(forbidden.body.error.code).toBe("STAFF_TICKET_FORBIDDEN");
   });
 
-  it("returns a typed conflict when a concurrent status update wins", async () => {
-    const updateMany = vi
-      .spyOn(prisma.ticket, "updateMany")
-      .mockResolvedValueOnce({ count: 0 });
+  it("returns a typed conflict when the client submits a stale status", async () => {
+    const response = await staff.agent
+      .patch(`/api/staff/tickets/${ticketId}/status`)
+      .set("X-CSRF-Token", staff.csrfToken)
+      .send({ expectedStatus: "NEW", status: "CLOSED", confirmation: true });
 
-    try {
-      const response = await staff.agent
-        .patch(`/api/staff/tickets/${ticketId}/status`)
-        .set("X-CSRF-Token", staff.csrfToken)
-        .send({ status: "CLOSED", confirmation: true });
-
-      expect(response.status).toBe(409);
-      expect(response.body.error).toEqual(
-        expect.objectContaining({ code: "TICKET_STATUS_CONFLICT" }),
-      );
-      expect(
-        (await prisma.ticket.findUniqueOrThrow({ where: { id: ticketId } }))
-          .currentStatus,
-      ).toBe("RESOLVED");
-    } finally {
-      updateMany.mockRestore();
-    }
+    expect(response.status).toBe(409);
+    expect(response.body.error).toEqual(
+      expect.objectContaining({ code: "TICKET_STATUS_CONFLICT" }),
+    );
+    expect(
+      (await prisma.ticket.findUniqueOrThrow({ where: { id: ticketId } }))
+        .currentStatus,
+    ).toBe("RESOLVED");
   });
 });

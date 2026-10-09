@@ -99,8 +99,8 @@ describe("Lab 3 authenticated application shell", () => {
       screen.getByRole("button", { name: "Ticket Review" }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: "Ticket Queue" }),
-    ).not.toBeInTheDocument();
+      screen.getByRole("button", { name: "Ticket Queue" }),
+    ).toBeInTheDocument();
   });
 
   it("keeps the authenticated shell visible when logout fails", async () => {

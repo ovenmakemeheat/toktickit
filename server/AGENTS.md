@@ -4,8 +4,9 @@ The repository rules in `../AGENTS.md` apply here. These instructions add server
 
 ## Scope
 
-- Preserve the completed Lab 1/Lab 2 API behavior while implementing only the active Lab 3 issue.
-- Follow the approved Lab 3 REST and data contracts in `../docs/lab-03/` and keep excluded features out of the workspace.
+- Preserve completed Lab 1–3 API behavior while implementing only the active Lab 4 issue authorized by the root instructions.
+- For Lab 4, follow the approved REST and data contracts in `../docs/lab-04/` and keep excluded features out of the workspace.
+- Keep existing Lab 3 tests and fixtures in place; add Lab 4 server tests under `tests/lab-04/`.
 - Keep the server compatible with Node.js even when scripts are run with Bun.
 
 ## Architecture
@@ -42,7 +43,7 @@ For focused work inside this workspace, use `bun run dev`, `bun run test`, `bun 
 
 - Use Vitest in the Node environment with the setup in `tests/setup.ts`.
 - Use Supertest against the exported Express app; tests must not start a real listener.
-- Keep existing Lab 1/Lab 2 API tests in their current locations, add Lab 3 API tests under `tests/lab-03/`, and isolate test database setup from development data.
+- Keep existing Lab 1–3 API tests in their current locations, add Lab 4 API tests under `tests/lab-04/`, and isolate test database setup from development data.
 - Add or update the nearest API, database, or seed test with each server change.
 
 ## Handoff

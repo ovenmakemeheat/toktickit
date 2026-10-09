@@ -8,8 +8,11 @@ import {
 
 import { listEligibleStaffOwners } from "./staff-owner-service.js";
 import {
+  ActionTakenRequiredError,
   assertAllowedStatusTransition,
+  parseExpectedTicketStatus,
   parseTicketStatus,
+  TicketStatusInputValidationError,
 } from "./ticket-status-service.js";
 import { parseTicketId, TicketNotFoundError } from "./ticket-service.js";
 import {
@@ -38,13 +41,17 @@ const staffTicketDetailInclude = {
       author: { select: { id: true, name: true, role: true } },
     },
   },
+  actionsTaken: { select: { id: true, createdAt: true } },
 } as const satisfies Prisma.TicketInclude;
 
 type StaffTicketWithDetail = Prisma.TicketGetPayload<{
   include: typeof staffTicketDetailInclude;
 }>;
 
-type StaffTicketStore = Pick<PrismaClient, "ticket" | "user" | "$transaction">;
+type StaffTicketStore = Pick<
+  PrismaClient,
+  "ticket" | "user" | "actionTaken" | "$transaction"
+>;
 
 export type StaffTicketAttachmentResponse = {
   id: number;
@@ -84,6 +91,8 @@ export type StaffTicketDetailResponse = {
   } | null;
   eligibleOwners: Awaited<ReturnType<typeof listEligibleStaffOwners>>;
   requesterResolutionIndicatedAt: string | null;
+  resolvedAt: string | null;
+  hasEligibleResolutionAction: boolean;
   createdAt: string;
   updatedAt: string;
   attachments: StaffTicketAttachmentResponse[];
@@ -199,6 +208,12 @@ export function toStaffTicketDetailCore(
     owner,
     requesterResolutionIndicatedAt:
       ticket.requesterResolutionIndicatedAt?.toISOString() ?? null,
+    resolvedAt: ticket.resolvedAt?.toISOString() ?? null,
+    hasEligibleResolutionAction: ticket.actionsTaken.some(
+      (action) =>
+        ticket.lastReopenedAt === null ||
+        action.createdAt > ticket.lastReopenedAt,
+    ),
     createdAt: ticket.createdAt.toISOString(),
     updatedAt: ticket.updatedAt.toISOString(),
     attachments: ticket.attachments.map((attachment) =>
@@ -371,24 +386,76 @@ export async function updateStaffTicketStatus(
   rawTicketId: unknown,
   rawBody: unknown,
 ) {
-  const ticket = await findStaffTicket(prisma, rawTicketId);
+  const ticketId = parseTicketId(rawTicketId);
   const body = readBody(rawBody);
+  if (
+    Object.keys(body).some(
+      (field) => !["expectedStatus", "status", "confirmation"].includes(field),
+    )
+  ) {
+    throw new TicketStatusInputValidationError();
+  }
+  const expectedStatus = parseExpectedTicketStatus(body.expectedStatus);
   const status = parseTicketStatus(body.status);
-  assertAllowedStatusTransition(
-    ticket.currentStatus,
-    status,
-    body.confirmation,
-  );
 
-  const result = await prisma.ticket.updateMany({
-    where: { id: ticket.id, currentStatus: ticket.currentStatus },
-    data: { currentStatus: status },
-  });
-  if (result.count === 0) {
-    throw new TicketStatusConflictError();
+  try {
+    await prisma.$transaction(async (transaction) => {
+      const ticket = await transaction.ticket.findUnique({
+        where: { id: ticketId },
+        select: { currentStatus: true, lastReopenedAt: true },
+      });
+      if (!ticket) {
+        throw new TicketNotFoundError();
+      }
+      if (ticket.currentStatus !== expectedStatus) {
+        throw new TicketStatusConflictError();
+      }
+
+      assertAllowedStatusTransition(
+        ticket.currentStatus,
+        status,
+        body.confirmation,
+      );
+
+      if (status === "RESOLVED") {
+        const actionTaken = await transaction.actionTaken.findFirst({
+          where: {
+            ticketId,
+            ...(ticket.lastReopenedAt
+              ? { createdAt: { gt: ticket.lastReopenedAt } }
+              : {}),
+          },
+          select: { id: true },
+        });
+        if (!actionTaken) {
+          throw new ActionTakenRequiredError();
+        }
+      }
+
+      const now = new Date();
+      const data: Prisma.TicketUpdateManyMutationInput = {
+        currentStatus: status,
+        ...(status === "RESOLVED" ? { resolvedAt: now } : {}),
+        ...(status === "REOPENED"
+          ? { resolvedAt: null, lastReopenedAt: now }
+          : {}),
+      };
+      const result = await transaction.ticket.updateMany({
+        where: { id: ticketId, currentStatus: expectedStatus },
+        data,
+      });
+      if (result.count === 0) {
+        throw new TicketStatusConflictError();
+      }
+    }, serializableTransactionOptions);
+  } catch (error) {
+    if (isSerializationConflict(error)) {
+      throw new TicketStatusConflictError();
+    }
+    throw error;
   }
 
-  return getStaffTicketDetail(prisma, ticket.id);
+  return getStaffTicketDetail(prisma, ticketId);
 }
 
 export { staffTicketDetailInclude, toStaffTicketDetail, findStaffTicket };

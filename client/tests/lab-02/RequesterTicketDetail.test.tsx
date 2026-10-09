@@ -100,8 +100,14 @@ describe("Issue #55 Requester Ticket Detail", () => {
   it("renders owned ticket fields read-only and separates active and removed attachments", async () => {
     const fetchMock = vi.fn(
       (input: RequestInfo | URL, _options?: RequestInit) => {
-        expect(String(input)).toBe("/api/tickets/101");
-        return Promise.resolve(response(ticket));
+        const url = String(input);
+        if (url === "/api/tickets/101") {
+          return Promise.resolve(response(ticket));
+        }
+        if (url === "/api/tickets/101/actions-taken") {
+          return Promise.resolve(response({ items: [] }));
+        }
+        return Promise.reject(new Error(`Unexpected request: ${url}`));
       },
     );
     vi.stubGlobal("fetch", fetchMock);
@@ -193,6 +199,9 @@ describe("Issue #55 Requester Ticket Detail", () => {
           response(detailRequests === 1 ? ticket : refreshedTicket),
         );
       }
+      if (url === "/api/tickets/101/actions-taken") {
+        return Promise.resolve(response({ items: [] }));
+      }
       if (url === "/api/tickets/101/attachments") {
         return Promise.resolve(response(activeAttachment));
       }
@@ -243,6 +252,9 @@ describe("Issue #55 Requester Ticket Detail", () => {
         (!init?.method || init.method === "GET")
       ) {
         return Promise.resolve(response(currentTicket));
+      }
+      if (url === "/api/tickets/101/actions-taken") {
+        return Promise.resolve(response({ items: [] }));
       }
       if (url === "/api/tickets/101/comments") {
         currentTicket = commentedTicket;

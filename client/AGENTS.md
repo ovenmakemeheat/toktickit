@@ -4,8 +4,9 @@ The repository rules in `../AGENTS.md` apply here. These instructions add client
 
 ## Scope
 
-- Preserve the completed Lab 1/Lab 2 React behavior while implementing only the active Lab 3 issue.
-- Follow the approved Lab 3 UI contract in `../docs/lab-03/ui-spec.md` and keep excluded features out of the workspace.
+- Preserve completed Lab 1–3 React behavior while implementing only the active Lab 4 issue authorized by the root instructions.
+- For Lab 4, follow the approved UI contract in `../docs/lab-04/ui-spec.md` and keep excluded features out of the workspace.
+- Keep existing Lab 3 tests in place; add Lab 4 client tests under `tests/lab-04/`.
 - Keep API calls relative to `/api` so the Vite proxy is used in development.
 
 ## Architecture
@@ -33,7 +34,7 @@ For focused work inside this workspace, the equivalent package scripts are `bun 
 - Use Vitest and Testing Library in the `jsdom` environment.
 - Test at the user-observable boundary, including authentication, role navigation, Requester regression, and the required loading, success, and failure states.
 - Prefer accessible queries and user interactions over implementation details.
-- Keep Lab 3 client tests under `tests/lab-03/`, shared client test setup in `tests/setup.ts`, and avoid starting a real API listener in unit tests.
+- Keep Lab 3 client tests under `tests/lab-03/` and Lab 4 client tests under `tests/lab-04/`, shared client test setup in `tests/setup.ts`, and avoid starting a real API listener in unit tests.
 
 ## Handoff
 

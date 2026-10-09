@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import ActionsTakenPanel from "../lab-04/ActionsTakenPanel";
 import {
   apiErrorMessage,
   ApiRequestError,
@@ -19,6 +20,8 @@ import { InternalNotesPanel, PublicCommentsPanel } from "./CommunicationPanels";
 type StaffTicketDetailProps = {
   ticketId: number | string;
   onBack: () => void;
+  isAdministrator?: boolean;
+  canWriteCommunications?: boolean;
 };
 
 const priorityOptions: RequestedPriority[] = ["LOW", "MEDIUM", "HIGH"];
@@ -62,10 +65,12 @@ function formatDate(value: string) {
       }).format(date);
 }
 
-function detailError(error: unknown) {
+function detailError(error: unknown, isAdministrator: boolean) {
   if (error instanceof ApiRequestError) {
     if (error.code === "STAFF_TICKET_FORBIDDEN") {
-      return "IT Staff access is required to view this Ticket.";
+      return isAdministrator
+        ? "Administrator operational access is required to view this Ticket."
+        : "IT Staff access is required to view this Ticket.";
     }
     if (error.code === "TICKET_NOT_FOUND") {
       return "This Ticket is not available in the shared Queue.";
@@ -83,6 +88,8 @@ function operationError(error: unknown) {
         return "Choose an active IT Staff or Administrator User ID.";
       case "STATUS_CONFIRMATION_REQUIRED":
         return "Confirm this status change before saving it.";
+      case "ACTION_TAKEN_REQUIRED":
+        return "Record an Action Taken after the most recent reopen before resolving this Ticket.";
       case "TICKET_STATUS_TRANSITION_INVALID":
         return "That status transition is not permitted from the current status.";
       case "TICKET_STATUS_CONFLICT":
@@ -171,6 +178,8 @@ function StaffAttachmentMetadata({
 export default function StaffTicketDetail({
   ticketId,
   onBack,
+  isAdministrator = false,
+  canWriteCommunications = true,
 }: StaffTicketDetailProps) {
   const [ticket, setTicket] = useState<StaffTicketDetailType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -204,6 +213,17 @@ export default function StaffTicketDetail({
       setLoadError(error);
     } finally {
       setIsLoading(false);
+    }
+  }, [ticketId]);
+
+  const refreshTicket = useCallback(async () => {
+    try {
+      setTicket(await fetchStaffTicketDetail(ticketId));
+    } catch (error) {
+      setOperationErrorMessage(operationError(error));
+      setOperationErrorCode(
+        error instanceof ApiRequestError ? (error.code ?? null) : null,
+      );
     }
   }, [ticketId]);
 
@@ -287,8 +307,18 @@ export default function StaffTicketDetail({
       setOperationErrorCode(null);
       return;
     }
+    const expectedStatus = ticket?.currentStatus;
+    if (!expectedStatus) {
+      return;
+    }
     await runOperation(
-      () => updateStaffTicketStatus(ticketId, selectedStatus, confirmation),
+      () =>
+        updateStaffTicketStatus(
+          ticketId,
+          expectedStatus,
+          selectedStatus,
+          confirmation,
+        ),
       "Ticket status updated successfully.",
     );
   }
@@ -315,7 +345,7 @@ export default function StaffTicketDetail({
       >
         <h1 id="staff-ticket-detail-title">Ticket Detail</h1>
         <div className="lab2-state lab2-state-error" role="alert">
-          <p>{detailError(loadError)}</p>
+          <p>{detailError(loadError, isAdministrator)}</p>
           <div className="lab2-form-actions">
             <button
               type="button"
@@ -344,11 +374,18 @@ export default function StaffTicketDetail({
     >
       <div className="lab2-page-heading">
         <div>
-          <p className="lab2-eyebrow">IT Staff Ticket Detail</p>
+          <p className="lab2-eyebrow">
+            {isAdministrator
+              ? "Administrator Ticket Operations"
+              : "IT Staff Ticket Detail"}
+          </p>
           <h1 id="staff-ticket-detail-title">{ticket.ticketNumber}</h1>
           <p className="lab2-introduction">
             Review the Requester record, make permitted operational changes, and
             keep public and private communication separate.
+            {canWriteCommunications
+              ? " IT Staff can add Public Comments and Internal Notes."
+              : " Communications are read-only for Administrators."}
           </p>
         </div>
         <button
@@ -544,15 +581,32 @@ export default function StaffTicketDetail({
               disabled={isSaving}
             >
               <option value="">Choose next status</option>
-              {allowedStatuses.map((status) => (
-                <option key={status} value={status}>
-                  {readable(status)}
-                </option>
-              ))}
+              {allowedStatuses.map((status) => {
+                const resolutionBlocked =
+                  status === "RESOLVED" &&
+                  ticket.hasEligibleResolutionAction === false;
+                return (
+                  <option
+                    key={status}
+                    value={status}
+                    disabled={resolutionBlocked}
+                  >
+                    {resolutionBlocked
+                      ? "Resolved (record an Action Taken first)"
+                      : readable(status)}
+                  </option>
+                );
+              })}
             </select>
             <div className="form-text">
               Only transitions allowed by the workflow matrix are offered.
             </div>
+            {allowedStatuses.includes("RESOLVED") &&
+            ticket.hasEligibleResolutionAction === false ? (
+              <p className="form-text" role="status">
+                Record an Action Taken after the latest reopen before resolving.
+              </p>
+            ) : null}
             {statusNeedsConfirmation ? (
               <label
                 className="form-check mt-2"
@@ -575,10 +629,30 @@ export default function StaffTicketDetail({
               type="button"
               className="btn btn-outline-success mt-2"
               onClick={() => void handleStatus()}
-              disabled={isSaving || !selectedStatus}
+              disabled={
+                isSaving ||
+                !selectedStatus ||
+                (selectedStatus === "RESOLVED" &&
+                  ticket.hasEligibleResolutionAction === false)
+              }
             >
               {isSaving ? "Saving..." : "Update status"}
             </button>
+            {selectedStatus ? (
+              <button
+                type="button"
+                className="btn btn-link mt-2"
+                onClick={() => {
+                  setSelectedStatus("");
+                  setConfirmation(false);
+                  setOperationErrorMessage(null);
+                  setOperationErrorCode(null);
+                }}
+                disabled={isSaving}
+              >
+                Cancel status change
+              </button>
+            ) : null}
           </div>
         </div>
       </fieldset>
@@ -590,19 +664,32 @@ export default function StaffTicketDetail({
           : "The Requester has not indicated that the problem appears resolved."}
       </div>
 
+      <ActionsTakenPanel
+        ticketId={ticket.id}
+        canEdit
+        onChanged={refreshTicket}
+      />
       <PublicCommentsPanel
         comments={ticket.publicComments}
-        onPost={async (content) => {
-          await postPublicComment(ticket.id, content);
-          await loadTicket();
-        }}
+        onPost={
+          canWriteCommunications
+            ? async (content) => {
+                await postPublicComment(ticket.id, content);
+                await loadTicket();
+              }
+            : undefined
+        }
       />
       <InternalNotesPanel
         notes={ticket.internalNotes}
-        onPost={async (content) => {
-          await postInternalNote(ticket.id, content);
-          await loadTicket();
-        }}
+        onPost={
+          canWriteCommunications
+            ? async (content) => {
+                await postInternalNote(ticket.id, content);
+                await loadTicket();
+              }
+            : undefined
+        }
       />
       <StaffAttachmentMetadata attachments={ticket.attachments} />
     </section>
