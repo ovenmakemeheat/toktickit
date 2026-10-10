@@ -76,6 +76,29 @@ describe("GET /api/staff/tickets", () => {
       ]),
     );
 
+    const active = await staff.agent.get(
+      "/api/staff/tickets?statusGroup=ACTIVE&pageSize=50",
+    );
+    expect(active.status).toBe(200);
+    expect(
+      active.body.items.every((ticket: { currentStatus: string }) =>
+        [
+          "NEW",
+          "OPEN",
+          "IN_PROGRESS",
+          "WAITING_FOR_REQUESTER",
+          "REOPENED",
+        ].includes(ticket.currentStatus),
+      ),
+    ).toBe(true);
+    const conflictingStatuses = await staff.agent.get(
+      "/api/staff/tickets?statusGroup=ACTIVE&currentStatus=OPEN",
+    );
+    expect(conflictingStatuses.status).toBe(400);
+    expect(conflictingStatuses.body.error.code).toBe(
+      "STAFF_QUEUE_QUERY_INVALID",
+    );
+
     const staffUser = await prisma.user.findUniqueOrThrow({
       where: { email: "it-staff-a@toktickit.test" },
       select: { id: true },

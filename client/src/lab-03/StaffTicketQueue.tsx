@@ -31,6 +31,54 @@ const statusOptions: TicketStatus[] = [
 ];
 const priorityOptions: RequestedPriority[] = ["LOW", "MEDIUM", "HIGH"];
 
+function initialQueueQuery(): StaffTicketListQuery {
+  const params = new URLSearchParams(window.location.search);
+  const rawStatus = params.get("currentStatus");
+  const currentStatus = statusOptions.find((status) => status === rawStatus);
+  const rawOwner = params.get("owner");
+  const numericOwner = rawOwner ? Number(rawOwner) : undefined;
+  const owner =
+    rawOwner === "me" || rawOwner === "unassigned"
+      ? rawOwner
+      : numericOwner && Number.isSafeInteger(numericOwner) && numericOwner > 0
+        ? numericOwner
+        : undefined;
+  const rawPriority = params.get("itPriority");
+  const itPriority = priorityOptions.find(
+    (priority) => priority === rawPriority,
+  );
+  const rawRequestedPriority = params.get("requestedPriority");
+  const requestedPriority = priorityOptions.find(
+    (priority) => priority === rawRequestedPriority,
+  );
+  const rawCategoryId = Number(params.get("categoryId"));
+  const rawRelatedSystemId = Number(params.get("relatedSystemId"));
+
+  return {
+    page: 1,
+    pageSize: 10,
+    sortBy: "updatedAt",
+    sortDirection: "desc",
+    search: params.get("search")?.trim() || undefined,
+    categoryId:
+      Number.isSafeInteger(rawCategoryId) && rawCategoryId > 0
+        ? rawCategoryId
+        : undefined,
+    relatedSystemId:
+      Number.isSafeInteger(rawRelatedSystemId) && rawRelatedSystemId > 0
+        ? rawRelatedSystemId
+        : undefined,
+    requestedPriority,
+    itPriority,
+    currentStatus,
+    statusGroup:
+      currentStatus || params.get("statusGroup") !== "ACTIVE"
+        ? undefined
+        : "ACTIVE",
+    owner,
+  };
+}
+
 function readable(value: string) {
   return value
     .toLowerCase()
@@ -84,12 +132,7 @@ function ownerLabel(owner: { name: string } | null) {
 export default function StaffTicketQueue({
   onOpenTicket,
 }: StaffTicketQueueProps) {
-  const [query, setQuery] = useState<StaffTicketListQuery>({
-    page: 1,
-    pageSize: 10,
-    sortBy: "updatedAt",
-    sortDirection: "desc",
-  });
+  const [query, setQuery] = useState<StaffTicketListQuery>(initialQueueQuery);
   const [list, setList] = useState<StaffTicketListResponse | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [relatedSystems, setRelatedSystems] = useState<Category[]>([]);
@@ -243,16 +286,19 @@ export default function StaffTicketQueue({
             <select
               id="staff-status-filter"
               className="form-select"
-              value={query.currentStatus ?? ""}
-              onChange={(event) =>
+              value={query.statusGroup ?? query.currentStatus ?? ""}
+              onChange={(event) => {
+                const value = event.target.value;
                 updateQuery({
-                  currentStatus: (event.target.value || undefined) as
-                    | TicketStatus
-                    | undefined,
-                })
-              }
+                  currentStatus: statusOptions.find(
+                    (status) => status === value,
+                  ),
+                  statusGroup: value === "ACTIVE" ? "ACTIVE" : undefined,
+                });
+              }}
             >
               <option value="">All statuses</option>
+              <option value="ACTIVE">Active Tickets</option>
               {statusOptions.map((status) => (
                 <option key={status} value={status}>
                   {readable(status)}

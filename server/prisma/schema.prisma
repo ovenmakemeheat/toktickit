@@ -107,6 +107,8 @@ model Ticket {
 
   @@index([requesterUserId, ticketDate, id])
   @@index([requesterUserId, updatedAt, id])
+  @@index([requesterUserId, currentStatus, resolvedAt, id])
+  @@index([currentStatus, updatedAt, id])
   @@index([primaryOwnerUserId, currentStatus, updatedAt, id])
   @@index([currentStatus])
   @@index([itPriority])

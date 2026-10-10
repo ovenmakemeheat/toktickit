@@ -46,6 +46,10 @@ import {
 } from "./services/attachment-policy-service.js";
 import { AttachmentStorageUnavailableError } from "./services/attachment-storage-service.js";
 import {
+  getRequesterDashboard,
+  getStaffDashboard,
+} from "./services/dashboard-service.js";
+import {
   ActionTakenConflictError,
   ActionTakenIdValidationError,
   ActionTakenIdempotencyKeyValidationError,
@@ -717,6 +721,27 @@ app.get(
   },
 );
 
+app.get(
+  "/api/requester/dashboard",
+  requireAuthentication({
+    roles: ["REQUESTER"],
+    roleForbiddenCode: "REQUESTER_DASHBOARD_FORBIDDEN",
+  }),
+  async (request, response) => {
+    try {
+      const auth = getAuthContext(request);
+      response.json(await getRequesterDashboard(prisma, auth.user.id));
+    } catch {
+      sendError(
+        response,
+        500,
+        "REQUESTER_DASHBOARD_FAILED",
+        "Unable to load the Requester Dashboard",
+      );
+    }
+  },
+);
+
 app.post(
   "/api/tickets",
   requireAuthentication({ roles: ["REQUESTER"] }),
@@ -1093,6 +1118,27 @@ app.post(
         error,
         "INTERNAL_NOTE_CREATE_FAILED",
         "Unable to create Internal Note",
+      );
+    }
+  },
+);
+
+app.get(
+  "/api/staff/dashboard",
+  requireAuthentication({
+    roles: ["IT_STAFF", "ADMINISTRATOR"],
+    roleForbiddenCode: "STAFF_DASHBOARD_FORBIDDEN",
+  }),
+  async (request, response) => {
+    try {
+      const auth = getAuthContext(request);
+      response.json(await getStaffDashboard(prisma, auth.user.id));
+    } catch {
+      sendError(
+        response,
+        500,
+        "STAFF_DASHBOARD_FAILED",
+        "Unable to load the operational Dashboard",
       );
     }
   },
