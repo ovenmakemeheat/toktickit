@@ -45,6 +45,7 @@ export async function deleteTickets(ticketIds: Iterable<number>) {
   if (ids.length === 0) {
     return;
   }
+  await prisma.actionTaken.deleteMany({ where: { ticketId: { in: ids } } });
   await prisma.attachment.deleteMany({ where: { ticketId: { in: ids } } });
   await prisma.ticket.deleteMany({ where: { id: { in: ids } } });
 }

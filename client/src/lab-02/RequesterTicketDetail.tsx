@@ -8,6 +8,7 @@ import {
   type TicketDetail,
 } from "../lib/api";
 import { PublicCommentsPanel } from "../lab-03/CommunicationPanels";
+import ActionsTakenPanel from "../lab-04/ActionsTakenPanel";
 import AttachmentSection from "./AttachmentSection";
 import { useRequester } from "./requester-context";
 
@@ -251,6 +252,7 @@ export default function RequesterTicketDetail({
               await loadTicket();
             }}
           />
+          <ActionsTakenPanel ticketId={ticket.id} canEdit={false} />
 
           <section
             className="lab3-resolution-section"

@@ -46,6 +46,17 @@ import {
 } from "./services/attachment-policy-service.js";
 import { AttachmentStorageUnavailableError } from "./services/attachment-storage-service.js";
 import {
+  ActionTakenConflictError,
+  ActionTakenIdValidationError,
+  ActionTakenIdempotencyKeyValidationError,
+  ActionTakenInputValidationError,
+  ActionTakenNotFoundError,
+  IdempotencyKeyReusedError as ActionTakenIdempotencyKeyReusedError,
+  createTicketActionTaken,
+  listTicketActionsTaken,
+  updateTicketActionTaken,
+} from "./services/actions-taken-service.js";
+import {
   CategoryNotFoundError,
   IdempotencyKeyReusedError,
   RelatedSystemNotFoundError,
@@ -100,7 +111,9 @@ import {
   UserQueryValidationError,
 } from "./services/user-management-service.js";
 import {
+  ActionTakenRequiredError,
   StatusConfirmationRequiredError,
+  TicketStatusInputValidationError,
   TicketStatusTransitionInvalidError,
 } from "./services/ticket-status-service.js";
 import { TicketInputValidationError } from "./services/ticket-validation-service.js";
@@ -233,7 +246,8 @@ function sendStaffTicketError(response: Response, error: unknown) {
   if (
     error instanceof TicketAlreadyAssignedError ||
     error instanceof TicketAssignmentConflictError ||
-    error instanceof TicketStatusConflictError
+    error instanceof TicketStatusConflictError ||
+    error instanceof ActionTakenRequiredError
   ) {
     sendError(response, 409, error.code, error.message);
     return;
@@ -243,6 +257,7 @@ function sendStaffTicketError(response: Response, error: unknown) {
     error instanceof OwnerInvalidError ||
     error instanceof ItPriorityValidationError ||
     error instanceof TicketStatusTransitionInvalidError ||
+    error instanceof TicketStatusInputValidationError ||
     error instanceof StatusConfirmationRequiredError
   ) {
     sendError(response, 400, error.code, error.message);
@@ -255,6 +270,48 @@ function sendStaffTicketError(response: Response, error: unknown) {
     "STAFF_TICKET_FAILED",
     "Unable to complete the Staff Ticket operation",
   );
+}
+
+function sendActionTakenError(
+  response: Response,
+  error: unknown,
+  fallbackCode:
+    | "ACTION_TAKEN_LIST_FAILED"
+    | "ACTION_TAKEN_CREATE_FAILED"
+    | "ACTION_TAKEN_UPDATE_FAILED",
+  fallbackMessage: string,
+) {
+  if (
+    error instanceof TicketIdValidationError ||
+    error instanceof ActionTakenIdValidationError ||
+    error instanceof ActionTakenIdempotencyKeyValidationError
+  ) {
+    sendError(response, 400, error.code, error.message);
+    return;
+  }
+
+  if (error instanceof ActionTakenInputValidationError) {
+    sendError(response, 400, error.code, error.message, error.fields);
+    return;
+  }
+
+  if (
+    error instanceof TicketNotFoundError ||
+    error instanceof ActionTakenNotFoundError
+  ) {
+    sendError(response, 404, error.code, error.message);
+    return;
+  }
+
+  if (
+    error instanceof ActionTakenConflictError ||
+    error instanceof ActionTakenIdempotencyKeyReusedError
+  ) {
+    sendError(response, 409, error.code, error.message);
+    return;
+  }
+
+  sendError(response, 500, fallbackCode, fallbackMessage);
 }
 
 function sendCommunicationError(
@@ -820,6 +877,92 @@ app.delete(
 );
 
 app.get(
+  "/api/tickets/:ticketId/actions-taken",
+  requireAuthentication({
+    roles: ["REQUESTER", "IT_STAFF", "ADMINISTRATOR"],
+    roleForbiddenCode: "ACTION_TAKEN_FORBIDDEN",
+  }),
+  async (request, response) => {
+    try {
+      const auth = getAuthContext(request);
+      response.json({
+        items: await listTicketActionsTaken(
+          prisma,
+          auth.user,
+          request.params.ticketId,
+        ),
+      });
+    } catch (error) {
+      sendActionTakenError(
+        response,
+        error,
+        "ACTION_TAKEN_LIST_FAILED",
+        "Unable to load Actions Taken",
+      );
+    }
+  },
+);
+
+app.post(
+  "/api/tickets/:ticketId/actions-taken",
+  requireAuthentication({
+    roles: ["IT_STAFF", "ADMINISTRATOR"],
+    roleForbiddenCode: "ACTION_TAKEN_FORBIDDEN",
+  }),
+  requireCsrf,
+  async (request, response) => {
+    try {
+      const auth = getAuthContext(request);
+      const result = await createTicketActionTaken(
+        prisma,
+        auth.user,
+        request.params.ticketId,
+        request.get("Idempotency-Key"),
+        request.body,
+      );
+      response.status(result.replayed ? 200 : 201).json(result.actionTaken);
+    } catch (error) {
+      sendActionTakenError(
+        response,
+        error,
+        "ACTION_TAKEN_CREATE_FAILED",
+        "Unable to create Action Taken",
+      );
+    }
+  },
+);
+
+app.patch(
+  "/api/tickets/:ticketId/actions-taken/:actionId",
+  requireAuthentication({
+    roles: ["IT_STAFF", "ADMINISTRATOR"],
+    roleForbiddenCode: "ACTION_TAKEN_FORBIDDEN",
+  }),
+  requireCsrf,
+  async (request, response) => {
+    try {
+      const auth = getAuthContext(request);
+      response.json(
+        await updateTicketActionTaken(
+          prisma,
+          auth.user,
+          request.params.ticketId,
+          request.params.actionId,
+          request.body,
+        ),
+      );
+    } catch (error) {
+      sendActionTakenError(
+        response,
+        error,
+        "ACTION_TAKEN_UPDATE_FAILED",
+        "Unable to update Action Taken",
+      );
+    }
+  },
+);
+
+app.get(
   "/api/tickets/:ticketId/comments",
   requireAuthentication({
     roles: ["REQUESTER", "IT_STAFF", "ADMINISTRATOR"],
@@ -958,7 +1101,7 @@ app.post(
 app.get(
   "/api/staff/tickets",
   requireAuthentication({
-    roles: ["IT_STAFF"],
+    roles: ["IT_STAFF", "ADMINISTRATOR"],
     roleForbiddenCode: "STAFF_QUEUE_FORBIDDEN",
   }),
   async (request, response) => {
@@ -976,7 +1119,7 @@ app.get(
 app.get(
   "/api/staff/tickets/:ticketId",
   requireAuthentication({
-    roles: ["IT_STAFF"],
+    roles: ["IT_STAFF", "ADMINISTRATOR"],
     roleForbiddenCode: "STAFF_TICKET_FORBIDDEN",
   }),
   async (request, response) => {
@@ -993,7 +1136,7 @@ app.get(
 app.post(
   "/api/staff/tickets/:ticketId/claim",
   requireAuthentication({
-    roles: ["IT_STAFF"],
+    roles: ["IT_STAFF", "ADMINISTRATOR"],
     roleForbiddenCode: "STAFF_TICKET_FORBIDDEN",
   }),
   requireCsrf,
@@ -1012,7 +1155,7 @@ app.post(
 app.patch(
   "/api/staff/tickets/:ticketId/owner",
   requireAuthentication({
-    roles: ["IT_STAFF"],
+    roles: ["IT_STAFF", "ADMINISTRATOR"],
     roleForbiddenCode: "STAFF_TICKET_FORBIDDEN",
   }),
   requireCsrf,
@@ -1030,7 +1173,7 @@ app.patch(
 app.patch(
   "/api/staff/tickets/:ticketId/priority",
   requireAuthentication({
-    roles: ["IT_STAFF"],
+    roles: ["IT_STAFF", "ADMINISTRATOR"],
     roleForbiddenCode: "STAFF_TICKET_FORBIDDEN",
   }),
   requireCsrf,
@@ -1052,7 +1195,7 @@ app.patch(
 app.patch(
   "/api/staff/tickets/:ticketId/status",
   requireAuthentication({
-    roles: ["IT_STAFF"],
+    roles: ["IT_STAFF", "ADMINISTRATOR"],
     roleForbiddenCode: "STAFF_TICKET_FORBIDDEN",
   }),
   requireCsrf,

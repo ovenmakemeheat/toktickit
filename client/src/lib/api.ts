@@ -55,6 +55,35 @@ export type TicketCommunicationEntry = {
   createdAt: string;
 };
 
+export type ActionTakenEntry = {
+  id: number;
+  ticketId: number;
+  actionAt: string;
+  actionDescription: string;
+  result: string;
+  performedBy: { id: number; name: string; role: Role };
+  followUpRequired: boolean;
+  followUpNote: string | null;
+  attachmentNotes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  updatedBy: { id: number; name: string; role: Role } | null;
+  version: number;
+};
+
+export type CreateActionTakenInput = {
+  actionAt: string;
+  actionDescription: string;
+  result: string;
+  followUpRequired: boolean;
+  followUpNote?: string | null;
+  attachmentNotes?: string | null;
+};
+
+export type UpdateActionTakenInput = Partial<CreateActionTakenInput> & {
+  expectedVersion: number;
+};
+
 export type StaffOwner = {
   id: number;
   name: string;
@@ -116,6 +145,7 @@ export type TicketDetail = {
   description: string;
   currentStatus: TicketStatus;
   requesterResolutionIndicatedAt?: string | null;
+  resolvedAt?: string | null;
   createdAt: string;
   lastUpdated: string;
   publicComments?: TicketCommunicationEntry[];
@@ -161,6 +191,8 @@ export type StaffTicketDetail = {
   owner: StaffOwner | null;
   eligibleOwners?: StaffOwner[];
   requesterResolutionIndicatedAt: string | null;
+  resolvedAt?: string | null;
+  hasEligibleResolutionAction?: boolean;
   createdAt: string;
   updatedAt: string;
   attachments: AttachmentMetadata[];
@@ -399,6 +431,9 @@ function isTicketDetail(payload: unknown): payload is TicketDetail {
     (ticket.requesterResolutionIndicatedAt === undefined ||
       typeof ticket.requesterResolutionIndicatedAt === "string" ||
       ticket.requesterResolutionIndicatedAt === null) &&
+    (ticket.resolvedAt === undefined ||
+      typeof ticket.resolvedAt === "string" ||
+      ticket.resolvedAt === null) &&
     typeof ticket.createdAt === "string" &&
     typeof ticket.lastUpdated === "string" &&
     isReference(ticket.requester) &&
@@ -449,6 +484,42 @@ function isCommunicationEntry(
     Number.isInteger(author.id) &&
     typeof author.name === "string" &&
     isRole(author.role)
+  );
+}
+
+function isActionTakenUser(payload: unknown) {
+  if (typeof payload !== "object" || payload === null) {
+    return false;
+  }
+  const user = payload as Record<string, unknown>;
+  return (
+    Number.isInteger(user.id) &&
+    typeof user.name === "string" &&
+    isRole(user.role)
+  );
+}
+
+function isActionTakenEntry(payload: unknown): payload is ActionTakenEntry {
+  if (typeof payload !== "object" || payload === null) {
+    return false;
+  }
+  const entry = payload as Record<string, unknown>;
+  return (
+    Number.isInteger(entry.id) &&
+    Number.isInteger(entry.ticketId) &&
+    typeof entry.actionAt === "string" &&
+    typeof entry.actionDescription === "string" &&
+    typeof entry.result === "string" &&
+    isActionTakenUser(entry.performedBy) &&
+    typeof entry.followUpRequired === "boolean" &&
+    (typeof entry.followUpNote === "string" || entry.followUpNote === null) &&
+    (typeof entry.attachmentNotes === "string" ||
+      entry.attachmentNotes === null) &&
+    typeof entry.createdAt === "string" &&
+    typeof entry.updatedAt === "string" &&
+    (entry.updatedBy === null || isActionTakenUser(entry.updatedBy)) &&
+    Number.isInteger(entry.version) &&
+    (entry.version as number) > 0
   );
 }
 
@@ -527,6 +598,11 @@ function isStaffTicketDetail(payload: unknown): payload is StaffTicketDetail {
         ticket.eligibleOwners.every(isStaffOwner))) &&
     (typeof ticket.requesterResolutionIndicatedAt === "string" ||
       ticket.requesterResolutionIndicatedAt === null) &&
+    (ticket.resolvedAt === undefined ||
+      typeof ticket.resolvedAt === "string" ||
+      ticket.resolvedAt === null) &&
+    (ticket.hasEligibleResolutionAction === undefined ||
+      typeof ticket.hasEligibleResolutionAction === "boolean") &&
     typeof ticket.createdAt === "string" &&
     typeof ticket.updatedAt === "string" &&
     Array.isArray(ticket.attachments) &&
@@ -886,6 +962,65 @@ export async function fetchStaffTicketDetail(
   return payload;
 }
 
+export async function fetchTicketActionsTaken(
+  ticketId: number | string,
+): Promise<ActionTakenEntry[]> {
+  const { response, payload } = await requestJson(
+    `/api/tickets/${ticketId}/actions-taken`,
+  );
+  if (
+    !response.ok ||
+    typeof payload !== "object" ||
+    payload === null ||
+    !Array.isArray((payload as { items?: unknown }).items) ||
+    !(payload as { items: unknown[] }).items.every(isActionTakenEntry)
+  ) {
+    throwApiRequestError(response, payload);
+  }
+  return (payload as { items: ActionTakenEntry[] }).items;
+}
+
+export async function createTicketActionTaken(
+  ticketId: number | string,
+  input: CreateActionTakenInput,
+  idempotencyKey: string,
+): Promise<ActionTakenEntry> {
+  const { response, payload } = await requestJson(
+    `/api/tickets/${ticketId}/actions-taken`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": idempotencyKey,
+      },
+      body: JSON.stringify(input),
+    },
+  );
+  if (!response.ok || !isActionTakenEntry(payload)) {
+    throwApiRequestError(response, payload);
+  }
+  return payload;
+}
+
+export async function updateTicketActionTaken(
+  ticketId: number | string,
+  actionId: number | string,
+  input: UpdateActionTakenInput,
+): Promise<ActionTakenEntry> {
+  const { response, payload } = await requestJson(
+    `/api/tickets/${ticketId}/actions-taken/${actionId}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    },
+  );
+  if (!response.ok || !isActionTakenEntry(payload)) {
+    throwApiRequestError(response, payload);
+  }
+  return payload;
+}
+
 export async function fetchAdminTicketDetail(
   ticketId: number | string,
 ): Promise<AdminTicketDetail> {
@@ -967,6 +1102,7 @@ export async function updateStaffTicketPriority(
 
 export async function updateStaffTicketStatus(
   ticketId: number | string,
+  expectedStatus: TicketStatus,
   status: TicketStatus,
   confirmation = false,
 ): Promise<StaffTicketDetail> {
@@ -975,7 +1111,7 @@ export async function updateStaffTicketStatus(
     {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status, confirmation }),
+      body: JSON.stringify({ expectedStatus, status, confirmation }),
     },
   );
   if (!response.ok || !isStaffTicketDetail(payload)) {

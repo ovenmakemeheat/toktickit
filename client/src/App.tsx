@@ -159,6 +159,22 @@ function AuthenticatedHeader({ user }: { user: PublicUser }) {
             <button
               type="button"
               className={`btn btn-sm ${
+                activePage === "staff-tickets" || activePage === "staff-detail"
+                  ? "btn-success"
+                  : "btn-outline-success"
+              }`}
+              aria-current={
+                activePage === "staff-tickets" || activePage === "staff-detail"
+                  ? "page"
+                  : undefined
+              }
+              onClick={() => navigate("/staff/tickets")}
+            >
+              Ticket Queue
+            </button>
+            <button
+              type="button"
+              className={`btn btn-sm ${
                 activePage === "users" ? "btn-success" : "btn-outline-success"
               }`}
               aria-current={activePage === "users" ? "page" : undefined}
@@ -278,8 +294,8 @@ function RoleWorkspace({ user }: { user: PublicUser }) {
       <p className="lab2-eyebrow">Authenticated workspace</p>
       <h1 id="role-workspace-title">{roleLabel(user.role)} access is ready</h1>
       <p className="lab2-introduction">
-        You are signed in as {user.name}. The {roleLabel(user.role)} workflow is
-        delivered in the next Lab 3 increment.
+        You are signed in as {user.name}. Use the navigation to open the
+        authorized {roleLabel(user.role)} tools as they are delivered.
       </p>
     </section>
   );
@@ -288,15 +304,19 @@ function RoleWorkspace({ user }: { user: PublicUser }) {
 function StaffWorkspace({
   route,
   user,
+  isAdministrator = false,
 }: {
   route: AppRoute;
   user: PublicUser;
+  isAdministrator?: boolean;
 }) {
   if (route.page === "staff-detail") {
     return (
       <StaffTicketDetail
         ticketId={route.ticketId}
         onBack={() => navigate("/staff/tickets")}
+        isAdministrator={isAdministrator}
+        canWriteCommunications={!isAdministrator}
       />
     );
   }
@@ -342,6 +362,8 @@ function AuthenticatedApplication({ route }: { route: AppRoute }) {
         />
       ) : route.page === "admin-ticket-entry" ? (
         <AdminTicketReview onBack={() => navigate("/admin/users")} />
+      ) : route.page === "staff-tickets" || route.page === "staff-detail" ? (
+        <StaffWorkspace route={route} user={user} isAdministrator />
       ) : (
         <RoleWorkspace user={user} />
       )}

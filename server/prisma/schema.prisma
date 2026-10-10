@@ -56,6 +56,8 @@ model User {
   sessions                    Session[]
   publicComments              PublicComment[]
   internalNotes               InternalNote[]
+  performedActionsTaken       ActionTaken[] @relation("ActionTakenPerformer")
+  updatedActionsTaken         ActionTaken[] @relation("ActionTakenUpdater")
 }
 
 model Session {
@@ -88,6 +90,8 @@ model Ticket {
   description                     String
   currentStatus                   TicketStatus     @default(NEW)
   requesterResolutionIndicatedAt DateTime?
+  resolvedAt                      DateTime?
+  lastReopenedAt                  DateTime?
   createdAt                       DateTime         @default(now())
   updatedAt                       DateTime         @updatedAt
 
@@ -96,9 +100,10 @@ model Ticket {
   primaryOwner  User?                  @relation("TicketOwner", fields: [primaryOwnerUserId], references: [id])
   category      Category                @relation(fields: [categoryId], references: [id])
   relatedSystem RelatedSystem           @relation(fields: [relatedSystemId], references: [id])
-  attachments   Attachment[]
+  attachments    Attachment[]
   publicComments PublicComment[]
   internalNotes  InternalNote[]
+  actionsTaken   ActionTaken[]
 
   @@index([requesterUserId, ticketDate, id])
   @@index([requesterUserId, updatedAt, id])
@@ -108,6 +113,32 @@ model Ticket {
   @@index([categoryId])
   @@index([relatedSystemId])
   @@index([requestedPriority])
+}
+
+model ActionTaken {
+  id                  Int      @id @default(autoincrement())
+  ticketId            Int
+  actionAt            DateTime
+  actionDescription   String
+  result              String
+  performedByUserId   Int
+  followUpRequired    Boolean
+  followUpNote        String?
+  attachmentNotes     String?
+  idempotencyKey      String   @unique @db.Uuid
+  requestFingerprint  Bytes    @db.ByteA
+  version             Int      @default(1)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  updatedByUserId     Int?
+
+  ticket      Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  performedBy User   @relation("ActionTakenPerformer", fields: [performedByUserId], references: [id], onDelete: Restrict)
+  updatedBy   User?  @relation("ActionTakenUpdater", fields: [updatedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([ticketId, actionAt, id])
+  @@index([ticketId, createdAt])
+  @@index([performedByUserId, createdAt, id])
 }
 
 model Attachment {
