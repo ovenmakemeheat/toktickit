@@ -50,7 +50,7 @@ describe("Lab 3 requester identity regression", () => {
     render(<App />);
 
     expect(
-      await screen.findByRole("heading", { name: "Welcome, Requester A" }),
+      await screen.findByRole("heading", { name: "Requester Dashboard" }),
     ).toBeInTheDocument();
     expect(screen.getByText("requester-a@toktickit.test")).toBeInTheDocument();
     expect(screen.getByText("Requester")).toBeInTheDocument();

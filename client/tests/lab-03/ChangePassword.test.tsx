@@ -108,7 +108,7 @@ describe("Lab 3 mandatory initial password change", () => {
     await user.click(screen.getByRole("button", { name: "Save new password" }));
 
     expect(
-      await screen.findByRole("heading", { name: "Welcome, Requester A" }),
+      await screen.findByRole("heading", { name: "Requester Dashboard" }),
     ).toBeInTheDocument();
     const passwordCall = fetchMock.mock.calls.find(
       ([input]) => String(input) === "/api/auth/password",

@@ -35,7 +35,7 @@ describe("Lab 3 authenticated application shell", () => {
 
       expect(
         await screen.findByRole("heading", {
-          name: `${label} access is ready`,
+          name: "Staff Dashboard",
         }),
       ).toBeInTheDocument();
       expect(screen.getByText(label)).toBeInTheDocument();
@@ -84,7 +84,7 @@ describe("Lab 3 authenticated application shell", () => {
 
     render(<App />);
     await screen.findByRole("heading", {
-      name: "Administrator access is ready",
+      name: "Staff Dashboard",
     });
     await user.click(screen.getByRole("button", { name: "User Management" }));
 
@@ -129,7 +129,7 @@ describe("Lab 3 authenticated application shell", () => {
     const user = userEvent.setup();
 
     render(<App />);
-    await screen.findByRole("heading", { name: "Welcome, Requester A" });
+    await screen.findByRole("heading", { name: "Requester Dashboard" });
     await user.click(screen.getByRole("button", { name: "Log out" }));
 
     expect(
@@ -138,7 +138,7 @@ describe("Lab 3 authenticated application shell", () => {
       ),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Welcome, Requester A" }),
+      screen.getByRole("heading", { name: "Requester Dashboard" }),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Log out" })).toBeEnabled();
   });
@@ -158,7 +158,7 @@ describe("Lab 3 authenticated application shell", () => {
     const user = userEvent.setup();
 
     render(<App />);
-    await screen.findByRole("heading", { name: "Welcome, Requester A" });
+    await screen.findByRole("heading", { name: "Requester Dashboard" });
     await user.click(screen.getByRole("button", { name: "Log out" }));
 
     expect(
@@ -166,7 +166,9 @@ describe("Lab 3 authenticated application shell", () => {
         name: "Sign in to your service desk",
       }),
     ).toBeInTheDocument();
-    expect(screen.queryByText("Welcome, Requester A")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Requester Dashboard" }),
+    ).not.toBeInTheDocument();
     expect(
       fetchMock.mock.calls.some(
         ([input]) => String(input) === "/api/auth/logout",
