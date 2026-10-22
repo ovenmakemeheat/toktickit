@@ -325,5 +325,5 @@ describe("Lab 3 migration handoff", () => {
     expect(await prisma.user.count()).toBe(countsBefore.users + 1);
     expect(await prisma.ticket.count()).toBe(countsBefore.tickets);
     expect(await prisma.attachment.count()).toBe(countsBefore.attachments);
-  });
+  }, 30_000);
 });

@@ -205,6 +205,7 @@ Other status-transition rules are unchanged: only listed edges are allowed; same
 - The API calculates all values from authoritative Ticket data in PostgreSQL and scopes Requester queries by session `requesterUserId`.
 - Generate one `asOf` UTC timestamp per response. The recent window is inclusive: `updatedAt`/`resolvedAt >= asOf - 30 days` and `<= asOf`.
 - Active statuses are `NEW`, `OPEN`, `IN_PROGRESS`, `WAITING_FOR_REQUESTER`, and `REOPENED`. Other statuses are not active.
+- To preserve Dashboard links to the existing detailed lists, `GET /api/tickets` and `GET /api/staff/tickets` accept `statusGroup=ACTIVE`. It filters to the five active statuses above and is mutually exclusive with `currentStatus`; sending both is a safe `400` query-validation error. Existing list identity/role scoping and other filters still apply.
 - Recent arrays are capped at five and have deterministic ID tie-breakers. Counts are not truncated. Empty arrays are `[]`; zero counts are `0`.
 - Response summaries omit descriptions, Attachments, Public Comments, Internal Notes, complete Ticket collections, and private data. The UI builds drill-down URLs from the documented destination keys/filters, not from untrusted HTML.
 

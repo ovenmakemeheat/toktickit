@@ -13,6 +13,7 @@ describe("parseTicketQuery", () => {
       relatedSystemId: undefined,
       requestedPriority: undefined,
       currentStatus: undefined,
+      statusGroup: undefined,
       sortBy: "ticketDate",
       sortDirection: "desc",
       page: 1,
@@ -39,6 +40,7 @@ describe("parseTicketQuery", () => {
       relatedSystemId: 3,
       requestedPriority: "HIGH",
       currentStatus: "NEW",
+      statusGroup: undefined,
       sortBy: "summary",
       sortDirection: "asc",
       page: 2,
@@ -60,6 +62,15 @@ describe("parseTicketQuery", () => {
     expect(() => parseTicketQuery({ [field]: value })).toThrow(
       TicketQueryValidationError,
     );
+  });
+
+  it("accepts an active-status group and rejects conflicting status filters", () => {
+    expect(parseTicketQuery({ statusGroup: "ACTIVE" }).statusGroup).toBe(
+      "ACTIVE",
+    );
+    expect(() =>
+      parseTicketQuery({ currentStatus: "OPEN", statusGroup: "ACTIVE" }),
+    ).toThrow(TicketQueryValidationError);
   });
 
   it("rejects repeated or unknown query values instead of guessing", () => {

@@ -16,6 +16,7 @@ import {
   type TicketListQuery,
   type TicketListResponse,
   type TicketSortBy,
+  type TicketStatus,
 } from "../lib/api";
 import { navigate } from "../lib/navigation";
 import { useRequester } from "./requester-context";
@@ -30,6 +31,31 @@ const defaultQuery: TicketListQuery = {
   sortBy: "ticketDate",
   sortDirection: "desc",
 };
+
+const statusOptions: TicketStatus[] = [
+  "NEW",
+  "OPEN",
+  "IN_PROGRESS",
+  "WAITING_FOR_REQUESTER",
+  "RESOLVED",
+  "CLOSED",
+  "REOPENED",
+  "CANCELLED",
+];
+
+function initialTicketQuery(): TicketListQuery {
+  const params = new URLSearchParams(window.location.search);
+  const rawStatus = params.get("currentStatus");
+  const currentStatus = statusOptions.find((status) => status === rawStatus);
+  return {
+    ...defaultQuery,
+    currentStatus,
+    statusGroup:
+      currentStatus || params.get("statusGroup") !== "ACTIVE"
+        ? undefined
+        : "ACTIVE",
+  };
+}
 
 function formatDate(value: string) {
   const date = new Date(value);
@@ -46,7 +72,10 @@ function readablePriority(priority: string) {
 }
 
 function readableStatus(status: string) {
-  return status === "NEW" ? "New" : status;
+  return status
+    .toLowerCase()
+    .replaceAll("_", " ")
+    .replace(/(^|\s)\S/g, (letter) => letter.toUpperCase());
 }
 
 function isActiveQuery(query: TicketListQuery) {
@@ -56,6 +85,7 @@ function isActiveQuery(query: TicketListQuery) {
       query.relatedSystemId ||
       query.requestedPriority ||
       query.currentStatus ||
+      query.statusGroup ||
       query.sortBy !== "ticketDate" ||
       query.sortDirection !== "desc" ||
       query.page !== 1,
@@ -69,7 +99,7 @@ export default function MyTickets({ onCreateTicket }: MyTicketsProps) {
   const [referenceError, setReferenceError] = useState(false);
   const [referenceLoading, setReferenceLoading] = useState(true);
   const [draftSearch, setDraftSearch] = useState("");
-  const [query, setQuery] = useState<TicketListQuery>(defaultQuery);
+  const [query, setQuery] = useState<TicketListQuery>(initialTicketQuery);
   const [list, setList] = useState<TicketListResponse | null>(null);
   const [listError, setListError] = useState(false);
   const [listLoading, setListLoading] = useState(true);
@@ -308,15 +338,24 @@ export default function MyTickets({ onCreateTicket }: MyTicketsProps) {
             <select
               id="ticket-status-filter"
               className="form-select"
-              value={query.currentStatus ?? ""}
-              onChange={(event) =>
+              value={query.statusGroup ?? query.currentStatus ?? ""}
+              onChange={(event) => {
+                const value = event.target.value;
                 updateQuery({
-                  currentStatus: event.target.value ? "NEW" : undefined,
-                })
-              }
+                  currentStatus: statusOptions.find(
+                    (status) => status === value,
+                  ),
+                  statusGroup: value === "ACTIVE" ? "ACTIVE" : undefined,
+                });
+              }}
             >
               <option value="">All Statuses</option>
-              <option value="NEW">New</option>
+              <option value="ACTIVE">Active Tickets</option>
+              {statusOptions.map((status) => (
+                <option key={status} value={status}>
+                  {readableStatus(status)}
+                </option>
+              ))}
             </select>
           </div>
 

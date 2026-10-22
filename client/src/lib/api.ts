@@ -42,6 +42,7 @@ export type TicketListQuery = {
   relatedSystemId?: number;
   requestedPriority?: RequestedPriority;
   currentStatus?: TicketStatus;
+  statusGroup?: "ACTIVE";
   sortBy?: TicketSortBy;
   sortDirection?: TicketSortDirection;
   page?: number;
@@ -105,6 +106,7 @@ export type StaffTicketListQuery = {
   requestedPriority?: RequestedPriority;
   itPriority?: RequestedPriority;
   currentStatus?: TicketStatus;
+  statusGroup?: "ACTIVE";
   owner?: "unassigned" | "me" | number;
   sortBy?: StaffTicketSortBy;
   sortDirection?: TicketSortDirection;
@@ -253,6 +255,57 @@ export type TicketListResponse = {
   pageSize: number;
   totalItems: number;
   totalPages: number;
+};
+
+export type RequesterDashboardTicket = {
+  id: number;
+  ticketNumber: string;
+  summary: string;
+  currentStatus: TicketStatus;
+  requestedPriority: RequestedPriority;
+  updatedAt: string;
+  resolvedAt: string | null;
+};
+
+export type RequesterDashboardResponse = {
+  asOf: string;
+  metrics: {
+    openCount: number;
+    waitingForRequesterCount: number;
+    recentlyResolvedCount: number;
+  };
+  recentlyUpdated: RequesterDashboardTicket[];
+  recentlyResolved: RequesterDashboardTicket[];
+};
+
+export type StaffDashboardTicket = RequesterDashboardTicket & {
+  itPriority: RequestedPriority;
+  owner: StaffOwner | null;
+};
+
+export type StaffDashboardResponse = {
+  asOf: string;
+  metrics: {
+    unassignedActiveCount: number;
+    myActiveCount: number;
+    highPriorityActiveCount: number;
+    statusBreakdown: Pick<
+      Record<TicketStatus, number>,
+      "NEW" | "OPEN" | "IN_PROGRESS" | "WAITING_FOR_REQUESTER" | "REOPENED"
+    >;
+    itPriorityBreakdown: Record<RequestedPriority, number>;
+  };
+  recentlyUpdated: StaffDashboardTicket[];
+  myRecentActions: {
+    id: number;
+    ticketId: number;
+    ticketNumber: string;
+    ticketSummary: string;
+    actionDescription: string;
+    result: string;
+    createdAt: string;
+    performedBy: StaffOwner;
+  }[];
 };
 
 type HealthResponse = {
@@ -652,6 +705,113 @@ function isTicketListResponse(payload: unknown): payload is TicketListResponse {
   );
 }
 
+function isRequesterDashboardTicket(
+  payload: unknown,
+): payload is RequesterDashboardTicket {
+  if (typeof payload !== "object" || payload === null) {
+    return false;
+  }
+  const ticket = payload as Record<string, unknown>;
+  return (
+    Number.isInteger(ticket.id) &&
+    typeof ticket.ticketNumber === "string" &&
+    typeof ticket.summary === "string" &&
+    isTicketStatus(ticket.currentStatus) &&
+    isPriority(ticket.requestedPriority) &&
+    typeof ticket.updatedAt === "string" &&
+    (typeof ticket.resolvedAt === "string" || ticket.resolvedAt === null)
+  );
+}
+
+function isStaffDashboardTicket(
+  payload: unknown,
+): payload is StaffDashboardTicket {
+  if (!isRequesterDashboardTicket(payload)) {
+    return false;
+  }
+  const ticket = payload as Record<string, unknown>;
+  return (
+    isPriority(ticket.itPriority) &&
+    (ticket.owner === null || isStaffOwner(ticket.owner))
+  );
+}
+
+function isRequesterDashboardResponse(
+  payload: unknown,
+): payload is RequesterDashboardResponse {
+  if (typeof payload !== "object" || payload === null) {
+    return false;
+  }
+  const dashboard = payload as Record<string, unknown>;
+  const metrics = dashboard.metrics as Record<string, unknown> | undefined;
+  return (
+    typeof dashboard.asOf === "string" &&
+    metrics !== undefined &&
+    Number.isInteger(metrics.openCount) &&
+    Number.isInteger(metrics.waitingForRequesterCount) &&
+    Number.isInteger(metrics.recentlyResolvedCount) &&
+    Array.isArray(dashboard.recentlyUpdated) &&
+    dashboard.recentlyUpdated.length <= 5 &&
+    dashboard.recentlyUpdated.every(isRequesterDashboardTicket) &&
+    Array.isArray(dashboard.recentlyResolved) &&
+    dashboard.recentlyResolved.length <= 5 &&
+    dashboard.recentlyResolved.every(isRequesterDashboardTicket)
+  );
+}
+
+function isStaffDashboardResponse(
+  payload: unknown,
+): payload is StaffDashboardResponse {
+  if (typeof payload !== "object" || payload === null) {
+    return false;
+  }
+  const dashboard = payload as Record<string, unknown>;
+  const metrics = dashboard.metrics as Record<string, unknown> | undefined;
+  const statuses = metrics?.statusBreakdown as
+    | Record<string, unknown>
+    | undefined;
+  const priorities = metrics?.itPriorityBreakdown as
+    | Record<string, unknown>
+    | undefined;
+  const actions = dashboard.myRecentActions;
+  return (
+    typeof dashboard.asOf === "string" &&
+    metrics !== undefined &&
+    Number.isInteger(metrics.unassignedActiveCount) &&
+    Number.isInteger(metrics.myActiveCount) &&
+    Number.isInteger(metrics.highPriorityActiveCount) &&
+    statuses !== undefined &&
+    ["NEW", "OPEN", "IN_PROGRESS", "WAITING_FOR_REQUESTER", "REOPENED"].every(
+      (status) => Number.isInteger(statuses[status]),
+    ) &&
+    priorities !== undefined &&
+    ["LOW", "MEDIUM", "HIGH"].every((priority) =>
+      Number.isInteger(priorities[priority]),
+    ) &&
+    Array.isArray(dashboard.recentlyUpdated) &&
+    dashboard.recentlyUpdated.length <= 5 &&
+    dashboard.recentlyUpdated.every(isStaffDashboardTicket) &&
+    Array.isArray(actions) &&
+    actions.length <= 5 &&
+    actions.every((action) => {
+      if (typeof action !== "object" || action === null) {
+        return false;
+      }
+      const entry = action as Record<string, unknown>;
+      return (
+        Number.isInteger(entry.id) &&
+        Number.isInteger(entry.ticketId) &&
+        typeof entry.ticketNumber === "string" &&
+        typeof entry.ticketSummary === "string" &&
+        typeof entry.actionDescription === "string" &&
+        typeof entry.result === "string" &&
+        typeof entry.createdAt === "string" &&
+        isStaffOwner(entry.performedBy)
+      );
+    })
+  );
+}
+
 function isApiErrorField(value: unknown): value is ApiErrorField {
   if (typeof value !== "object" || value === null) {
     return false;
@@ -786,6 +946,30 @@ export async function fetchRelatedSystems(): Promise<RelatedSystem[]> {
   return payload;
 }
 
+export async function fetchRequesterDashboard(
+  signal?: AbortSignal,
+): Promise<RequesterDashboardResponse> {
+  const { response, payload } = await requestJson("/api/requester/dashboard", {
+    signal,
+  });
+  if (!response.ok || !isRequesterDashboardResponse(payload)) {
+    throwApiRequestError(response, payload);
+  }
+  return payload;
+}
+
+export async function fetchStaffDashboard(
+  signal?: AbortSignal,
+): Promise<StaffDashboardResponse> {
+  const { response, payload } = await requestJson("/api/staff/dashboard", {
+    signal,
+  });
+  if (!response.ok || !isStaffDashboardResponse(payload)) {
+    throwApiRequestError(response, payload);
+  }
+  return payload;
+}
+
 export async function createTicket(
   input: CreateTicketInput,
 ): Promise<TicketDetail> {
@@ -888,6 +1072,7 @@ export async function fetchTickets(
     ["relatedSystemId", query.relatedSystemId],
     ["requestedPriority", query.requestedPriority],
     ["currentStatus", query.currentStatus],
+    ["statusGroup", query.statusGroup],
     ["sortBy", query.sortBy],
     ["sortDirection", query.sortDirection],
     ["page", query.page],
@@ -920,6 +1105,7 @@ function buildStaffTicketQuery(query: StaffTicketListQuery) {
     ["requestedPriority", query.requestedPriority],
     ["itPriority", query.itPriority],
     ["currentStatus", query.currentStatus],
+    ["statusGroup", query.statusGroup],
     ["owner", query.owner],
     ["sortBy", query.sortBy],
     ["sortDirection", query.sortDirection],

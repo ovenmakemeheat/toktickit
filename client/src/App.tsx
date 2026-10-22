@@ -11,11 +11,13 @@ import AdminTicketReview from "./lab-03/AdminTicketReview";
 import StaffTicketDetail from "./lab-03/StaffTicketDetail";
 import StaffTicketQueue from "./lab-03/StaffTicketQueue";
 import UserManagement from "./lab-03/UserManagement";
+import RequesterDashboard from "./lab-04/RequesterDashboard";
+import StaffDashboard from "./lab-04/StaffDashboard";
 import { navigate } from "./lib/navigation";
 import type { PublicUser, Role } from "./lib/api";
 
 type AppRoute =
-  | { page: "summary" }
+  | { page: "dashboard" }
   | { page: "tickets" }
   | { page: "create" }
   | { page: "detail"; ticketId: string }
@@ -27,6 +29,13 @@ type AppRoute =
   | { page: "change-password" };
 
 function readRoute(): AppRoute {
+  if (
+    window.location.pathname === "/" ||
+    window.location.pathname === "/dashboard"
+  ) {
+    return { page: "dashboard" };
+  }
+
   const adminTicketId = window.location.pathname.match(
     /^\/admin\/tickets\/([1-9]\d*)$/,
   )?.[1];
@@ -72,7 +81,7 @@ function readRoute(): AppRoute {
     return { page: "change-password" };
   }
 
-  return { page: "summary" };
+  return { page: "dashboard" };
 }
 
 function roleLabel(role: Role) {
@@ -114,6 +123,16 @@ function AuthenticatedHeader({ user }: { user: PublicUser }) {
         <span className="lab2-shell-context">IT service desk</span>
       </div>
       <nav className="lab2-shell-nav" aria-label="Application navigation">
+        <button
+          type="button"
+          className={`btn btn-sm ${
+            activePage === "dashboard" ? "btn-success" : "btn-outline-success"
+          }`}
+          aria-current={activePage === "dashboard" ? "page" : undefined}
+          onClick={() => navigate("/dashboard")}
+        >
+          Dashboard
+        </button>
         {user.role === "REQUESTER" ? (
           <>
             <button
@@ -246,7 +265,9 @@ function RequesterWorkspace({ route }: { route: AppRoute }) {
 
   return (
     <>
-      {route.page === "detail" ? (
+      {route.page === "dashboard" ? (
+        <RequesterDashboard />
+      ) : route.page === "detail" ? (
         <RequesterTicketDetail
           ticketId={route.ticketId}
           onBack={() => navigate("/tickets")}
@@ -310,6 +331,10 @@ function StaffWorkspace({
   user: PublicUser;
   isAdministrator?: boolean;
 }) {
+  if (route.page === "dashboard") {
+    return <StaffDashboard />;
+  }
+
   if (route.page === "staff-detail") {
     return (
       <StaffTicketDetail
@@ -362,7 +387,9 @@ function AuthenticatedApplication({ route }: { route: AppRoute }) {
         />
       ) : route.page === "admin-ticket-entry" ? (
         <AdminTicketReview onBack={() => navigate("/admin/users")} />
-      ) : route.page === "staff-tickets" || route.page === "staff-detail" ? (
+      ) : route.page === "dashboard" ||
+        route.page === "staff-tickets" ||
+        route.page === "staff-detail" ? (
         <StaffWorkspace route={route} user={user} isAdministrator />
       ) : (
         <RoleWorkspace user={user} />

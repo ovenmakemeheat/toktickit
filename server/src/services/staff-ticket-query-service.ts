@@ -18,6 +18,7 @@ const supportedQueryKeys = new Set([
   "requestedPriority",
   "itPriority",
   "currentStatus",
+  "statusGroup",
   "owner",
   "sortBy",
   "sortDirection",
@@ -60,6 +61,7 @@ export type StaffTicketQuery = {
   requestedPriority: RequestedPriority | undefined;
   itPriority: RequestedPriority | undefined;
   currentStatus: TicketStatus | undefined;
+  statusGroup: "ACTIVE" | undefined;
   owner: StaffOwnerFilter | undefined;
   sortBy: SortField;
   sortDirection: SortDirection;
@@ -198,6 +200,16 @@ export function parseStaffTicketQuery(rawQuery: unknown): StaffTicketQuery {
     readSingleValue(query, "currentStatus"),
     statusValues,
   );
+  const statusGroup = parseEnum(
+    "statusGroup",
+    readSingleValue(query, "statusGroup"),
+    ["ACTIVE"] as const,
+  );
+  if (currentStatus && statusGroup) {
+    invalidQuery([
+      fieldError("statusGroup", "Choose a status or statusGroup, not both"),
+    ]);
+  }
   const owner = parseOwner(readSingleValue(query, "owner"));
   const sortBy =
     parseEnum("sortBy", readSingleValue(query, "sortBy"), sortFields) ??
@@ -227,6 +239,7 @@ export function parseStaffTicketQuery(rawQuery: unknown): StaffTicketQuery {
     requestedPriority,
     itPriority,
     currentStatus,
+    statusGroup,
     owner,
     sortBy,
     sortDirection,
@@ -389,9 +402,21 @@ export async function listStaffTickets(
       ? {}
       : { requestedPriority: query.requestedPriority }),
     ...(query.itPriority === undefined ? {} : { itPriority: query.itPriority }),
-    ...(query.currentStatus === undefined
-      ? {}
-      : { currentStatus: query.currentStatus }),
+    ...(query.currentStatus !== undefined
+      ? { currentStatus: query.currentStatus }
+      : query.statusGroup === "ACTIVE"
+        ? {
+            currentStatus: {
+              in: [
+                "NEW",
+                "OPEN",
+                "IN_PROGRESS",
+                "WAITING_FOR_REQUESTER",
+                "REOPENED",
+              ],
+            },
+          }
+        : {}),
     ...(query.owner === undefined
       ? {}
       : query.owner === "unassigned"
