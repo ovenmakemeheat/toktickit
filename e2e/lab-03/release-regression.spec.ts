@@ -125,7 +125,10 @@ test.describe("Lab 3 integrated release regression", () => {
     ).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Ticket Queue" }),
-    ).toHaveCount(0);
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Ticket Review" }),
+    ).toBeVisible();
   });
 
   test("enforces role-forbidden API and destination boundaries with a seeded session", async ({

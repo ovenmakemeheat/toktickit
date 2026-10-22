@@ -196,6 +196,30 @@ test.describe("Lab 4 role dashboards", () => {
         page.getByRole("button", { name: "Ticket Queue" }),
       ).toHaveCount(0);
 
+      const ownedTicketRow = page.getByRole("button", {
+        name: `Open Ticket ${fixture.tickets[0].ticketNumber}: ${fixture.tickets[0].summary}`,
+      });
+      await ownedTicketRow.click();
+      await expect(page).toHaveURL(`/tickets/${fixture.tickets[0].id}`);
+      await expect(
+        page.getByRole("heading", {
+          name: fixture.tickets[0].ticketNumber,
+        }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Actions Taken" }),
+      ).toBeVisible();
+      await expect(
+        page.getByText("No Actions Taken have been recorded for this Ticket."),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: "Add Action Taken" }),
+      ).toHaveCount(0);
+      await expect(
+        page.getByRole("button", { name: "Edit Action Taken" }),
+      ).toHaveCount(0);
+
+      await page.goto("/dashboard");
       await page
         .getByRole("button", {
           name: `Waiting for You: ${requesterBaseline.metrics.waitingForRequesterCount}. View Tickets waiting for your response.`,
