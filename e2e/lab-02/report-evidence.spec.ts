@@ -28,6 +28,17 @@ const authResponse = {
   csrfToken: "csrf-token",
 };
 
+const requesterDashboard = {
+  asOf: "2026-09-14T17:00:00.000Z",
+  metrics: {
+    openCount: 0,
+    waitingForRequesterCount: 0,
+    recentlyResolvedCount: 0,
+  },
+  recentlyUpdated: [],
+  recentlyResolved: [],
+};
+
 const categories = [
   { id: 1, name: "Hardware" },
   { id: 2, name: "Software" },
@@ -128,6 +139,9 @@ test.describe("Issue #65 report evidence", () => {
     await page.route("**/api/auth/me", (route) =>
       fulfillJson(route, authResponse),
     );
+    await page.route("**/api/requester/dashboard", (route) =>
+      fulfillJson(route, requesterDashboard),
+    );
     await page.route("**/api/categories", (route) =>
       fulfillJson(route, categories),
     );
@@ -137,7 +151,7 @@ test.describe("Issue #65 report evidence", () => {
 
     await page.goto("/");
     await expect(
-      page.getByRole("heading", { name: "Welcome, Requester A", exact: true }),
+      page.getByRole("heading", { name: "Requester Dashboard", exact: true }),
     ).toBeVisible();
     await expect(
       page.getByRole("combobox", { name: "Development Requester" }),

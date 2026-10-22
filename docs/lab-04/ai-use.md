@@ -1,11 +1,11 @@
 # Lab 4 AI-use record
 
-- Status: ongoing; record updated as Lab 4 work proceeds.
-- Record date: 2026-09-27.
+- Status: ongoing; Issue #90 automated regression/evidence work is in progress. Human peer review and the remaining VIS-01 accessibility sign-off are still pending.
+- Record date: 2026-09-27; updated: 2026-10-22.
 
 ## LLM used
 
-The current contract-authoring session used the OpenAI Codex coding agent, model `gpt-6-luna`, provider `openai-codex`. The AI-assisted work created the Lab 4 engineering-contract and test-plan documents for Issue #87. No Lab 4 product implementation or test result is claimed by this record.
+The Issue #87 contract-authoring and Issue #90 implementation sessions used the OpenAI Codex coding agent, model `gpt-6-luna`, provider `openai-codex`. AI-assisted Issue #90 work added isolated seeded Playwright regression journeys, a Lab 3-shaped additive-migration/repeat-safe-seed integration test, and current setup/evidence documentation. Automated results are recorded in `tests.md`; they do not constitute peer review or a complete accessibility sign-off.
 
 ## Selected key prompts
 
@@ -19,6 +19,18 @@ These selected user prompts capture the main specification, planning, workflow, 
 6. “next let's create lab 4 staging branch”
 7. “edit issue propose branch number to increment continuing with lab3 number branch name”
 8. “now get into first branch and start implement”
+9. “Implement Issue #90.”
+
+## Issue #90 work and verification
+
+AI-assisted changes added the real seeded Action Taken and resolution/reopen Playwright journeys, the role/API/navigation and browser-hardening report, a Lab 3-shaped migration/repeat-safe-seed integration test, safe E2E database/port isolation, and refreshed setup/release evidence. The verified working tree is based on `47d6487b638939835403ea0da7c0e3f011078b7b` and was uncommitted during testing.
+
+- `bun run verify` — passed: client 19 files / 72 tests, server 29 files / 170 tests, lint/hooks, Prisma validation, type checks, and builds.
+- `bun run test:e2e` — passed: 19 Chromium tests across Labs 2–4 against the isolated PostgreSQL test database.
+- Targeted `migration-seed.api.test.ts` — passed: 1 test; built Express app import under Node also passed.
+- E2E-04 machine-readable evidence: `artifacts/lab-04/e2e/e2e-04-hardening/run-report.json`.
+
+These automated results are not peer approval or a complete accessibility sign-off. VIS-01, formal DOC-01 review, and release integration remain pending.
 
 ## My Reflection
 

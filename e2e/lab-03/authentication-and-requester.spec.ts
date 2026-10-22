@@ -20,6 +20,17 @@ const authResponse = (user: typeof requester) => ({
   csrfToken: "csrf-token",
 });
 
+const requesterDashboard = {
+  asOf: "2026-09-14T17:00:00.000Z",
+  metrics: {
+    openCount: 0,
+    waitingForRequesterCount: 0,
+    recentlyResolvedCount: 0,
+  },
+  recentlyUpdated: [],
+  recentlyResolved: [],
+};
+
 const categories = [
   { id: 2, name: "Hardware" },
   { id: 3, name: "Software" },
@@ -75,11 +86,17 @@ async function mockUnauthenticatedAuth(page: Page) {
   await page.route("**/api/auth/logout", (route) =>
     route.fulfill({ status: 204 }),
   );
+  await page.route("**/api/requester/dashboard", (route) =>
+    fulfillJson(route, requesterDashboard),
+  );
 }
 
 async function mockAuthenticatedRequester(page: Page) {
   await page.route("**/api/auth/me", (route) =>
     fulfillJson(route, authResponse(requester)),
+  );
+  await page.route("**/api/requester/dashboard", (route) =>
+    fulfillJson(route, requesterDashboard),
   );
   await page.route("**/api/categories", (route) =>
     fulfillJson(route, categories),
@@ -139,7 +156,7 @@ test.describe("Lab 3 authentication and Requester regression", () => {
     await page.getByRole("button", { name: "Sign in" }).click();
 
     await expect(
-      page.getByRole("heading", { name: "Welcome, Requester A" }),
+      page.getByRole("heading", { name: "Requester Dashboard" }),
     ).toBeVisible();
     const navigation = page.getByRole("navigation", {
       name: "Application navigation",
@@ -225,6 +242,9 @@ test.describe("Lab 3 authentication and Requester regression", () => {
     await page.route("**/api/auth/logout", (route) =>
       route.fulfill({ status: 204 }),
     );
+    await page.route("**/api/requester/dashboard", (route) =>
+      fulfillJson(route, requesterDashboard),
+    );
 
     await page.goto("/");
     await expect(
@@ -240,7 +260,7 @@ test.describe("Lab 3 authentication and Requester regression", () => {
     await page.getByRole("button", { name: "Save new password" }).click();
 
     await expect(
-      page.getByRole("heading", { name: "Welcome, Requester A" }),
+      page.getByRole("heading", { name: "Requester Dashboard" }),
     ).toBeVisible();
   });
 
@@ -251,7 +271,7 @@ test.describe("Lab 3 authentication and Requester regression", () => {
     await page.goto("/");
 
     await expect(
-      page.getByRole("heading", { name: "Welcome, Requester A" }),
+      page.getByRole("heading", { name: "Requester Dashboard" }),
     ).toBeVisible();
     await expect(page.getByText("Signed-in Requester")).toHaveCount(0);
     await expect(

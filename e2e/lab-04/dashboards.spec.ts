@@ -24,7 +24,8 @@ type DashboardResponse = {
   myRecentActions?: { id: number; ticketId: number; ticketNumber: string }[];
 };
 
-const seededPassword = process.env.LAB3_SEED_PASSWORD;
+const seededPassword =
+  process.env.LAB3_TEST_PASSWORD ?? process.env.LAB3_SEED_PASSWORD;
 
 function requireSeededPassword() {
   if (!seededPassword) {
