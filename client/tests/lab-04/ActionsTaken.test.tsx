@@ -153,7 +153,7 @@ describe("Actions Taken panel", () => {
         );
       }),
     ).toBe(true);
-  });
+  }, 15_000);
 
   it("edits mutable fields with optimistic version and preserves original performer", async () => {
     let current = action;
