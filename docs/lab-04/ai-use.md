@@ -1,7 +1,7 @@
 # Lab 4 AI-use record
 
 - Status: ongoing; Issue #90 automated regression/evidence work is in progress. Human peer review and the remaining VIS-01 accessibility sign-off are still pending.
-- Record date: 2026-09-27; updated: 2026-10-22.
+- Record date: 2026-09-27; updated: 2026-10-27.
 
 ## LLM used
 
@@ -23,12 +23,13 @@ These selected user prompts capture the main specification, planning, workflow, 
 
 ## Issue #90 work and verification
 
-AI-assisted changes added the real seeded Action Taken and resolution/reopen Playwright journeys, the role/API/navigation and browser-hardening report, a Lab 3-shaped migration/repeat-safe-seed integration test, safe E2E database/port isolation, and refreshed setup/release evidence. The verified working tree is based on `47d6487b638939835403ea0da7c0e3f011078b7b` and was uncommitted during testing.
+AI-assisted changes added the real seeded Action Taken and resolution/reopen Playwright journeys, the role/API/navigation and browser-hardening report, a Lab 3-shaped migration/repeat-safe-seed integration test, safe E2E database/port isolation, and refreshed setup/release evidence. Initial Issue #90 verification used an uncommitted tree based on `47d6487b638939835403ea0da7c0e3f011078b7b`; PR feedback then identified the unsupported standalone Playwright `afterEach` import. That was corrected with `test.afterEach(...)` and committed as `851ee7301f6f0ebc677f8268b4c6c5ac3de7d7e4`.
 
-- `bun run verify` — passed: client 19 files / 72 tests, server 29 files / 170 tests, lint/hooks, Prisma validation, type checks, and builds.
-- `bun run test:e2e` — passed: 19 Chromium tests across Labs 2–4 against the isolated PostgreSQL test database.
+- `bunx playwright test --list e2e/lab-02/requester-ticket-flow.spec.ts` — passed; the test is discoverable with Playwright 1.62.1.
+- `bun run verify` — passed against commit `851ee73`: client 19 files / 72 tests, server 29 files / 170 tests, lint/hooks, Prisma validation, type checks, and builds.
+- `bun run test:e2e` — passed after commit `851ee73`: 19 Chromium tests across Labs 2–4 against the isolated PostgreSQL test database. E2E-04 report revision matches that commit.
 - Targeted `migration-seed.api.test.ts` — passed: 1 test; built Express app import under Node also passed.
-- E2E-04 machine-readable evidence: `artifacts/lab-04/e2e/e2e-04-hardening/run-report.json`.
+- E2E-04 machine-readable evidence: `artifacts/lab-04/e2e/e2e-04-hardening/run-report.json`. `worktreeDirty: true` reflects screenshot generation during the full run and pre-existing local-only files; generated Lab 2/3 screenshots were restored.
 
 These automated results are not peer approval or a complete accessibility sign-off. VIS-01, formal DOC-01 review, and release integration remain pending.
 

@@ -1,12 +1,12 @@
 # Lab 4 reviewer record
 
-Status: updated 2026-10-22. Feature PRs #91–#93 have been merged into `lab4-staging` by reviewer MadMax168 after human comments and readiness replies. No formal GitHub `APPROVED` review is recorded for those PRs; this ledger does not equate comments, automated review, or merge state with formal approval. Issue #90 has no PR yet, and the release integration to `main` remains pending.
+Status: updated 2026-10-27. Feature PRs #91–#93 have been merged into `lab4-staging` by reviewer MadMax168 after human comments and readiness replies. PR #94 for Issue #90 is open; MadMax168 has requested release-readiness changes in a conversation comment, and a separate Codex inline finding was fixed. No formal GitHub `APPROVED` review is recorded for PR #94; this ledger does not equate comments, automated review, or merge state with formal approval. The release integration to `main` remains pending.
 
 Scope: Issues #86–#90, their feature Pull Requests into `lab4-staging`, and the separately reviewed release integration to `main`.
 
 - Student/author: `GUNTEE DOUNGMANEE` (`ovenmakemeheat`)
 - Student ID: `67070501003`
-- Record opened: 2026-09-27; updated: 2026-10-22
+- Record opened: 2026-09-27; updated: 2026-10-27
 
 ## Review and merge rules
 
@@ -25,7 +25,7 @@ Scope: Issues #86–#90, their feature Pull Requests into `lab4-staging`, and th
 | #87 Contract and test plan | `feature/20-lab4-contract-test-plan` | [PR #91](https://github.com/ovenmakemeheat/toktickit/pull/91) → `lab4-staging` | MadMax168 reviewed via comments; no formal `APPROVED` review is recorded. The contract's formal review status remains pending. | [Human review comment](https://github.com/ovenmakemeheat/toktickit/pull/91#issuecomment-6017639317); author [consolidated response](https://github.com/ovenmakemeheat/toktickit/pull/91#issuecomment-6019690579) and replies to all four inline threads; reviewer [“nice, MERGE!!”](https://github.com/ovenmakemeheat/toktickit/pull/91#issuecomment-6052380896). | Merged by MadMax168 at [`c945062c41b2fa85b8f279cc7cc852e07a5aa8fb`](https://github.com/ovenmakemeheat/toktickit/commit/c945062c41b2fa85b8f279cc7cc852e07a5aa8fb). |
 | #88 Actions Taken and Ticket workflow | `feature/21-lab4-actions-taken-ticket-workflow` | [PR #92](https://github.com/ovenmakemeheat/toktickit/pull/92) → `lab4-staging` | MadMax168 commented ready to merge; no formal GitHub review is recorded. Automated Codex review is not peer approval. | [Reviewer readiness comment](https://github.com/ovenmakemeheat/toktickit/pull/92#issuecomment-6098930825). No unaddressed human review request is recorded in the issue-comment evidence. | Merged by MadMax168 at [`8608a312d298ecfd480ea67b0fe9ffd5ccf5db5f`](https://github.com/ovenmakemeheat/toktickit/commit/8608a312d298ecfd480ea67b0fe9ffd5ccf5db5f). |
 | #89 Role dashboards | `feature/22-lab4-role-dashboards` | [PR #93](https://github.com/ovenmakemeheat/toktickit/pull/93) → `lab4-staging` | MadMax168 reviewed via comments and said ready to merge; no formal `APPROVED` review is recorded. | Author replied to [human feedback](https://github.com/ovenmakemeheat/toktickit/pull/93#issuecomment-6335063616); reviewer [confirmed readiness](https://github.com/ovenmakemeheat/toktickit/pull/93#issuecomment-6342480985). | Merged by MadMax168 at [`47d6487b638939835403ea0da7c0e3f011078b7b`](https://github.com/ovenmakemeheat/toktickit/commit/47d6487b638939835403ea0da7c0e3f011078b7b). |
-| #90 Regression and demo readiness | `feature/23-lab4-regression-demo-readiness` | Pending | Pending; this branch has not yet been submitted for peer review. | Pending. | Pending. |
+| #90 Regression and demo readiness | `feature/23-lab4-regression-demo-readiness` | [PR #94](https://github.com/ovenmakemeheat/toktickit/pull/94) → `lab4-staging` | MadMax168 requested release-gate changes in a PR conversation comment; no formal GitHub review/approval is recorded. | [Human release-readiness comment](https://github.com/ovenmakemeheat/toktickit/pull/94#issuecomment-6444445511); [Codex inline finding](https://github.com/ovenmakemeheat/toktickit/pull/94#discussion_r4351366572) fixed; author response pending. | Pending. |
 
 ## Contract review record — Issue #87
 
