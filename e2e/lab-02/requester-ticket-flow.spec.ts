@@ -2,13 +2,7 @@ import { Buffer } from "node:buffer";
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 
-import {
-  afterEach,
-  expect,
-  test,
-  type Locator,
-  type Page,
-} from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { removeE2eAttachment } from "../support/attachment-storage.js";
 import { prisma } from "../../server/src/db.js";
@@ -41,7 +35,7 @@ function e2eReplacementPassword() {
   return `${password.slice(0, 100)}Lab3E2E!9`;
 }
 
-afterEach(async () => {
+test.afterEach(async () => {
   if (createdTicketId === undefined) {
     return;
   }
