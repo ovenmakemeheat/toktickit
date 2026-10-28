@@ -1,6 +1,6 @@
 # Lab 4 Test DD and traceability plan
 
-- Status: The integrated automated gates passed on 2026-10-28 against Issue #90 follow-up commit `66a663a2566a9d6b72456684b2ae228e8699aeb4`: `bun run verify` passed (client 72 tests, server 171 tests), and `bun run test:e2e` passed all 19 Chromium tests. VIS-01 remains partial pending human assistive-technology review; DOC-01 and release/peer-review closeout remain pending. This is not a claim that parent #86 is done.
+- Status: The integrated automated gates passed on 2026-10-28 against Issue #90 follow-up commit `9d1b0009a44331fad5a4bbdf5317d6a521811bdd`: `bun run verify` passed (client 72 tests, server 171 tests), and `bun run test:e2e` passed all 19 Chromium tests. VIS-01 remains partial pending human assistive-technology review; DOC-01 and release/peer-review closeout remain pending. This is not a claim that parent #86 is done.
 - Parent: [Issue #86](https://github.com/ovenmakemeheat/toktickit/issues/86) · Contract: [Issue #87](https://github.com/ovenmakemeheat/toktickit/issues/87)
 - Requirements: [Lab 4 handout](requirements/UTF-8_SE+Lab+4.pdf) · [specification](specification.md) · [API contract](api-spec.md) · [UI contract](ui-spec.md).
 
@@ -243,10 +243,10 @@ For DB-backed suites, use the isolated test database and the repository's approv
 
 ### 5.6 Issue #90 follow-up migration recovery and integrated gate (2026-10-28)
 
-- Starting integration commit: `7cb171562bac42e7dce9cf7d5aee42022de9e253` (PR #94 merged to `lab4-staging`); tested follow-up commit: `66a663a2566a9d6b72456684b2ae228e8699aeb4`.
+- Starting integration commit: `7cb171562bac42e7dce9cf7d5aee42022de9e253` (PR #94 merged to `lab4-staging`); tested follow-up commit: `9d1b0009a44331fad5a4bbdf5317d6a521811bdd`.
 - `bun run --cwd server test -- tests/lab-04/migration-seed.api.test.ts --reporter=verbose` — passed: 1 file / 2 PostgreSQL integration tests. The recovery case forced a later migration failure in a temporary copy, checked migration history and preserved rows, rebuilt only its unique schema from deterministic pre-Lab-4 migrations/fixtures, then retried clean migrations successfully. The full verification run after commit also included both migration tests.
-- `bun run verify` — passed after commit `66a663a`: Biome (142 files), Lefthook validation, Prisma validation, client/server type checks, client tests (19 files / 72 tests), server tests (29 files / 171 tests), and both production builds.
-- `bun run test:e2e` — passed after commit `66a663a`: 19 Chromium tests across Labs 2–4 against isolated `toktickit_test` on host port `15434`; the E2E-04 report records revision `66a663a2566a9d6b72456684b2ae228e8699aeb4`, zero business API mocks, and zero browser/page errors. Its `worktreeDirty: true` reflects only the two pre-existing local-only untracked files, which were preserved. The E2E harness regenerates Lab 2/3 screenshots; those unrelated outputs were restored.
+- `bun run verify` — passed after commit `9d1b000`: Biome (142 files), Lefthook validation, Prisma validation, client/server type checks, client tests (19 files / 72 tests), server tests (29 files / 171 tests), and both production builds.
+- `bun run test:e2e` — passed after commit `9d1b000`: 19 Chromium tests across Labs 2–4 against isolated `toktickit_test` on host port `15434`; the E2E-04 report records revision `9d1b0009a44331fad5a4bbdf5317d6a521811bdd`, zero business API mocks, and zero browser/page errors. Its `worktreeDirty: true` reflects only the two pre-existing local-only untracked files, which were preserved. The E2E harness regenerates Lab 2/3 screenshots; those unrelated outputs were restored.
 - These automated checks do not complete VIS-01, DOC-01 formal review, or the required integration/release merge to `main`.
 
 ## 6. Manual review checklist
