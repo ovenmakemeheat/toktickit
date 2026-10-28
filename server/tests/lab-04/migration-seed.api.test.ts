@@ -30,6 +30,10 @@ const preLab4Migrations = [
   "20260913073929_lab3_authentication",
   "20260914140000_enforce_requester_ticket_ownership",
 ] as const;
+const lab4Migrations = [
+  "20261008090000_lab4_actions_taken_workflow",
+  "20261011120000_lab4_dashboard_indexes",
+] as const;
 const fixtureIds = {
   requester: 88_001,
   staff: 88_002,
@@ -71,6 +75,18 @@ async function runPrisma(
     maxBuffer: 1024 * 1024,
     timeout: 120_000,
   });
+}
+
+async function persistLab3Counts(client: PrismaClient) {
+  const [users, tickets, attachments, publicComments, internalNotes] =
+    await Promise.all([
+      client.user.count(),
+      client.ticket.count(),
+      client.attachment.count(),
+      client.publicComment.count(),
+      client.internalNote.count(),
+    ]);
+  return { users, tickets, attachments, publicComments, internalNotes };
 }
 
 async function persistCounts(client: PrismaClient): Promise<PersistedCounts> {
@@ -148,6 +164,165 @@ async function createLab3Baseline(client: PrismaClient) {
 }
 
 describe("Lab 4 additive migration and repeat-safe seed", () => {
+  it("restores a Lab 3 baseline after a failed migration and retries cleanly", async () => {
+    const baseDatabaseUrl = process.env.TEST_DATABASE_URL;
+    if (!baseDatabaseUrl) {
+      throw new Error(
+        "TEST_DATABASE_URL is required for migration recovery verification.",
+      );
+    }
+
+    const schemaName = `lab4_recovery_${process.pid}_${randomUUID().replaceAll("-", "")}`;
+    const databaseUrl = schemaScopedUrl(baseDatabaseUrl, schemaName);
+    const temporaryRoot = resolve(
+      serverRoot,
+      ".local",
+      `lab4-recovery-${schemaName}`,
+    );
+    const baselineMigrations = resolve(temporaryRoot, "baseline-migrations");
+    const failingMigrations = resolve(temporaryRoot, "failing-migrations");
+    const baselineConfig = resolve(temporaryRoot, "prisma.config.mjs");
+    const failingConfig = resolve(temporaryRoot, "failing.prisma.config.mjs");
+    const prismaSchema = resolve(serverRoot, "prisma/schema.prisma");
+    const recoveryMigration = "20261011120000_lab4_dashboard_indexes";
+    let client = new PrismaClient({
+      datasources: { db: { url: databaseUrl } },
+    });
+    let schemaCreated = false;
+
+    try {
+      await prisma.$executeRawUnsafe(`CREATE SCHEMA "${schemaName}"`);
+      schemaCreated = true;
+      await mkdir(baselineMigrations, { recursive: true });
+      await mkdir(failingMigrations, { recursive: true });
+      for (const migrationName of preLab4Migrations) {
+        await cp(
+          resolve(migrationRoot, migrationName),
+          resolve(baselineMigrations, migrationName),
+          { recursive: true },
+        );
+      }
+      for (const migrationName of [...preLab4Migrations, ...lab4Migrations]) {
+        await cp(
+          resolve(migrationRoot, migrationName),
+          resolve(failingMigrations, migrationName),
+          { recursive: true },
+        );
+      }
+      for (const migrationsPath of [baselineMigrations, failingMigrations]) {
+        await copyFile(
+          resolve(migrationRoot, "migration_lock.toml"),
+          resolve(migrationsPath, "migration_lock.toml"),
+        );
+      }
+
+      const writeConfig = async (
+        configPath: string,
+        migrationsPath: string,
+      ) => {
+        await writeFile(
+          configPath,
+          [
+            'import { defineConfig } from "prisma/config";',
+            "export default defineConfig({",
+            `  schema: ${JSON.stringify(prismaSchema)},`,
+            `  migrations: { path: ${JSON.stringify(migrationsPath)} },`,
+            '  datasource: { url: process.env.DATABASE_URL ?? "" },',
+            "});",
+            "",
+          ].join("\n"),
+          "utf8",
+        );
+      };
+      await writeConfig(baselineConfig, baselineMigrations);
+      await writeConfig(failingConfig, failingMigrations);
+
+      await runPrisma(baselineConfig, databaseUrl, ["migrate", "deploy"]);
+      await client.$connect();
+      await createLab3Baseline(client);
+      const beforeFailure = await persistLab3Counts(client);
+
+      await writeFile(
+        resolve(failingMigrations, recoveryMigration, "migration.sql"),
+        "THIS IS AN INTENTIONAL MIGRATION FAILURE;\n",
+        "utf8",
+      );
+      await expect(
+        runPrisma(failingConfig, databaseUrl, ["migrate", "deploy"]),
+      ).rejects.toThrow();
+
+      const migrationState = await client.$queryRawUnsafe<
+        { migration_name: string; finished_at: Date | null }[]
+      >(
+        `SELECT "migration_name", "finished_at" FROM "_prisma_migrations"
+         WHERE "migration_name" IN ($1, $2) ORDER BY "migration_name"`,
+        lab4Migrations[0],
+        recoveryMigration,
+      );
+      expect(migrationState).toEqual([
+        expect.objectContaining({
+          migration_name: lab4Migrations[0],
+          finished_at: expect.any(Date),
+        }),
+        expect.objectContaining({
+          migration_name: recoveryMigration,
+          finished_at: null,
+        }),
+      ]);
+      expect(await persistCounts(client)).toEqual({
+        ...beforeFailure,
+        actionsTaken: 0,
+      });
+
+      // Model the documented pre-work recovery: restore the known Lab 3 baseline,
+      // rather than trying to reverse or hand-edit additive production migrations.
+      await client.$disconnect();
+      await prisma.$executeRawUnsafe(
+        `DROP SCHEMA IF EXISTS "${schemaName}" CASCADE`,
+      );
+      schemaCreated = false;
+      await prisma.$executeRawUnsafe(`CREATE SCHEMA "${schemaName}"`);
+      schemaCreated = true;
+      await runPrisma(baselineConfig, databaseUrl, ["migrate", "deploy"]);
+      client = new PrismaClient({
+        datasources: { db: { url: databaseUrl } },
+      });
+      await client.$connect();
+      await createLab3Baseline(client);
+      expect(await persistLab3Counts(client)).toEqual(beforeFailure);
+
+      await runPrisma(resolve(serverRoot, "prisma.config.ts"), databaseUrl, [
+        "migrate",
+        "deploy",
+      ]);
+      expect(await persistCounts(client)).toEqual({
+        ...beforeFailure,
+        actionsTaken: 0,
+      });
+      const recoveredTickets = await client.ticket.findMany({
+        where: {
+          id: { in: [fixtureIds.resolvedTicket, fixtureIds.closedTicket] },
+        },
+        select: { id: true, updatedAt: true, resolvedAt: true },
+      });
+      expect(recoveredTickets).toHaveLength(2);
+      expect(
+        recoveredTickets.every(
+          (ticket) =>
+            ticket.resolvedAt?.getTime() === ticket.updatedAt.getTime(),
+        ),
+      ).toBe(true);
+    } finally {
+      await client.$disconnect().catch(() => undefined);
+      if (schemaCreated) {
+        await prisma
+          .$executeRawUnsafe(`DROP SCHEMA IF EXISTS "${schemaName}" CASCADE`)
+          .catch(() => undefined);
+      }
+      await rm(temporaryRoot, { recursive: true, force: true });
+    }
+  }, 120_000);
+
   it("upgrades a Lab 3-shaped schema without losing rows and seeds without duplicates", async () => {
     const baseDatabaseUrl = process.env.TEST_DATABASE_URL;
     if (!baseDatabaseUrl) {
