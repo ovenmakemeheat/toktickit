@@ -1,13 +1,12 @@
 # Lab 4 reviewer record
 
-Status: review is pending. This file is an evidence ledger, not a claim that any review or approval has occurred.
+Status: updated 2026-10-27. Feature PRs #91–#93 have been merged into `lab4-staging` by reviewer MadMax168 after human comments and readiness replies. PR #94 for Issue #90 is open; MadMax168 requested release-readiness changes, the author replied, and the separate Codex inline finding was fixed, answered, and resolved. VIS-01 and formal DOC-01 review remain pending. No formal GitHub `APPROVED` review is recorded for PR #94; this ledger does not equate comments, automated review, or merge state with formal approval. The release integration to `main` remains pending.
 
 Scope: Issues #86–#90, their feature Pull Requests into `lab4-staging`, and the separately reviewed release integration to `main`.
 
 - Student/author: `GUNTEE DOUNGMANEE` (`ovenmakemeheat`)
 - Student ID: `67070501003`
-- PR #91 commenter: `MadMax168` (commenter identity observed on the linked comment; this does not establish formal review approval).
-- Record opened: 2026-09-27
+- Record opened: 2026-09-27; updated: 2026-10-27
 
 ## Review and merge rules
 
@@ -21,22 +20,20 @@ Scope: Issues #86–#90, their feature Pull Requests into `lab4-staging`, and th
 
 ## Feature Pull Request ledger
 
-| Issue | Feature branch | Pull Request | Human reviewer / review state | Comments and author responses | Merge evidence |
+| Issue | Feature branch | Pull Request | Human reviewer / formal review state | Comments and author responses | Merge evidence |
 | --- | --- | --- | --- | --- | --- |
-| #87 Contract and test plan | `feature/20-lab4-contract-test-plan` | [PR #91](https://github.com/ovenmakemeheat/toktickit/pull/91) → `lab4-staging` | Commenter: `MadMax168`; formal approval pending | [Original comment](https://github.com/ovenmakemeheat/toktickit/pull/91#issuecomment-6017639317); author replies: [scope](https://github.com/ovenmakemeheat/toktickit/pull/91#discussion_r4197269211), [dashboard](https://github.com/ovenmakemeheat/toktickit/pull/91#discussion_r4197269213), [idempotency](https://github.com/ovenmakemeheat/toktickit/pull/91#discussion_r4197269201), [hardening](https://github.com/ovenmakemeheat/toktickit/pull/91#discussion_r4197269200), [summary](https://github.com/ovenmakemeheat/toktickit/pull/91#issuecomment-6019690579) | Pending |
-| #88 Actions Taken and Ticket workflow | `feature/21-lab4-actions-taken-ticket-workflow` | Pending | Pending | Pending | Pending |
-| #89 Role dashboards | `feature/22-lab4-role-dashboards` | Pending | Pending | Pending | Pending |
-| #90 Regression and demo readiness | `feature/23-lab4-regression-demo-readiness` | Pending | Pending | Pending | Pending |
+| #87 Contract and test plan | `feature/20-lab4-contract-test-plan` | [PR #91](https://github.com/ovenmakemeheat/toktickit/pull/91) → `lab4-staging` | MadMax168 reviewed via comments; no formal `APPROVED` review is recorded. The contract's formal review status remains pending. | [Human review comment](https://github.com/ovenmakemeheat/toktickit/pull/91#issuecomment-6017639317); author [consolidated response](https://github.com/ovenmakemeheat/toktickit/pull/91#issuecomment-6019690579) and replies to all four inline threads; reviewer [“nice, MERGE!!”](https://github.com/ovenmakemeheat/toktickit/pull/91#issuecomment-6052380896). | Merged by MadMax168 at [`c945062c41b2fa85b8f279cc7cc852e07a5aa8fb`](https://github.com/ovenmakemeheat/toktickit/commit/c945062c41b2fa85b8f279cc7cc852e07a5aa8fb). |
+| #88 Actions Taken and Ticket workflow | `feature/21-lab4-actions-taken-ticket-workflow` | [PR #92](https://github.com/ovenmakemeheat/toktickit/pull/92) → `lab4-staging` | MadMax168 commented ready to merge; no formal GitHub review is recorded. Automated Codex review is not peer approval. | [Reviewer readiness comment](https://github.com/ovenmakemeheat/toktickit/pull/92#issuecomment-6098930825). No unaddressed human review request is recorded in the issue-comment evidence. | Merged by MadMax168 at [`8608a312d298ecfd480ea67b0fe9ffd5ccf5db5f`](https://github.com/ovenmakemeheat/toktickit/commit/8608a312d298ecfd480ea67b0fe9ffd5ccf5db5f). |
+| #89 Role dashboards | `feature/22-lab4-role-dashboards` | [PR #93](https://github.com/ovenmakemeheat/toktickit/pull/93) → `lab4-staging` | MadMax168 reviewed via comments and said ready to merge; no formal `APPROVED` review is recorded. | Author replied to [human feedback](https://github.com/ovenmakemeheat/toktickit/pull/93#issuecomment-6335063616); reviewer [confirmed readiness](https://github.com/ovenmakemeheat/toktickit/pull/93#issuecomment-6342480985). | Merged by MadMax168 at [`47d6487b638939835403ea0da7c0e3f011078b7b`](https://github.com/ovenmakemeheat/toktickit/commit/47d6487b638939835403ea0da7c0e3f011078b7b). |
+| #90 Regression and demo readiness | `feature/23-lab4-regression-demo-readiness` | [PR #94](https://github.com/ovenmakemeheat/toktickit/pull/94) → `lab4-staging` | MadMax168 requested release-gate changes in a PR conversation comment; no formal GitHub review/approval is recorded. | [Human release-readiness comment](https://github.com/ovenmakemeheat/toktickit/pull/94#issuecomment-6444445511); author [response](https://github.com/ovenmakemeheat/toktickit/pull/94#issuecomment-6448005326). [Codex inline finding](https://github.com/ovenmakemeheat/toktickit/pull/94#discussion_r4351366572) was fixed, [answered](https://github.com/ovenmakemeheat/toktickit/pull/94#discussion_r4391578110), and resolved. VIS-01/DOC-01 remain pending human sign-off. | Pending. |
 
 ## Contract review record — Issue #87
 
-- Contract documents created: `specification.md`, `api-spec.md`, `ui-spec.md`, and `tests.md`.
-- Human reviewer: Pending.
-- Review date and formal decision: Pending.
-- Review comment: [MadMax168 on PR #91](https://github.com/ovenmakemeheat/toktickit/pull/91#issuecomment-6017639317); requested complete FR/BR test traceability, accurate PR ledger, and explicit Administrator communication permissions from parent issue #86.
-- Author response/changes: Posted on [PR #91](https://github.com/ovenmakemeheat/toktickit/pull/91), with a consolidated [response to the human comment](https://github.com/ovenmakemeheat/toktickit/pull/91#issuecomment-6019690579) and replies to all four inline threads. Formal approval and merge remain pending.
-- Formal approval evidence: Pending. No approval or merge is claimed.
-- State remains **Draft—review required** until a human records the review and any requested changes are addressed.
+- Contract documents: `specification.md`, `api-spec.md`, `ui-spec.md`, and `tests.md`.
+- Human reviewer/commenter: MadMax168.
+- Review comment and author response are linked above. The reviewer invited merge, and merged PR #91 into `lab4-staging`.
+- Formal GitHub `APPROVED` review: not recorded. Keep the contract's formal approval state pending rather than inferring approval from the comment or merge.
+- No feature implementation or automated result substitutes for the human's responsibility to verify the contract against the complete Lab 4 handout and parent issue #86.
 
 ## Release Pull Request ledger
 
@@ -46,4 +43,4 @@ Scope: Issues #86–#90, their feature Pull Requests into `lab4-staging`, and th
 
 ## Closeout requirements
 
-Update this file from actual GitHub Pull Request/review/merge records. Add exact PR links, reviewer identity, review state, comment/response evidence, and merge commit only after those events occur. Keep open or pending work visibly pending; do not fabricate Lab 4 completion evidence.
+Update this file from actual GitHub Pull Request/review/merge records. Add exact PR links, reviewer identity, formal review state, comment/response evidence, and merge commit only after those events occur. Keep open or pending work visibly pending; do not fabricate Lab 4 completion evidence.

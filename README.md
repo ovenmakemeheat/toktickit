@@ -1,8 +1,8 @@
 # TokTickIT
 
-TokTickIT is the Lab 1/Lab 2 full-stack foundation for the IT service desk
-application, with Lab 3 authentication and role-based workflows being delivered
-incrementally.
+TokTickIT is a full-stack IT service desk application built across Labs 1–4.
+Lab 4 adds auditable Actions Taken, Ticket resolution controls, and role-scoped
+dashboards while preserving the earlier Labs' workflows.
 
 ## Stack
 
@@ -33,12 +33,11 @@ bun run db:validate
 bunx playwright install chromium
 ```
 
-On Windows PowerShell, use `Copy-Item server/.env.example server/.env` instead of `cp`.
-Before `db:seed`, set `LAB3_SEED_PASSWORD` in the local `server/.env` to a 12-128 character development-only password containing a letter, number, and non-alphanumeric character. If port `5432` is already in use, set `POSTGRES_PORT`, `DATABASE_URL`, and `TEST_DATABASE_URL` to the same available host port in `server/.env`.
+On Windows PowerShell, use `Copy-Item server/.env.example server/.env` instead of `cp`. Set `LAB3_SEED_PASSWORD` in the local `server/.env` to a 12-128 character development-only password containing a letter, number, and non-alphanumeric character before seeding. If port `5432` is already in use, set `POSTGRES_PORT`, `DATABASE_URL`, and `TEST_DATABASE_URL` to the same available host port in `server/.env`.
 
 The database stack is owned by `server/`: Compose is defined in `server/docker-compose.yml`, PostgreSQL initialization is under `server/docker/`, and Prisma files remain under `server/prisma/`.
 
-The database migration and repeat-safe Lab 3 seed commands are:
+The optional `LAB3_TEST_PASSWORD` can set a separate password for isolated test fixtures; the seeded E2E helpers recognize it. Do not use real credentials.
 
 ```sh
 bun run db:migrate
@@ -46,11 +45,11 @@ bun run db:seed
 bun run db:test:setup
 ```
 
-`db:migrate` and `db:migrate:deploy` run the Prisma migration and the Lab 3 ownership migration before returning. Existing Lab 2 Development Requesters are backfilled to Users, Ticket ownership is enforced, and generated initial credentials are written to the ignored local path `.local/lab3-credentials.json`. Set `LAB3_MIGRATION_HANDOFF_PATH` to choose another ignored local handoff path. `db:migrate:lab3` remains available for a separately managed handoff path.
+`db:migrate` and `db:migrate:deploy` apply the current additive Prisma migrations and then run the Lab 3 ownership migration. Existing Lab 2 Development Requesters are backfilled to Users, Ticket ownership is enforced, and any generated initial credentials are written to the ignored local path `.local/lab3-credentials.json`. Set `LAB3_MIGRATION_HANDOFF_PATH` to choose another ignored local handoff path. `db:migrate:lab3` remains available for a separately managed handoff path.
 
-`db:seed` backfills every seeded Ticket to its authenticated Requester User and verifies the database-level ownership constraint before completing.
+`db:seed` is repeat-safe, backfills seeded Tickets to their authenticated Requester Users, verifies the database-level ownership constraint, and includes deterministic Lab 4 Action Taken examples. Seed identities use `.test` addresses.
 
-`db:test:setup` applies the current migrations and seed to the isolated `toktickit_test` database. The test database is created by `server/docker/postgres/init/01-create-test-database.sql` on a new Compose volume.
+`db:test:setup` resets, migrates, and seeds the isolated `toktickit_test` database using `TEST_DATABASE_URL`. The test database is created by `server/docker/postgres/init/01-create-test-database.sql` on a new Compose volume. Keep `TEST_DATABASE_URL` on the same host port as `DATABASE_URL`, but point it at a different database.
 
 ## Run the application
 
@@ -71,21 +70,32 @@ bun run verify
 ```
 
 `verify` runs Biome checks, Lefthook configuration validation, Prisma schema validation, TypeScript checks, tests, and both workspace builds.
-API tests use the exported Express application and do not start a listener. The isolated test database workflow is completed by the server test setup and the authenticated Lab 3 fixtures.
+API tests use the exported Express application and do not start a listener. `verify` does not run Playwright; use `bun run test:e2e` separately for the isolated seeded browser suite.
 
-The authenticated Lab 3 Requester flow can be run against the seeded development database with
-the client and API started by Playwright:
+### Local demo
+
+Run the seeded application against the development database:
 
 ```sh
 bun run db:up
 bun run db:migrate
 bun run db:seed
+bun dev
+```
+
+Use local seeded `.test` accounts and the development-only password configured in `server/.env`. Keep this database separate from the E2E database.
+
+### Seeded E2E and release regression
+
+Playwright loads `server/.env` and requires `TEST_DATABASE_URL` to name a database ending in `_test`, distinct from the configured development database. The root E2E command resets and reseeds that test database before every run; never point it at development or production data.
+
+```sh
+bun run test:e2e -- e2e/lab-04
+# or run the full earlier-lab and Lab 4 browser regression suite
 bun run test:e2e
 ```
 
-The E2E tests cover authentication, mandatory password change, authenticated
-Requester navigation, ticket continuity, and responsive overflow checks. They
-expect the local client/API and Chromium browser to be available.
+The seeded Lab 4 journeys use the real API and PostgreSQL without intercepting business routes. Chromium must be installed. Playwright starts isolated API/UI servers on ports 3001/5174 and never reuses existing servers; set `E2E_API_PORT` or `E2E_UI_PORT` to alternate free ports if needed. The migration and seed integration test uses a temporary schema in `TEST_DATABASE_URL`. `bun run verify` runs the local static, Prisma, type-check, unit/API/client-test, and build gate; run E2E separately with `bun run test:e2e`.
 
 ## Scope
 
@@ -93,4 +103,5 @@ Lab 1 proves the client, API, Prisma, PostgreSQL, and test tooling as one
 vertical slice. Lab 2 adds the temporary Development Requester context, ticket
 creation/list/detail, and permitted attachment lifecycle. Lab 3 replaces that
 temporary identity with authenticated Users and adds role-based workflows under
-the approved contracts in `docs/lab-03/`; later-lab features remain out of scope.
+`docs/lab-03/`. Lab 4 adds the approved work-log, Ticket workflow, and dashboard
+scope under `docs/lab-04/`; unapproved later-lab features remain out of scope.

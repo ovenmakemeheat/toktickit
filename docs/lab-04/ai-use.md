@@ -1,11 +1,11 @@
 # Lab 4 AI-use record
 
-- Status: ongoing; record updated as Lab 4 work proceeds.
-- Record date: 2026-09-27.
+- Status: ongoing; Issue #90 automated regression/evidence work is in progress. Human peer review and the remaining VIS-01 accessibility sign-off are still pending.
+- Record date: 2026-09-27; updated: 2026-10-27.
 
 ## LLM used
 
-The current contract-authoring session used the OpenAI Codex coding agent, model `gpt-6-luna`, provider `openai-codex`. The AI-assisted work created the Lab 4 engineering-contract and test-plan documents for Issue #87. No Lab 4 product implementation or test result is claimed by this record.
+The Issue #87 contract-authoring and Issue #90 implementation sessions used the OpenAI Codex coding agent, model `gpt-6-luna`, provider `openai-codex`. AI-assisted Issue #90 work added isolated seeded Playwright regression journeys, a Lab 3-shaped additive-migration/repeat-safe-seed integration test, and current setup/evidence documentation. Automated results are recorded in `tests.md`; they do not constitute peer review or a complete accessibility sign-off.
 
 ## Selected key prompts
 
@@ -19,6 +19,20 @@ These selected user prompts capture the main specification, planning, workflow, 
 6. “next let's create lab 4 staging branch”
 7. “edit issue propose branch number to increment continuing with lab3 number branch name”
 8. “now get into first branch and start implement”
+9. “Implement Issue #90.”
+
+## Issue #90 work and verification
+
+AI-assisted changes added the real seeded Action Taken and resolution/reopen Playwright journeys, the role/API/navigation and browser-hardening report, a Lab 3-shaped migration/repeat-safe-seed integration test, safe E2E database/port isolation, and refreshed setup/release evidence. Initial Issue #90 verification used an uncommitted tree based on `47d6487b638939835403ea0da7c0e3f011078b7b`; PR feedback then identified the unsupported standalone Playwright `afterEach` import. That was corrected with `test.afterEach(...)` and committed as `851ee7301f6f0ebc677f8268b4c6c5ac3de7d7e4`. A subsequent full verification exposed a 5-second timeout in one Actions Taken client test under suite load; its per-test timeout was raised to 15 seconds in `acd0ab1f89b8897876447de18ef87be3fddb35a4`.
+
+- `bunx playwright test --list e2e/lab-02/requester-ticket-flow.spec.ts` — passed; the test is discoverable with Playwright 1.62.1.
+- Targeted `ActionsTaken.test.tsx` — passed: 5 tests.
+- `bun run verify` — passed after commit `acd0ab1`: client 19 files / 72 tests, server 29 files / 170 tests, lint/hooks, Prisma validation, type checks, and builds.
+- `bun run test:e2e` — passed after commit `acd0ab1`: 19 Chromium tests across Labs 2–4 against the isolated PostgreSQL test database. E2E-04 report revision matches that commit.
+- Targeted `migration-seed.api.test.ts` — passed: 1 test; built Express app import under Node also passed.
+- E2E-04 machine-readable evidence: `artifacts/lab-04/e2e/e2e-04-hardening/run-report.json`. `worktreeDirty: true` reflects screenshot generation during the full run and pre-existing local-only files; generated Lab 2/3 screenshots were restored.
+
+These automated results are not peer approval or a complete accessibility sign-off. VIS-01, formal DOC-01 review, and release integration remain pending.
 
 ## My Reflection
 
@@ -28,7 +42,7 @@ The specification work starts from the UTF-8 Lab 4 handout and parent issue #86,
 
 One technical choice made explicit in the contract is a separate `lastReopenedAt` marker. Ticket `updatedAt` also changes when an Action Taken is created or edited, so it is not a stable boundary for enforcing the requirement that a reopened Ticket needs newly recorded work before another resolution. This marker is internal and adds no user-facing history feature. The contract records this implementation choice for human review; it is separate from the explicit parent #86 role decision.
 
-The coding-agent work on this branch is documentation only. The AI cannot approve its own specification, establish that a planned test passed, or act as peer reviewer. The student must read the source PDF, verify every rule and calculation, decide whether to accept or revise the proposed contract, review generated changes, run the tests on the actual implementation, and obtain human peer review.
+For Issue #87, the coding-agent work was contract documentation only; Issue #90 later added test and evidence implementation. The AI cannot approve its own specification, establish that a planned test passed without execution, or act as peer reviewer. The student must read the source PDF, verify every rule and calculation, decide whether to accept or revise the proposed contract, review generated changes, run the tests on the actual implementation, and obtain human peer review.
 
 ## Human responsibility
 
