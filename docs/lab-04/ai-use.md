@@ -1,11 +1,11 @@
 # Lab 4 AI-use record
 
-- Status: ongoing; Issue #90 automated regression/evidence work is in progress. Human peer review and the remaining VIS-01 accessibility sign-off are still pending.
-- Record date: 2026-09-27; updated: 2026-10-27.
+- Status: Issue #90 automated regression/evidence work is complete on `lab4-staging`; the repository owner confirmed the remaining VIS-01 manual visual/accessibility review passed on 2026-10-28. Human peer-review closeout, DOC-01 review, and release integration remain pending.
+- Record date: 2026-09-27; updated: 2026-10-28.
 
 ## LLM used
 
-The Issue #87 contract-authoring and Issue #90 implementation sessions used the OpenAI Codex coding agent, model `gpt-6-luna`, provider `openai-codex`. AI-assisted Issue #90 work added isolated seeded Playwright regression journeys, a Lab 3-shaped additive-migration/repeat-safe-seed integration test, and current setup/evidence documentation. Automated results are recorded in `tests.md`; they do not constitute peer review or a complete accessibility sign-off.
+The Issue #87 contract-authoring and Issue #90 implementation sessions used the OpenAI Codex coding agent, model `gpt-6-luna`, provider `openai-codex`. AI-assisted Issue #90 work added isolated seeded Playwright regression journeys, a Lab 3-shaped additive-migration/repeat-safe-seed integration test, and setup/evidence documentation. Automated results are recorded in `tests.md`; they do not constitute peer review. The repository owner's VIS-01 manual sign-off is recorded in the visual-inspection checklist.
 
 ## Selected key prompts
 
@@ -32,7 +32,7 @@ AI-assisted changes added the real seeded Action Taken and resolution/reopen Pla
 - Targeted `migration-seed.api.test.ts` — passed: 1 test; built Express app import under Node also passed.
 - E2E-04 machine-readable evidence: `artifacts/lab-04/e2e/e2e-04-hardening/run-report.json`. `worktreeDirty: true` reflects screenshot generation during the full run and pre-existing local-only files; generated Lab 2/3 screenshots were restored.
 
-These automated results are not peer approval or a complete accessibility sign-off. VIS-01, formal DOC-01 review, and release integration remain pending.
+These automated results are not peer approval. VIS-01 manual review was owner-confirmed as passed on 2026-10-28; formal DOC-01 review, peer-review closeout, and release integration remain pending.
 
 ## My Reflection
 
