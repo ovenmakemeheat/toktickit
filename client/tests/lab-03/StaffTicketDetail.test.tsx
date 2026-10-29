@@ -189,12 +189,15 @@ describe("IT Staff Ticket Detail", () => {
       await screen.findByText("Ticket status updated successfully."),
     ).toBeInTheDocument();
 
-    expect(
-      fetchMock.mock.calls.some(
-        ([input, init]) =>
-          String(input) === "/api/staff/tickets/101/status" &&
-          init?.method === "PATCH",
-      ),
-    ).toBe(true);
+    const statusCall = fetchMock.mock.calls.find(
+      ([input, init]) =>
+        String(input) === "/api/staff/tickets/101/status" &&
+        init?.method === "PATCH",
+    );
+    expect(JSON.parse(String(statusCall?.[1]?.body))).toEqual({
+      expectedStatus: "OPEN",
+      status: "IN_PROGRESS",
+      confirmation: false,
+    });
   });
 });

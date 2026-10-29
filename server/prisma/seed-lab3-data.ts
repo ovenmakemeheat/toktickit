@@ -20,6 +20,10 @@ import {
   ensureRequesterOwnershipConstraint,
   validateRequesterOwnershipConstraint,
 } from "../src/services/ticket-ownership-service.js";
+import {
+  createActionTakenRequestFingerprint,
+  normalizeActionTakenCreateInput,
+} from "../src/services/actions-taken-service.js";
 
 export const lab3SeedUsers = [
   {
@@ -326,6 +330,8 @@ async function upsertSeedTickets(
   );
   const systemIds = new Map(systems.map((system) => [system.name, system.id]));
   const ticketDate = new Date("2026-09-10T10:30:00.000Z");
+  const resolvedAt = new Date("2026-09-10T11:00:00.000Z");
+  const lastReopenedAt = new Date("2026-09-10T11:30:00.000Z");
 
   for (const fixture of seedTicketFixtures) {
     const requester = users.get(fixture.requesterKey);
@@ -351,6 +357,13 @@ async function upsertSeedTickets(
           requestedPriority: fixture.requestedPriority,
           itPriority: fixture.itPriority,
           currentStatus: fixture.currentStatus,
+          resolvedAt:
+            fixture.currentStatus === "RESOLVED" ||
+            fixture.currentStatus === "CLOSED"
+              ? resolvedAt
+              : null,
+          lastReopenedAt:
+            fixture.currentStatus === "REOPENED" ? lastReopenedAt : null,
           primaryOwnerUserId: owner ?? null,
           summary: fixture.summary,
           description: fixture.description,
@@ -368,12 +381,108 @@ async function upsertSeedTickets(
         requestedPriority: fixture.requestedPriority,
         itPriority: fixture.itPriority,
         currentStatus: fixture.currentStatus,
+        resolvedAt:
+          fixture.currentStatus === "RESOLVED" ||
+          fixture.currentStatus === "CLOSED"
+            ? resolvedAt
+            : null,
+        lastReopenedAt:
+          fixture.currentStatus === "REOPENED" ? lastReopenedAt : null,
         primaryOwnerUserId: owner ?? null,
         categoryId,
         relatedSystemId,
         summary: fixture.summary,
         description: fixture.description,
       },
+    });
+  }
+}
+
+async function upsertSeedActionsTaken(
+  prisma: PrismaClient,
+  users: Map<string, { id: number }>,
+) {
+  const fixtures = [
+    {
+      ticketRequestId: "00000000-0000-4000-8000-000000000005",
+      performerKey: "it-staff-a",
+      idempotencyKey: "00000000-0000-4000-8000-000000000105",
+      input: {
+        actionAt: "2026-09-10T11:00:00.000Z",
+        actionDescription: "Restored the grade submission service connection.",
+        result: "The submission form loads and accepts a test entry.",
+        followUpRequired: false,
+        followUpNote: null,
+        attachmentNotes: "Verified against the existing service status.",
+      },
+    },
+    {
+      ticketRequestId: "00000000-0000-4000-8000-000000000005",
+      performerKey: "administrator",
+      idempotencyKey: "00000000-0000-4000-8000-000000000109",
+      input: {
+        actionAt: "2026-09-10T11:15:00.000Z",
+        actionDescription:
+          "Confirmed the restored service with a second test account.",
+        result: "The submission flow remains available after a fresh sign-in.",
+        followUpRequired: true,
+        followUpNote: "Review availability after the next scheduled update.",
+        attachmentNotes: null,
+      },
+    },
+    {
+      ticketRequestId: "00000000-0000-4000-8000-000000000007",
+      performerKey: "it-staff-c",
+      idempotencyKey: "00000000-0000-4000-8000-000000000107",
+      input: {
+        actionAt: "2026-09-10T12:15:00.000Z",
+        actionDescription: "Reviewed the campus Wi-Fi access point logs.",
+        result: "The disconnect recurred; the network team has been notified.",
+        followUpRequired: true,
+        followUpNote:
+          "Check the access point after the next maintenance window.",
+        attachmentNotes: null,
+      },
+    },
+  ] as const;
+
+  for (const fixture of fixtures) {
+    const [ticket, performer] = await Promise.all([
+      prisma.ticket.findUnique({
+        where: { clientRequestId: fixture.ticketRequestId },
+        select: { id: true },
+      }),
+      Promise.resolve(users.get(fixture.performerKey)),
+    ]);
+    if (!ticket || !performer) {
+      throw new Error("Unable to resolve seeded Action Taken references");
+    }
+
+    const input = normalizeActionTakenCreateInput(fixture.input);
+    const now = new Date("2026-09-10T12:30:00.000Z");
+    const requestFingerprint = createActionTakenRequestFingerprint(
+      ticket.id,
+      performer.id,
+      input,
+    );
+    await prisma.actionTaken.upsert({
+      where: { idempotencyKey: fixture.idempotencyKey },
+      create: {
+        ticketId: ticket.id,
+        actionAt: input.actionAt,
+        actionDescription: input.actionDescription,
+        result: input.result,
+        performedByUserId: performer.id,
+        followUpRequired: input.followUpRequired,
+        followUpNote: input.followUpNote,
+        attachmentNotes: input.attachmentNotes,
+        idempotencyKey: fixture.idempotencyKey,
+        requestFingerprint,
+        version: 1,
+        createdAt: now,
+        updatedAt: now,
+      },
+      update: {},
     });
   }
 }
@@ -478,6 +587,7 @@ export async function seedLab3Data(
   await backfillRequesterOwnership(prisma);
   await upsertSeedTickets(prisma, users);
   await upsertSeedCommunication(prisma, users);
+  await upsertSeedActionsTaken(prisma, users);
   await enforceRequesterOwnershipConstraint(prisma);
 }
 

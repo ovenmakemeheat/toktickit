@@ -69,6 +69,24 @@ export class TicketStatusTransitionInvalidError extends Error {
   }
 }
 
+export class TicketStatusInputValidationError extends Error {
+  readonly code = "TICKET_STATUS_INPUT_INVALID";
+
+  constructor() {
+    super("Ticket status update input is invalid");
+    this.name = "TicketStatusInputValidationError";
+  }
+}
+
+export class ActionTakenRequiredError extends Error {
+  readonly code = "ACTION_TAKEN_REQUIRED";
+
+  constructor() {
+    super("Record a new Action Taken before resolving this Ticket");
+    this.name = "ActionTakenRequiredError";
+  }
+}
+
 export class StatusConfirmationRequiredError extends Error {
   readonly code = "STATUS_CONFIRMATION_REQUIRED";
 
@@ -88,6 +106,13 @@ export function isTicketStatus(value: unknown): value is TicketStatus {
 export function parseTicketStatus(value: unknown): TicketStatus {
   if (!isTicketStatus(value)) {
     throw new TicketStatusTransitionInvalidError();
+  }
+  return value;
+}
+
+export function parseExpectedTicketStatus(value: unknown): TicketStatus {
+  if (!isTicketStatus(value)) {
+    throw new TicketStatusInputValidationError();
   }
   return value;
 }

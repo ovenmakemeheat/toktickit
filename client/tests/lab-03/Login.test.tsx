@@ -115,7 +115,7 @@ describe("Lab 3 login", () => {
     await user.click(screen.getByRole("button", { name: "Sign in" }));
 
     expect(
-      await screen.findByRole("heading", { name: "Welcome, Requester A" }),
+      await screen.findByRole("heading", { name: "Requester Dashboard" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Requester")).toBeInTheDocument();
     const navigation = within(

@@ -42,6 +42,7 @@ export type TicketListQuery = {
   relatedSystemId?: number;
   requestedPriority?: RequestedPriority;
   currentStatus?: TicketStatus;
+  statusGroup?: "ACTIVE";
   sortBy?: TicketSortBy;
   sortDirection?: TicketSortDirection;
   page?: number;
@@ -53,6 +54,35 @@ export type TicketCommunicationEntry = {
   author: { id: number; name: string; role: Role };
   content: string;
   createdAt: string;
+};
+
+export type ActionTakenEntry = {
+  id: number;
+  ticketId: number;
+  actionAt: string;
+  actionDescription: string;
+  result: string;
+  performedBy: { id: number; name: string; role: Role };
+  followUpRequired: boolean;
+  followUpNote: string | null;
+  attachmentNotes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  updatedBy: { id: number; name: string; role: Role } | null;
+  version: number;
+};
+
+export type CreateActionTakenInput = {
+  actionAt: string;
+  actionDescription: string;
+  result: string;
+  followUpRequired: boolean;
+  followUpNote?: string | null;
+  attachmentNotes?: string | null;
+};
+
+export type UpdateActionTakenInput = Partial<CreateActionTakenInput> & {
+  expectedVersion: number;
 };
 
 export type StaffOwner = {
@@ -76,6 +106,7 @@ export type StaffTicketListQuery = {
   requestedPriority?: RequestedPriority;
   itPriority?: RequestedPriority;
   currentStatus?: TicketStatus;
+  statusGroup?: "ACTIVE";
   owner?: "unassigned" | "me" | number;
   sortBy?: StaffTicketSortBy;
   sortDirection?: TicketSortDirection;
@@ -116,6 +147,7 @@ export type TicketDetail = {
   description: string;
   currentStatus: TicketStatus;
   requesterResolutionIndicatedAt?: string | null;
+  resolvedAt?: string | null;
   createdAt: string;
   lastUpdated: string;
   publicComments?: TicketCommunicationEntry[];
@@ -161,6 +193,8 @@ export type StaffTicketDetail = {
   owner: StaffOwner | null;
   eligibleOwners?: StaffOwner[];
   requesterResolutionIndicatedAt: string | null;
+  resolvedAt?: string | null;
+  hasEligibleResolutionAction?: boolean;
   createdAt: string;
   updatedAt: string;
   attachments: AttachmentMetadata[];
@@ -221,6 +255,57 @@ export type TicketListResponse = {
   pageSize: number;
   totalItems: number;
   totalPages: number;
+};
+
+export type RequesterDashboardTicket = {
+  id: number;
+  ticketNumber: string;
+  summary: string;
+  currentStatus: TicketStatus;
+  requestedPriority: RequestedPriority;
+  updatedAt: string;
+  resolvedAt: string | null;
+};
+
+export type RequesterDashboardResponse = {
+  asOf: string;
+  metrics: {
+    openCount: number;
+    waitingForRequesterCount: number;
+    recentlyResolvedCount: number;
+  };
+  recentlyUpdated: RequesterDashboardTicket[];
+  recentlyResolved: RequesterDashboardTicket[];
+};
+
+export type StaffDashboardTicket = RequesterDashboardTicket & {
+  itPriority: RequestedPriority;
+  owner: StaffOwner | null;
+};
+
+export type StaffDashboardResponse = {
+  asOf: string;
+  metrics: {
+    unassignedActiveCount: number;
+    myActiveCount: number;
+    highPriorityActiveCount: number;
+    statusBreakdown: Pick<
+      Record<TicketStatus, number>,
+      "NEW" | "OPEN" | "IN_PROGRESS" | "WAITING_FOR_REQUESTER" | "REOPENED"
+    >;
+    itPriorityBreakdown: Record<RequestedPriority, number>;
+  };
+  recentlyUpdated: StaffDashboardTicket[];
+  myRecentActions: {
+    id: number;
+    ticketId: number;
+    ticketNumber: string;
+    ticketSummary: string;
+    actionDescription: string;
+    result: string;
+    createdAt: string;
+    performedBy: StaffOwner;
+  }[];
 };
 
 type HealthResponse = {
@@ -399,6 +484,9 @@ function isTicketDetail(payload: unknown): payload is TicketDetail {
     (ticket.requesterResolutionIndicatedAt === undefined ||
       typeof ticket.requesterResolutionIndicatedAt === "string" ||
       ticket.requesterResolutionIndicatedAt === null) &&
+    (ticket.resolvedAt === undefined ||
+      typeof ticket.resolvedAt === "string" ||
+      ticket.resolvedAt === null) &&
     typeof ticket.createdAt === "string" &&
     typeof ticket.lastUpdated === "string" &&
     isReference(ticket.requester) &&
@@ -449,6 +537,42 @@ function isCommunicationEntry(
     Number.isInteger(author.id) &&
     typeof author.name === "string" &&
     isRole(author.role)
+  );
+}
+
+function isActionTakenUser(payload: unknown) {
+  if (typeof payload !== "object" || payload === null) {
+    return false;
+  }
+  const user = payload as Record<string, unknown>;
+  return (
+    Number.isInteger(user.id) &&
+    typeof user.name === "string" &&
+    isRole(user.role)
+  );
+}
+
+function isActionTakenEntry(payload: unknown): payload is ActionTakenEntry {
+  if (typeof payload !== "object" || payload === null) {
+    return false;
+  }
+  const entry = payload as Record<string, unknown>;
+  return (
+    Number.isInteger(entry.id) &&
+    Number.isInteger(entry.ticketId) &&
+    typeof entry.actionAt === "string" &&
+    typeof entry.actionDescription === "string" &&
+    typeof entry.result === "string" &&
+    isActionTakenUser(entry.performedBy) &&
+    typeof entry.followUpRequired === "boolean" &&
+    (typeof entry.followUpNote === "string" || entry.followUpNote === null) &&
+    (typeof entry.attachmentNotes === "string" ||
+      entry.attachmentNotes === null) &&
+    typeof entry.createdAt === "string" &&
+    typeof entry.updatedAt === "string" &&
+    (entry.updatedBy === null || isActionTakenUser(entry.updatedBy)) &&
+    Number.isInteger(entry.version) &&
+    (entry.version as number) > 0
   );
 }
 
@@ -527,6 +651,11 @@ function isStaffTicketDetail(payload: unknown): payload is StaffTicketDetail {
         ticket.eligibleOwners.every(isStaffOwner))) &&
     (typeof ticket.requesterResolutionIndicatedAt === "string" ||
       ticket.requesterResolutionIndicatedAt === null) &&
+    (ticket.resolvedAt === undefined ||
+      typeof ticket.resolvedAt === "string" ||
+      ticket.resolvedAt === null) &&
+    (ticket.hasEligibleResolutionAction === undefined ||
+      typeof ticket.hasEligibleResolutionAction === "boolean") &&
     typeof ticket.createdAt === "string" &&
     typeof ticket.updatedAt === "string" &&
     Array.isArray(ticket.attachments) &&
@@ -573,6 +702,113 @@ function isTicketListResponse(payload: unknown): payload is TicketListResponse {
     Number.isInteger(list.pageSize) &&
     Number.isInteger(list.totalItems) &&
     Number.isInteger(list.totalPages)
+  );
+}
+
+function isRequesterDashboardTicket(
+  payload: unknown,
+): payload is RequesterDashboardTicket {
+  if (typeof payload !== "object" || payload === null) {
+    return false;
+  }
+  const ticket = payload as Record<string, unknown>;
+  return (
+    Number.isInteger(ticket.id) &&
+    typeof ticket.ticketNumber === "string" &&
+    typeof ticket.summary === "string" &&
+    isTicketStatus(ticket.currentStatus) &&
+    isPriority(ticket.requestedPriority) &&
+    typeof ticket.updatedAt === "string" &&
+    (typeof ticket.resolvedAt === "string" || ticket.resolvedAt === null)
+  );
+}
+
+function isStaffDashboardTicket(
+  payload: unknown,
+): payload is StaffDashboardTicket {
+  if (!isRequesterDashboardTicket(payload)) {
+    return false;
+  }
+  const ticket = payload as Record<string, unknown>;
+  return (
+    isPriority(ticket.itPriority) &&
+    (ticket.owner === null || isStaffOwner(ticket.owner))
+  );
+}
+
+function isRequesterDashboardResponse(
+  payload: unknown,
+): payload is RequesterDashboardResponse {
+  if (typeof payload !== "object" || payload === null) {
+    return false;
+  }
+  const dashboard = payload as Record<string, unknown>;
+  const metrics = dashboard.metrics as Record<string, unknown> | undefined;
+  return (
+    typeof dashboard.asOf === "string" &&
+    metrics !== undefined &&
+    Number.isInteger(metrics.openCount) &&
+    Number.isInteger(metrics.waitingForRequesterCount) &&
+    Number.isInteger(metrics.recentlyResolvedCount) &&
+    Array.isArray(dashboard.recentlyUpdated) &&
+    dashboard.recentlyUpdated.length <= 5 &&
+    dashboard.recentlyUpdated.every(isRequesterDashboardTicket) &&
+    Array.isArray(dashboard.recentlyResolved) &&
+    dashboard.recentlyResolved.length <= 5 &&
+    dashboard.recentlyResolved.every(isRequesterDashboardTicket)
+  );
+}
+
+function isStaffDashboardResponse(
+  payload: unknown,
+): payload is StaffDashboardResponse {
+  if (typeof payload !== "object" || payload === null) {
+    return false;
+  }
+  const dashboard = payload as Record<string, unknown>;
+  const metrics = dashboard.metrics as Record<string, unknown> | undefined;
+  const statuses = metrics?.statusBreakdown as
+    | Record<string, unknown>
+    | undefined;
+  const priorities = metrics?.itPriorityBreakdown as
+    | Record<string, unknown>
+    | undefined;
+  const actions = dashboard.myRecentActions;
+  return (
+    typeof dashboard.asOf === "string" &&
+    metrics !== undefined &&
+    Number.isInteger(metrics.unassignedActiveCount) &&
+    Number.isInteger(metrics.myActiveCount) &&
+    Number.isInteger(metrics.highPriorityActiveCount) &&
+    statuses !== undefined &&
+    ["NEW", "OPEN", "IN_PROGRESS", "WAITING_FOR_REQUESTER", "REOPENED"].every(
+      (status) => Number.isInteger(statuses[status]),
+    ) &&
+    priorities !== undefined &&
+    ["LOW", "MEDIUM", "HIGH"].every((priority) =>
+      Number.isInteger(priorities[priority]),
+    ) &&
+    Array.isArray(dashboard.recentlyUpdated) &&
+    dashboard.recentlyUpdated.length <= 5 &&
+    dashboard.recentlyUpdated.every(isStaffDashboardTicket) &&
+    Array.isArray(actions) &&
+    actions.length <= 5 &&
+    actions.every((action) => {
+      if (typeof action !== "object" || action === null) {
+        return false;
+      }
+      const entry = action as Record<string, unknown>;
+      return (
+        Number.isInteger(entry.id) &&
+        Number.isInteger(entry.ticketId) &&
+        typeof entry.ticketNumber === "string" &&
+        typeof entry.ticketSummary === "string" &&
+        typeof entry.actionDescription === "string" &&
+        typeof entry.result === "string" &&
+        typeof entry.createdAt === "string" &&
+        isStaffOwner(entry.performedBy)
+      );
+    })
   );
 }
 
@@ -710,6 +946,30 @@ export async function fetchRelatedSystems(): Promise<RelatedSystem[]> {
   return payload;
 }
 
+export async function fetchRequesterDashboard(
+  signal?: AbortSignal,
+): Promise<RequesterDashboardResponse> {
+  const { response, payload } = await requestJson("/api/requester/dashboard", {
+    signal,
+  });
+  if (!response.ok || !isRequesterDashboardResponse(payload)) {
+    throwApiRequestError(response, payload);
+  }
+  return payload;
+}
+
+export async function fetchStaffDashboard(
+  signal?: AbortSignal,
+): Promise<StaffDashboardResponse> {
+  const { response, payload } = await requestJson("/api/staff/dashboard", {
+    signal,
+  });
+  if (!response.ok || !isStaffDashboardResponse(payload)) {
+    throwApiRequestError(response, payload);
+  }
+  return payload;
+}
+
 export async function createTicket(
   input: CreateTicketInput,
 ): Promise<TicketDetail> {
@@ -812,6 +1072,7 @@ export async function fetchTickets(
     ["relatedSystemId", query.relatedSystemId],
     ["requestedPriority", query.requestedPriority],
     ["currentStatus", query.currentStatus],
+    ["statusGroup", query.statusGroup],
     ["sortBy", query.sortBy],
     ["sortDirection", query.sortDirection],
     ["page", query.page],
@@ -844,6 +1105,7 @@ function buildStaffTicketQuery(query: StaffTicketListQuery) {
     ["requestedPriority", query.requestedPriority],
     ["itPriority", query.itPriority],
     ["currentStatus", query.currentStatus],
+    ["statusGroup", query.statusGroup],
     ["owner", query.owner],
     ["sortBy", query.sortBy],
     ["sortDirection", query.sortDirection],
@@ -881,6 +1143,65 @@ export async function fetchStaffTicketDetail(
     `/api/staff/tickets/${ticketId}`,
   );
   if (!response.ok || !isStaffTicketDetail(payload)) {
+    throwApiRequestError(response, payload);
+  }
+  return payload;
+}
+
+export async function fetchTicketActionsTaken(
+  ticketId: number | string,
+): Promise<ActionTakenEntry[]> {
+  const { response, payload } = await requestJson(
+    `/api/tickets/${ticketId}/actions-taken`,
+  );
+  if (
+    !response.ok ||
+    typeof payload !== "object" ||
+    payload === null ||
+    !Array.isArray((payload as { items?: unknown }).items) ||
+    !(payload as { items: unknown[] }).items.every(isActionTakenEntry)
+  ) {
+    throwApiRequestError(response, payload);
+  }
+  return (payload as { items: ActionTakenEntry[] }).items;
+}
+
+export async function createTicketActionTaken(
+  ticketId: number | string,
+  input: CreateActionTakenInput,
+  idempotencyKey: string,
+): Promise<ActionTakenEntry> {
+  const { response, payload } = await requestJson(
+    `/api/tickets/${ticketId}/actions-taken`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": idempotencyKey,
+      },
+      body: JSON.stringify(input),
+    },
+  );
+  if (!response.ok || !isActionTakenEntry(payload)) {
+    throwApiRequestError(response, payload);
+  }
+  return payload;
+}
+
+export async function updateTicketActionTaken(
+  ticketId: number | string,
+  actionId: number | string,
+  input: UpdateActionTakenInput,
+): Promise<ActionTakenEntry> {
+  const { response, payload } = await requestJson(
+    `/api/tickets/${ticketId}/actions-taken/${actionId}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    },
+  );
+  if (!response.ok || !isActionTakenEntry(payload)) {
     throwApiRequestError(response, payload);
   }
   return payload;
@@ -967,6 +1288,7 @@ export async function updateStaffTicketPriority(
 
 export async function updateStaffTicketStatus(
   ticketId: number | string,
+  expectedStatus: TicketStatus,
   status: TicketStatus,
   confirmation = false,
 ): Promise<StaffTicketDetail> {
@@ -975,7 +1297,7 @@ export async function updateStaffTicketStatus(
     {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status, confirmation }),
+      body: JSON.stringify({ expectedStatus, status, confirmation }),
     },
   );
   if (!response.ok || !isStaffTicketDetail(payload)) {

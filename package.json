@@ -28,7 +28,7 @@
     "test": "bun run test:client && bun run test:server",
     "test:client": "bun run --cwd client test",
     "test:server": "bun run --cwd server test",
-    "test:e2e": "playwright test",
+    "test:e2e": "bun run db:test:setup && playwright test",
     "typecheck": "bun run typecheck:client && bun run typecheck:server",
     "typecheck:client": "bun run --cwd client typecheck",
     "typecheck:server": "bun run --cwd server typecheck",

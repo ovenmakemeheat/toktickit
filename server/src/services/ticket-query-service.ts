@@ -11,6 +11,7 @@ const supportedQueryKeys = new Set([
   "relatedSystemId",
   "requestedPriority",
   "currentStatus",
+  "statusGroup",
   "sortBy",
   "sortDirection",
   "page",
@@ -47,6 +48,7 @@ export type TicketQuery = {
   relatedSystemId: number | undefined;
   requestedPriority: RequestedPriority | undefined;
   currentStatus: TicketStatus | undefined;
+  statusGroup: "ACTIVE" | undefined;
   sortBy: SortField;
   sortDirection: SortDirection;
   page: number;
@@ -178,6 +180,16 @@ export function parseTicketQuery(rawQuery: unknown): TicketQuery {
     readSingleValue(query, "currentStatus"),
     statuses,
   );
+  const statusGroup = parseEnum(
+    "statusGroup",
+    readSingleValue(query, "statusGroup"),
+    ["ACTIVE"] as const,
+  );
+  if (currentStatus && statusGroup) {
+    invalidQuery([
+      fieldError("statusGroup", "Choose a status or statusGroup, not both"),
+    ]);
+  }
   const sortBy =
     parseEnum("sortBy", readSingleValue(query, "sortBy"), sortFields) ??
     "ticketDate";
@@ -205,6 +217,7 @@ export function parseTicketQuery(rawQuery: unknown): TicketQuery {
     relatedSystemId,
     requestedPriority,
     currentStatus,
+    statusGroup,
     sortBy,
     sortDirection,
     page,
@@ -316,9 +329,21 @@ export async function listTickets(
     ...(query.requestedPriority === undefined
       ? {}
       : { requestedPriority: query.requestedPriority }),
-    ...(query.currentStatus === undefined
-      ? {}
-      : { currentStatus: query.currentStatus }),
+    ...(query.currentStatus !== undefined
+      ? { currentStatus: query.currentStatus }
+      : query.statusGroup === "ACTIVE"
+        ? {
+            currentStatus: {
+              in: [
+                "NEW",
+                "OPEN",
+                "IN_PROGRESS",
+                "WAITING_FOR_REQUESTER",
+                "REOPENED",
+              ] as const,
+            },
+          }
+        : {}),
   };
 
   const [totalItems, tickets] = await Promise.all([

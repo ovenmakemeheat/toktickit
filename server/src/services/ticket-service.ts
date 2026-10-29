@@ -54,6 +54,7 @@ export type TicketDetailResponse = {
   description: string;
   currentStatus: TicketStatus;
   requesterResolutionIndicatedAt: string | null;
+  resolvedAt: string | null;
   createdAt: string;
   lastUpdated: string;
   publicComments: TicketPublicCommentResponse[];
@@ -141,6 +142,7 @@ export function toTicketDetail(
     currentStatus: ticket.currentStatus,
     requesterResolutionIndicatedAt:
       ticket.requesterResolutionIndicatedAt?.toISOString() ?? null,
+    resolvedAt: ticket.resolvedAt?.toISOString() ?? null,
     createdAt: ticket.createdAt.toISOString(),
     lastUpdated: ticket.updatedAt.toISOString(),
     publicComments: (ticket.publicComments ?? []).map((comment) => ({

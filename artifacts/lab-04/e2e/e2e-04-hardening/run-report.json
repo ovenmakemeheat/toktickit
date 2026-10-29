@@ -1,0 +1,280 @@
+{
+  "testId": "E2E-04",
+  "revision": "c66aaa841c437d1d430032f9f0f01c52a56fd212",
+  "worktreeDirty": true,
+  "startedAt": "2026-10-28T14:30:36.686Z",
+  "finishedAt": "2026-10-28T14:30:42.425Z",
+  "status": "passed",
+  "expectedStatus": "passed",
+  "browser": "chromium",
+  "finalPath": "/admin/tickets/2",
+  "routes": [
+    {
+      "role": "REQUESTER",
+      "route": "/dashboard",
+      "heading": "Requester Dashboard",
+      "internalLinksResolved": 0,
+      "visibleControlsNamed": 10,
+      "noPlaceholderText": true
+    },
+    {
+      "role": "REQUESTER",
+      "route": "/tickets",
+      "heading": "My Tickets",
+      "internalLinksResolved": 0,
+      "visibleControlsNamed": 18,
+      "noPlaceholderText": true
+    },
+    {
+      "role": "REQUESTER",
+      "route": "/tickets/1",
+      "heading": "TT-20260910-SEED01",
+      "internalLinksResolved": 0,
+      "visibleControlsNamed": 19,
+      "noPlaceholderText": true
+    },
+    {
+      "role": "REQUESTER",
+      "route": "/tickets/new",
+      "heading": "Create Ticket",
+      "internalLinksResolved": 0,
+      "visibleControlsNamed": 15,
+      "noPlaceholderText": true
+    },
+    {
+      "role": "REQUESTER",
+      "route": "/staff/tickets",
+      "heading": "Welcome, Requester A",
+      "internalLinksResolved": 0,
+      "visibleControlsNamed": 7,
+      "noPlaceholderText": true
+    },
+    {
+      "role": "REQUESTER",
+      "route": "/admin/users",
+      "heading": "Welcome, Requester A",
+      "internalLinksResolved": 0,
+      "visibleControlsNamed": 7,
+      "noPlaceholderText": true
+    },
+    {
+      "role": "IT_STAFF",
+      "route": "/dashboard",
+      "heading": "Staff Dashboard",
+      "internalLinksResolved": 0,
+      "visibleControlsNamed": 21,
+      "noPlaceholderText": true
+    },
+    {
+      "role": "IT_STAFF",
+      "route": "/staff/tickets",
+      "heading": "Ticket Queue",
+      "internalLinksResolved": 0,
+      "visibleControlsNamed": 24,
+      "noPlaceholderText": true
+    },
+    {
+      "role": "IT_STAFF",
+      "route": "/staff/tickets/2",
+      "heading": "TT-20260910-SEED02",
+      "internalLinksResolved": 0,
+      "visibleControlsNamed": 25,
+      "noPlaceholderText": true
+    },
+    {
+      "role": "IT_STAFF",
+      "route": "/admin/users",
+      "heading": "IT Staff access is ready",
+      "internalLinksResolved": 0,
+      "visibleControlsNamed": 4,
+      "noPlaceholderText": true
+    },
+    {
+      "role": "REQUESTER",
+      "route": "/tickets/2",
+      "heading": "TT-20260910-SEED02",
+      "internalLinksResolved": 0,
+      "visibleControlsNamed": 19,
+      "noPlaceholderText": true
+    },
+    {
+      "role": "ADMINISTRATOR",
+      "route": "/dashboard",
+      "heading": "Staff Dashboard",
+      "internalLinksResolved": 0,
+      "visibleControlsNamed": 23,
+      "noPlaceholderText": true
+    },
+    {
+      "role": "ADMINISTRATOR",
+      "route": "/admin/users",
+      "heading": "User Management",
+      "internalLinksResolved": 0,
+      "visibleControlsNamed": 19,
+      "noPlaceholderText": true
+    },
+    {
+      "role": "ADMINISTRATOR",
+      "route": "/staff/tickets",
+      "heading": "Ticket Queue",
+      "internalLinksResolved": 0,
+      "visibleControlsNamed": 26,
+      "noPlaceholderText": true
+    },
+    {
+      "role": "ADMINISTRATOR",
+      "route": "/staff/tickets/2",
+      "heading": "TT-20260910-SEED02",
+      "internalLinksResolved": 0,
+      "visibleControlsNamed": 23,
+      "noPlaceholderText": true
+    },
+    {
+      "role": "ADMINISTRATOR",
+      "route": "/admin/tickets/2",
+      "heading": "TT-20260910-SEED02",
+      "internalLinksResolved": 0,
+      "visibleControlsNamed": 19,
+      "noPlaceholderText": true
+    }
+  ],
+  "navigation": [
+    {
+      "role": "REQUESTER",
+      "control": "My Tickets",
+      "path": "/tickets"
+    },
+    {
+      "role": "REQUESTER",
+      "control": "Create Ticket",
+      "path": "/tickets/new"
+    },
+    {
+      "role": "IT_STAFF",
+      "control": "Ticket Queue",
+      "path": "/staff/tickets"
+    },
+    {
+      "role": "ADMINISTRATOR",
+      "control": "User Management",
+      "path": "/admin/users"
+    },
+    {
+      "role": "ADMINISTRATOR",
+      "control": "Ticket Queue",
+      "path": "/staff/tickets"
+    },
+    {
+      "role": "ADMINISTRATOR",
+      "control": "Ticket Review",
+      "path": "/admin/tickets"
+    }
+  ],
+  "api": [
+    {
+      "role": "REQUESTER",
+      "method": "GET",
+      "path": "/api/tickets/1",
+      "status": 200
+    },
+    {
+      "role": "REQUESTER",
+      "method": "GET",
+      "path": "/api/tickets/1/actions-taken",
+      "status": 200
+    },
+    {
+      "role": "REQUESTER",
+      "method": "GET",
+      "path": "/api/tickets/2",
+      "status": 404
+    },
+    {
+      "role": "REQUESTER",
+      "method": "GET",
+      "path": "/api/tickets/2/actions-taken",
+      "status": 404
+    },
+    {
+      "role": "REQUESTER",
+      "method": "POST",
+      "path": "/api/tickets/1/actions-taken",
+      "status": 403
+    },
+    {
+      "role": "REQUESTER",
+      "method": "PATCH",
+      "path": "/api/tickets/5/actions-taken/1",
+      "status": 403
+    },
+    {
+      "role": "REQUESTER",
+      "method": "PATCH",
+      "path": "/api/staff/tickets/1/status",
+      "status": 403
+    },
+    {
+      "role": "REQUESTER",
+      "method": "PATCH",
+      "path": "/api/staff/tickets/1/status",
+      "status": 403
+    },
+    {
+      "role": "IT_STAFF",
+      "method": "GET",
+      "path": "/api/staff/tickets",
+      "status": 200
+    },
+    {
+      "role": "IT_STAFF",
+      "method": "GET",
+      "path": "/api/staff/tickets/2",
+      "status": 200
+    },
+    {
+      "role": "IT_STAFF",
+      "method": "GET",
+      "path": "/api/staff/dashboard",
+      "status": 200
+    },
+    {
+      "role": "IT_STAFF",
+      "method": "GET",
+      "path": "/api/admin/users",
+      "status": 403
+    },
+    {
+      "role": "IT_STAFF",
+      "method": "GET",
+      "path": "/api/admin/tickets/2",
+      "status": 403
+    },
+    {
+      "role": "REQUESTER",
+      "method": "GET",
+      "path": "/api/tickets/2/comments",
+      "status": 200
+    },
+    {
+      "role": "ADMINISTRATOR",
+      "method": "GET",
+      "path": "/api/admin/users",
+      "status": 200
+    },
+    {
+      "role": "ADMINISTRATOR",
+      "method": "GET",
+      "path": "/api/staff/tickets",
+      "status": 200
+    },
+    {
+      "role": "ADMINISTRATOR",
+      "method": "GET",
+      "path": "/api/admin/tickets/2",
+      "status": 200
+    }
+  ],
+  "browserConsoleErrors": [],
+  "pageErrors": [],
+  "businessApiMocks": false
+}

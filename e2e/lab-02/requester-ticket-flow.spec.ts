@@ -1,9 +1,11 @@
-import { randomUUID } from "node:crypto";
 import { Buffer } from "node:buffer";
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 
 import { expect, test, type Locator, type Page } from "@playwright/test";
+
+import { removeE2eAttachment } from "../support/attachment-storage.js";
+import { prisma } from "../../server/src/db.js";
 
 const viewportSizes = {
   desktop: { width: 1280, height: 900 },
@@ -18,8 +20,38 @@ const evidenceDirectories = [
 ] as const;
 const repositoryRoot = resolve(__dirname, "..", "..");
 const e2ePassword =
-  process.env.LAB3_E2E_PASSWORD || process.env.LAB3_SEED_PASSWORD;
+  process.env.LAB3_TEST_PASSWORD ||
+  process.env.LAB3_E2E_PASSWORD ||
+  process.env.LAB3_SEED_PASSWORD;
 const passwordByEmail = new Map<string, string>();
+let createdTicketId: number | undefined;
+
+function e2eReplacementPassword() {
+  const password =
+    process.env.LAB3_TEST_PASSWORD || process.env.LAB3_SEED_PASSWORD;
+  if (!password) {
+    throw new Error("LAB3_SEED_PASSWORD must be set for seeded E2E tests.");
+  }
+  return `${password.slice(0, 100)}Lab3E2E!9`;
+}
+
+test.afterEach(async () => {
+  if (createdTicketId === undefined) {
+    return;
+  }
+  const attachments = await prisma.attachment.findMany({
+    where: { ticketId: createdTicketId },
+    select: { storageKey: true },
+  });
+  await Promise.all(
+    attachments.map((attachment) =>
+      removeE2eAttachment(attachment.storageKey).catch(() => undefined),
+    ),
+  );
+  await prisma.attachment.deleteMany({ where: { ticketId: createdTicketId } });
+  await prisma.ticket.deleteMany({ where: { id: createdTicketId } });
+  createdTicketId = undefined;
+});
 
 type CreatedTicket = {
   id: number;
@@ -93,7 +125,7 @@ async function signInRequester(page: Page, email: string) {
   const currentPassword = passwordByEmail.get(email) ?? e2ePassword;
   if (!currentPassword) {
     throw new Error(
-      "Set LAB3_E2E_PASSWORD or LAB3_SEED_PASSWORD before running E2E tests.",
+      "Set LAB3_TEST_PASSWORD or LAB3_SEED_PASSWORD before running E2E tests.",
     );
   }
 
@@ -101,7 +133,7 @@ async function signInRequester(page: Page, email: string) {
     page.getByRole("heading", { name: "Sign in to your service desk" }),
   ).toBeVisible();
   await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill(currentPassword);
+  await page.getByRole("textbox", { name: "Password" }).fill(currentPassword);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
 
   const changePasswordHeading = page.getByRole("heading", {
@@ -109,15 +141,20 @@ async function signInRequester(page: Page, email: string) {
     exact: true,
   });
   const homeHeading = page.getByRole("heading", {
-    name: /Welcome, Requester [A-D]/,
+    name: "Requester Dashboard",
+    exact: true,
   });
   await expect(changePasswordHeading.or(homeHeading)).toBeVisible();
 
   if (await changePasswordHeading.isVisible()) {
-    const nextPassword = `${randomUUID()}${String.fromCharCode(65, 49, 33)}`;
+    const nextPassword = e2eReplacementPassword();
     await page.getByLabel("Current password").fill(currentPassword);
-    await page.getByLabel("New password").fill(nextPassword);
-    await page.getByLabel("Confirm new password").fill(nextPassword);
+    await page
+      .getByRole("textbox", { name: "New password", exact: true })
+      .fill(nextPassword);
+    await page
+      .getByRole("textbox", { name: "Confirm new password", exact: true })
+      .fill(nextPassword);
     await page
       .getByRole("button", { name: "Save new password", exact: true })
       .click();
@@ -168,6 +205,7 @@ test.describe("Authenticated Requester Lab 2 regression", () => {
       await route.continue();
     });
     await page
+      .getByRole("navigation", { name: "Application navigation" })
       .getByRole("button", { name: "Create Ticket", exact: true })
       .click();
     await expect(
@@ -269,6 +307,7 @@ test.describe("Authenticated Requester Lab 2 regression", () => {
     const createResponse = await createResponsePromise;
     expect(createResponse.status()).toBe(201);
     const createdTicket = (await createResponse.json()) as CreatedTicket;
+    createdTicketId = createdTicket.id;
     expect(createdTicket.id).toEqual(expect.any(Number));
     expect(createdTicket.ticketNumber).toMatch(/^TT-\d{8}-[A-Z0-9]{6}$/);
     await expect(
@@ -439,7 +478,8 @@ test.describe("Authenticated Requester Lab 2 regression", () => {
     );
     await page
       .getByRole("region", { name: "Attachments" })
-      .getByRole("button", { name: "Upload attachment", exact: true })
+      .locator("button")
+      .filter({ hasText: "Upload attachment" })
       .click();
     const uploadResponse = await uploadResponsePromise;
     expect(uploadResponse.status()).toBe(201);
