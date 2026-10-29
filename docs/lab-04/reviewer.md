@@ -41,7 +41,7 @@ Scope: Issues #86–#90, their feature Pull Requests into `lab4-staging`, and th
 
 | Source | Target | Pull Request | Human reviewer / formal review | Responses | Merger and merge evidence |
 | --- | --- | --- | --- | --- | --- |
-| `lab4-staging` | `main` | Pending | Pending | Pending | Pending |
+| `lab4-staging` | `main` | [PR #98](https://github.com/ovenmakemeheat/toktickit/pull/98) | Pending | Pending | Pending |
 
 ## Closeout requirements
 
