@@ -1,0 +1,114 @@
+$ bun run check && bun run hooks:validate && bun run db:validate && bun run typecheck && bun run test && bun run build
+$ biome check .
+Checked 142 files in 220ms. No fixes applied.
+$ lefthook validate
+All good
+$ bun run --cwd server prisma:validate
+$ prisma validate
+Loaded Prisma config from prisma.config.ts.
+
+Prisma config detected, skipping environment variable loading.
+Prisma schema loaded from prisma\schema.prisma
+The schema at prisma\schema.prisma is valid
+$ bun run typecheck:client && bun run typecheck:server
+$ bun run --cwd client typecheck
+$ tsc -b --pretty false
+$ bun run --cwd server typecheck
+$ tsc -p tsconfig.json --noEmit
+$ bun run test:client && bun run test:server
+$ bun run --cwd client test
+$ vitest run
+
+ RUN  v3.2.7 C:/Users/Gunte/Workspace/Workspace/works/CPE/toktickit/client
+
+ PASS tests/lab-03/StaffTicketQueue.test.tsx (4 tests) 1031ms
+   PASS IT Staff Ticket Queue > renders query controls, operational fields, and opens detail  630ms
+ PASS tests/lab-03/AdminTicketReview.test.tsx (3 tests) 1112ms
+   PASS Administrator Ticket Review > shows read-only Ticket facts and only permits IT Priority changes  856ms
+ PASS tests/lab-04/RequesterDashboard.test.tsx (3 tests) 948ms
+   PASS Lab 4 Requester Dashboard > shows scoped summary cards and recent Ticket details  530ms
+ PASS tests/lab-04/StaffDashboard.test.tsx (4 tests) 1067ms
+   PASS Lab 4 Staff Dashboard > shows active metrics and opens the Queue with its dashboard filters intact  707ms
+ PASS tests/lab-03/ApplicationShell.test.tsx (5 tests) 1105ms
+   PASS Lab 3 authenticated application shell > shows the IT_STAFF identity without requester controls  464ms
+ PASS tests/lab-02/AttachmentSection.test.tsx (3 tests) 1615ms
+   PASS Issue #55 AttachmentSection > rejects an invalid file before calling the upload API  510ms
+   PASS Issue #55 AttachmentSection > uploads a permitted file with session ownership and offers retry on failure  380ms
+   PASS Issue #55 AttachmentSection > downloads active files and requires confirmation plus a reason before removal  724ms
+ PASS tests/lab-03/StaffTicketDetail.test.tsx (3 tests) 1702ms
+   PASS IT Staff Ticket Detail > shows read-only facts, private/public communication, attachments, and operations  536ms
+   PASS IT Staff Ticket Detail > shows refresh feedback for a concurrent status conflict  560ms
+   PASS IT Staff Ticket Detail > requires status confirmation and submits permitted mutations  604ms
+ PASS tests/lab-02/RequesterTicketDetail.test.tsx (4 tests) 1796ms
+   PASS Issue #55 Requester Ticket Detail > renders owned ticket fields read-only and separates active and removed attachments  609ms
+   PASS Issue #55 Requester Ticket Detail > keeps upload success feedback visible while refreshing the Ticket  313ms
+   PASS Issue #55 Requester Ticket Detail > lets the Requester post a Public Comment and indicate resolution without closing  811ms
+ PASS tests/lab-02/MyTickets.test.tsx (5 tests) 2036ms
+   PASS Lab 3 authenticated My Tickets > shows loading, authenticated results, and the documented ticket fields  805ms
+   PASS Lab 3 authenticated My Tickets > distinguishes an empty requester list from a no-results query and clears filters  431ms
+   PASS Lab 3 authenticated My Tickets > opens a ticket detail view from the result action  307ms
+ PASS tests/lab-03/ChangePassword.test.tsx (3 tests) 2110ms
+   PASS Lab 3 mandatory initial password change > blocks the normal shell and explains the password rules  303ms
+   PASS Lab 3 mandatory initial password change > shows client validation and does not submit an invalid password  969ms
+   PASS Lab 3 mandatory initial password change > saves a valid password and then opens the authenticated shell  837ms
+ PASS tests/lab-03/Login.test.tsx (5 tests) 2420ms
+   PASS Lab 3 login > starts with a focused sign-in form and no requester selector  341ms
+   PASS Lab 3 login > shows a generic invalid-credential failure and clears the password  702ms
+   PASS Lab 3 login > opens the authenticated shell after a successful login  835ms
+   PASS Lab 3 login > explains an inactive account without exposing credential details  370ms
+ PASS tests/lab-02/ZenGreenResponsive.test.tsx (4 tests) 2952ms
+   PASS Lab 3 Zen Green requester regression > exposes the approved tokens and accessible shared control states  810ms
+   PASS Lab 3 Zen Green requester regression > exposes field-level invalid state through accessible relationships  500ms
+   PASS Lab 3 Zen Green requester regression > marks the current requester page in the application navigation  411ms
+   PASS Lab 3 Zen Green requester regression > exposes busy and success states without allowing duplicate submission  1229ms
+ PASS tests/lab-04/ActionsTaken.test.tsx (5 tests) 3512ms
+   PASS Actions Taken panel > records required work details, follow-up, and plain-text attachment notes  2539ms
+   PASS Actions Taken panel > edits mutable fields with optimistic version and preserves original performer  380ms
+   PASS Actions Taken panel > refreshes the current version after conflict without discarding the draft  317ms
+ PASS tests/lab-02/attachment-policy.test.ts (4 tests) 10ms
+ PASS tests/lab-01/App.test.tsx (1 test) 192ms
+ PASS tests/lab-02/RequesterSelection.test.tsx (2 tests) 298ms
+ PASS tests/lab-03/UserManagement.test.tsx (6 tests) 4555ms
+   PASS Administrator User Management > lists the required columns with search, role filter, and actions  1154ms
+   PASS Administrator User Management > creates a User with the required identity and initial password fields  1392ms
+   PASS Administrator User Management > blocks weak passwords and surfaces duplicate-email conflicts  980ms
+   PASS Administrator User Management > edits an account, prevents self-deactivation, and sets a new initial password  866ms
+ PASS tests/lab-04/TicketWorkflow.test.tsx (2 tests) 737ms
+   PASS Administrator Ticket operations > allows operational work and Actions Taken while keeping communications read-only  549ms
+ PASS tests/lab-02/CreateTicket.test.tsx (6 tests) 5236ms
+   PASS Lab 3 authenticated Create Ticket regression > shows a loading state before active reference controls are ready  569ms
+   PASS Lab 3 authenticated Create Ticket regression > submits one valid ticket with authenticated ownership  1681ms
+   PASS Lab 3 authenticated Create Ticket regression > disables Submit and prevents duplicate requests while busy  992ms
+   PASS Lab 3 authenticated Create Ticket regression > preserves entered values after a safe API failure  846ms
+   PASS Lab 3 authenticated Create Ticket regression > rejects unsupported attachments before calling the create API  958ms
+
+ Test Files  19 passed (19)
+      Tests  72 passed (72)
+   Start at  13:56:37
+   Duration  15.13s (transform 3.81s, setup 33.42s, collect 20.76s, tests 34.43s, environment 77.26s, prepare 7.92s)
+
+$ bun run --cwd server test
+$ vitest run
+
+ RUN  v4.1.10 C:/Users/Gunte/Workspace/Workspace/works/CPE/toktickit/server
+
+
+ Test Files  29 passed (29)
+      Tests  171 passed (171)
+   Start at  13:56:55
+   Duration  82.39s (transform 1.12s, setup 652ms, import 21.04s, tests 50.88s, environment 4ms)
+
+$ bun run build:client && bun run build:server
+$ bun run --cwd client build
+$ tsc -b && vite build
+vite v7.3.6 building client environment for production...
+transforming...
+PASS 49 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.49 kB | gzip:  0.30 kB
+dist/assets/index-DfiwSy_-.css  250.27 kB | gzip: 34.44 kB
+dist/assets/index-D1GCJ51X.js   333.76 kB | gzip: 88.43 kB
+PASS built in 1.64s
+$ bun run --cwd server build
+$ tsc -p tsconfig.json

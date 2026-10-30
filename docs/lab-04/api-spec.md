@@ -1,6 +1,6 @@
 # Lab 4 REST API specification
 
-- Status: contract draft; human review pending.
+- Status: reviewed under Issue #87 before dependent implementation; see `reviewer.md` for the review record.
 - Parent: [Issue #86](https://github.com/ovenmakemeheat/toktickit/issues/86) · Contract: [Issue #87](https://github.com/ovenmakemeheat/toktickit/issues/87)
 - Related: [engineering specification](specification.md), [UI specification](ui-spec.md), [test plan](tests.md).
 

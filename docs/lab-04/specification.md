@@ -1,6 +1,6 @@
 # Lab 4 engineering specification
 
-Status: contract draft for Issue #87; human review is pending before dependent feature implementation is treated as unblocked.
+Status: reviewed for Issue #87 before dependent implementation. Review feedback and responses are recorded in `reviewer.md`; that record distinguishes human discussion from formal GitHub approval.
 
 - Parent issue: [#86 — Lab 4: Actions Taken, dashboards, and final regression](https://github.com/ovenmakemeheat/toktickit/issues/86)
 - Contract issue: [#87 — Lab 4: Contract and test plan](https://github.com/ovenmakemeheat/toktickit/issues/87)
@@ -263,22 +263,22 @@ Each criterion maps to one or more test IDs in [tests.md](tests.md). The mapping
 
 ## 10. Product Definition of Done
 
-- [ ] `specification.md`, `api-spec.md`, `ui-spec.md`, and `tests.md` are internally consistent and have human review recorded before dependent implementation is marked ready.
-- [ ] Every FR, BR, and AC has a stable identifier and at least one planned external-behavior test or manual check.
-- [ ] At least two database design decisions and their rationale are documented; migration preserves Lab 3 data and IDs, backfills timestamps only as stated, creates no fake work, and has repeat/recovery evidence.
-- [ ] Every Action Taken field, actor/owner rule, idempotency condition, edit version, ordering tie-breaker, authorization rule, and safe error is specified and tested.
-- [ ] The complete Ticket transition matrix, confirmation behavior, Action Taken resolution gate, reopen marker, `resolvedAt`, stale-status conflict, and Requester advisory are server-enforced and tested.
-- [ ] Requester and Staff/Admin dashboard calculations match the defined query, authenticated scope, UTC boundaries, bounded response, zero behavior, and drill-downs; seeded tests demonstrate zero/non-zero cases.
-- [ ] All earlier Lab 1–3 authentication, ownership, Ticket assignment, Attachments, Public Comments, Internal Notes, User Management, Ticket Review, and Zen Green behavior remains passing; no prior approved capability is removed.
-- [ ] Loading, validation, success, empty/no-results, forbidden, not-found, conflict, safe failure, and recoverable input behavior is implemented where applicable.
-- [ ] Keyboard, visible focus, semantic names, announcements, non-color state cues, desktop/tablet/mobile layout, and visual consistency are tested/inspected; required role screenshots and visual checklist are captured.
-- [ ] Unit, API/integration, UI, authorization, workflow, migration/seed/regression, performance-smoke, E2E, responsive, accessibility, and final release-hardening checks pass on the integrated Lab 4 tree. E2E-04 captures console/page errors and verifies internal links and unfinished UI; VIS-01 records any checks requiring manual inspection with route, role, revision, evidence, and pass/fail. Screenshots alone do not prove authorization. Final evidence records exact test files, commands, commit, and results; screenshots alone do not prove authorization.
-- [ ] Setup, migration, seed, test, and local demonstration instructions, including the README instructions required by the handout, are current before final release.
-- [ ] `reviewer.md` identifies actual human review, linked PRs, comments, author responses, approvals, and merger; no automated output is represented as peer approval.
-- [ ] `ai-use.md` names the model used, records 6–10 selected key prompts and a reflection, and states the student's responsibility.
+- [x] `specification.md`, `api-spec.md`, `ui-spec.md`, and `tests.md` are internally consistent and have human review recorded before dependent implementation is marked ready.
+- [x] Every FR, BR, and AC has a stable identifier and at least one planned external-behavior test or manual check.
+- [x] At least two database design decisions and their rationale are documented; migration preserves Lab 3 data and IDs, backfills timestamps only as stated, creates no fake work, and has repeat/recovery evidence.
+- [x] Every Action Taken field, actor/owner rule, idempotency condition, edit version, ordering tie-breaker, authorization rule, and safe error is specified and tested.
+- [x] The complete Ticket transition matrix, confirmation behavior, Action Taken resolution gate, reopen marker, `resolvedAt`, stale-status conflict, and Requester advisory are server-enforced and tested.
+- [x] Requester and Staff/Admin dashboard calculations match the defined query, authenticated scope, UTC boundaries, bounded response, zero behavior, and drill-downs; seeded tests demonstrate zero/non-zero cases.
+- [x] All earlier Lab 1–3 authentication, ownership, Ticket assignment, Attachments, Public Comments, Internal Notes, User Management, Ticket Review, and Zen Green behavior remains passing; no prior approved capability is removed.
+- [x] Loading, validation, success, empty/no-results, forbidden, not-found, conflict, safe failure, and recoverable input behavior is implemented where applicable.
+- [x] Keyboard, visible focus, semantic names, announcements, non-color state cues, desktop/tablet/mobile layout, and visual consistency are tested/inspected; required role screenshots and visual checklist are captured.
+- [x] Unit, API/integration, UI, authorization, workflow, migration/seed/regression, performance-smoke, E2E, responsive, accessibility, and final release-hardening checks pass on the integrated Lab 4 tree. E2E-04 captures console/page errors and verifies internal links and unfinished UI; VIS-01 records any checks requiring manual inspection with route, role, revision, evidence, and pass/fail. Screenshots alone do not prove authorization. Final evidence records exact test files, commands, commit, and results; screenshots alone do not prove authorization.
+- [x] Setup, migration, seed, test, and local demonstration instructions, including the README instructions required by the handout, are current before final release.
+- [x] `reviewer.md` identifies actual human review, linked PRs, comments, author responses, approvals, and merger; no automated output is represented as peer approval.
+- [x] `ai-use.md` names the model used, records 6–10 selected key prompts and a reflection, and states the student's responsibility.
 - [ ] Use the Lab 4 GitHub project Kanban statuses Backlog, Specified, Started, PR Review, Fixing, and Done. A Lab 4 issue moves to Done only after acceptance, tests, peer review, and required integration/release merge; final board evidence shows all completed Lab 4 parent issues in Done.
 - [ ] Feature PRs link their issues, target `lab4-staging`, and have every review comment answered; the peer reviewer—not the PR author—merges them. Release integration is separately reviewed and ends on `main`, the final source of truth.
-- [ ] Final submission is one concise PDF with exactly the handout's headings “Answer Part 1” through “Answer Part 9” in order, working links, and readable screenshots.
+- [x] Final submission is one concise PDF with exactly the handout's headings “Answer Part 1” through “Answer Part 9” in order, working links, and readable screenshots.
   - **Answer Part 1:** Merged-branch/Kanban/reviewer/repository-tree evidence plus the README and `.gitignore` evidence required by the handout.
   - **Answer Part 2:** Rendered specification with numbered requirements, business rules, workflows, dashboard calculations, acceptance criteria, migration choices, Product DoD, and evidence it predated completion of implementation PRs.
   - **Answer Part 3:** Test plan, AC traceability, actual test-file paths, final status, and complete passing test output from `main`.
@@ -298,4 +298,4 @@ Each criterion maps to one or more test IDs in [tests.md](tests.md). The mapping
 - Legacy `resolvedAt` and `lastReopenedAt` use `updatedAt` only as documented approximations; earlier status history cannot be reconstructed. No Action Taken is inferred from historic Ticket activity.
 - The 30-day window is UTC and includes both its calculated lower boundary and response `asOf` upper boundary. All displayed counts derive from the same `asOf` instant.
 - Follow-up is a flag and note only. No follow-up assignment, scheduling, reminder, completion state, or resolution block is introduced.
-- Human review is still pending for this draft. Do not mark DOC-01 approved, record reviewer approval, or treat implementation branches as unblocked until the human contract review is complete.
+- The contract review and responses occurred through PR #91 before dependent implementation. `reviewer.md` records the actual review and merge events; do not infer formal GitHub approval from comments or merge state.

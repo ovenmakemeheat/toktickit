@@ -1,6 +1,6 @@
 # Lab 4 Zen Green UI specification
 
-- Status: contract draft; human review pending.
+- Status: reviewed under Issue #87 before dependent implementation; see `reviewer.md` for the review record.
 - Parent: [Issue #86](https://github.com/ovenmakemeheat/toktickit/issues/86) · Contract: [Issue #87](https://github.com/ovenmakemeheat/toktickit/issues/87)
 - Related: [engineering specification](specification.md), [API contract](api-spec.md), [test plan](tests.md).
 - Visual foundation: [Lab 3 Zen Green UI specification](../lab-03/ui-spec.md).

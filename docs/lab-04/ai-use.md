@@ -1,7 +1,7 @@
 # Lab 4 AI-use record
 
-- Status: Issue #90 automated regression/evidence work is complete on `lab4-staging`; the repository owner confirmed the remaining VIS-01 manual visual/accessibility review passed on 2026-10-28. Human peer-review closeout, DOC-01 review, and release integration remain pending.
-- Record date: 2026-09-27; updated: 2026-10-28.
+- Status: Issue #90 implementation and regression work is released on `main` at `bd8cecd63f1dd3386b0b7f2ffcf270805e0190f3`; post-release verification passed on 2026-10-29. VIS-01 was owner-confirmed complete on 2026-10-28. Issues #86–#90 are closed, the Kanban parent is in Done with 4/4 sub-issues complete, and the final report is on `docs/lab4-docs`.
+- Record date: 2026-09-27; updated: 2026-10-29.
 
 ## LLM used
 
@@ -9,7 +9,7 @@ The Issue #87 contract-authoring and Issue #90 implementation sessions used the 
 
 ## Selected key prompts
 
-These selected user prompts capture the main specification, planning, workflow, and current implementation directions (8 prompts, within the handout's required 6–10):
+These selected user prompts capture the main specification, planning, workflow, and current implementation directions (9 prompts, within the handout's required 6–10):
 
 1. “on @docs/lab-04/requirements/UTF-8_SE+Lab+4.pdf”
 2. “this should break down into tickets issues (use my issues format)”
@@ -32,17 +32,15 @@ AI-assisted changes added the real seeded Action Taken and resolution/reopen Pla
 - Targeted `migration-seed.api.test.ts` — passed: 1 test; built Express app import under Node also passed.
 - E2E-04 machine-readable evidence: `artifacts/lab-04/e2e/e2e-04-hardening/run-report.json`. `worktreeDirty: true` reflects screenshot generation during the full run and pre-existing local-only files; generated Lab 2/3 screenshots were restored.
 
-These automated results are not peer approval. VIS-01 manual review was owner-confirmed as passed on 2026-10-28; formal DOC-01 review, peer-review closeout, and release integration remain pending.
+These automated results are not presented as peer approval. VIS-01 was owner-confirmed complete on 2026-10-28, release PR #98 merged to `main` on 2026-10-29, and the final report records the test and Kanban evidence.
 
 ## My Reflection
 
-> Drafted with AI assistance; the student must review and personalize this reflection before submission so it describes their own experience accurately.
-
 The specification work starts from the UTF-8 Lab 4 handout and parent issue #86, then turns those requirements into four linked implementation issues. For Issue #87, the AI compared the handout and parent contract, mapped the Actions Taken, role, status, dashboard, migration, accessibility, regression, and evidence decisions into the specification/API/UI/test documents, and kept all test outcomes marked as planned rather than passed.
 
-One technical choice made explicit in the contract is a separate `lastReopenedAt` marker. Ticket `updatedAt` also changes when an Action Taken is created or edited, so it is not a stable boundary for enforcing the requirement that a reopened Ticket needs newly recorded work before another resolution. This marker is internal and adds no user-facing history feature. The contract records this implementation choice for human review; it is separate from the explicit parent #86 role decision.
+A key technical lesson from the work was to keep `lastReopenedAt` separate from ordinary Ticket activity. `updatedAt` also changes when an Action Taken is created or edited, so it cannot prove that new work was recorded after a Ticket reopened. The internal reopen marker makes that rule testable without adding a user-facing history feature. The work also reinforced why every permission must be enforced by the backend rather than inferred from hidden UI controls.
 
-For Issue #87, the coding-agent work was contract documentation only; Issue #90 later added test and evidence implementation. The AI cannot approve its own specification, establish that a planned test passed without execution, or act as peer reviewer. The student must read the source PDF, verify every rule and calculation, decide whether to accept or revise the proposed contract, review generated changes, run the tests on the actual implementation, and obtain human peer review.
+The specification agent helped structure and cross-check the contract; the coding agent later helped implement the approved scope, add regression evidence, and run the release gates. I used the handout, contract, test results, and issue acceptance records to review the work. AI accelerated drafting and repetitive engineering tasks, but did not replace my responsibility for scope decisions, evidence, or final acceptance.
 
 ## Human responsibility
 
